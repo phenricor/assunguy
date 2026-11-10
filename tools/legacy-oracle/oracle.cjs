@@ -182,6 +182,19 @@ const SCENARIOS = {
       return { state, box: [a0, a1, b0, b1], msgs, out };
     }, [txt, LOAD.toString()]);
   },
+  // the economy with hypothetical buildings placed on real lots, as the advisor measures them
+  measure: async (page) => {
+    const out = {};
+    const extras = [{ rMilho: 1 }, { rFeijao: 2 }, { rArroz: 1 }, { armazem: 1 }, { monjolo: 1 }, { chiqueiro: 1 }, { rancho: 2 }, { curral: 1 }, { serraria: 1 }, { rendimento: { lavoura: 1.1 } }, { rMilho: 1, monjolo: 1 }];
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load, extras]) => {
+        const state = (0, eval)(load)(txt);
+        memoEco = null; cacheLotes = null;
+        return { state, runs: extras.map((x) => { const c = economia(M, x); return { x, renda: c.rendaTotal, fora: c.foraTotal, perda: c.perdaTotal }; }) };
+      }, [txt, LOAD.toString(), extras]);
+    }
+    return out;
+  },
 };
 
 (async () => {
