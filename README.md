@@ -29,23 +29,44 @@ Fontes: [IBGE, histórico de Cerro Azul](https://biblioteca.ibge.gov.br/visualiz
 
 ## Mecânicas
 
-**Estações e anos.** Cada turno é uma estação, e quatro estações fazem um ano. O clima muda a colheita, os preços mudam o que vale a pena produzir, e o relatório da estação mostra o que entrou, o que saiu e o que ficou parado.
-
-**Famílias e satisfação.** Cada família precisa de casa e de trabalho. A satisfação depende da moradia, dos serviços por perto, dos impostos e das leis, e é uma das exigências de cada marco.
-
-**Ruas, lotes e terras.** Tudo se constrói em lotes ao longo das ruas. A colônia começa numa terra e cresce anexando as vizinhas, o que custa influência e dinheiro. Cada terra tem o seu solo, a sua mata e os seus recursos.
-
-**Produção.** Plantações e criações dão a matéria-prima. As oficinas transformam o que há por perto, e as famílias decidem sozinhas o que processar conforme o preço: mandioca vira farinha, cana vira rapadura ou aguardente, erva vira mate.
-
-**Escoamento.** O que a colônia não consome precisa sair. Cais, porto e pouso são as portas para fora, venda e embarcadouro recolhem a produção longe do comércio, e tropas, carroças, canoas e vapores levam a carga. A tarifa é sua: a preço de custo o caixa empata, com margem ganha, mas os produtores passam a preferir levar a pé.
-
-**Governo.** Três impostos (dízimo, dízimo de exportação e licença de negócio), oito leis, como feira semanal, mutirão de obras e escola obrigatória, e oito grandes obras, do telégrafo à serraria a vapor.
-
-**Níveis e marcos.** A colônia tem 12 níveis, que liberam novas culturas, oficinas e serviços. Os marcos vêm com prazo da província. A freguesia pede 90 famílias, satisfação 50, capela, escola e diretoria em 32 estações. A vila pede 180 famílias, quatro terras e mais serviços.
-
-**Conselheiro.** Sugere o que mais pesa agora, explica por quê e faz a ação com um toque. Não decide por você.
-
-**A corrida da ferrovia.** No fim do jogo a ferrovia chega à região e as colônias rivais disputam o ramal. Ganha quem tiver estação, trilhos e uma produção que valha o frete.
+<table>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-estacoes.png" width="88" height="88" alt=""></td>
+<td><b>Estações e anos.</b> Cada turno é uma estação, e quatro estações fazem um ano. O clima muda a colheita, os preços mudam o que vale a pena produzir, e o relatório da estação mostra o que entrou, o que saiu e o que ficou parado.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-familias.png" width="88" height="88" alt=""></td>
+<td><b>Famílias e satisfação.</b> Cada família precisa de casa e de trabalho. A satisfação depende da moradia, dos serviços por perto, dos impostos e das leis, e é uma das exigências de cada marco.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-ruas.png" width="88" height="88" alt=""></td>
+<td><b>Ruas, lotes e terras.</b> Tudo se constrói em lotes ao longo das ruas. A colônia começa numa terra e cresce anexando as vizinhas, o que custa influência e dinheiro. Cada terra tem o seu solo, a sua mata e os seus recursos.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-producao.png" width="88" height="88" alt=""></td>
+<td><b>Produção.</b> Plantações e criações dão a matéria-prima. As oficinas transformam o que há por perto, e as famílias decidem sozinhas o que processar conforme o preço: mandioca vira farinha, cana vira rapadura ou aguardente, erva vira mate.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-escoamento.png" width="88" height="88" alt=""></td>
+<td><b>Escoamento.</b> O que a colônia não consome precisa sair. Cais, porto e pouso são as portas para fora, venda e embarcadouro recolhem a produção longe do comércio, e tropas, carroças, canoas e vapores levam a carga. A tarifa é sua: a preço de custo o caixa empata, com margem ganha, mas os produtores passam a preferir levar a pé.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-governo.png" width="88" height="88" alt=""></td>
+<td><b>Governo.</b> Três impostos (dízimo, dízimo de exportação e licença de negócio), oito leis, como feira semanal, mutirão de obras e escola obrigatória, e oito grandes obras, do telégrafo à serraria a vapor.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-niveis.png" width="88" height="88" alt=""></td>
+<td><b>Níveis e marcos.</b> A colônia tem 12 níveis, que liberam novas culturas, oficinas e serviços. Os marcos vêm com prazo da província. A freguesia pede 90 famílias, satisfação 50, capela, escola e diretoria em 32 estações. A vila pede 180 famílias, quatro terras e mais serviços.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-conselheiro.png" width="88" height="88" alt=""></td>
+<td><b>Conselheiro.</b> Sugere o que mais pesa agora, explica por quê e faz a ação com um toque. Não decide por você.</td>
+</tr>
+<tr>
+<td width="96"><img src="docs/readme/mecanica-corrida.png" width="88" height="88" alt=""></td>
+<td><b>A corrida da ferrovia.</b> No fim do jogo a ferrovia chega à região e as colônias rivais disputam o ramal. Ganha quem tiver estação, trilhos e uma produção que valha o frete.</td>
+</tr>
+</table>
 
 ### Categorias de construção
 
@@ -119,12 +140,6 @@ pnpm typecheck
 pnpm balance       # partidas do robô e relatório de equilíbrio
 cd apps/game && npx vite build   # o jogo, em dist/index.html
 ```
-
-### Versões
-
-O jogo segue o [versionamento semântico](https://semver.org/lang/pt-BR/), lido pelo lado dos saves. Uma versão major quebra saves antigos ou muda o jeito de jogar, uma minor traz conteúdo ou equilíbrio novo e mantém os saves, e uma patch só corrige. Os saves guardam o próprio formato e passam por migração ao abrir. As mudanças de cada versão estão no [CHANGELOG](CHANGELOG.md).
-
-Para lançar uma versão, ajuste a versão nos `package.json`, transforme a seção `Unreleased` do changelog na seção da versão e faça o commit. Depois rode o workflow **Release** pela aba Actions: ele cria a tag e publica a release com o arquivo do jogo.
 
 ### Licença
 
