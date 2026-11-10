@@ -50,6 +50,8 @@ export interface BuildingDef {
   color?: string;
   size?: readonly [number, number];
   riverside?: boolean;
+  /** Yields more with trees around (up to 4 lots away). */
+  nearForest?: boolean;
   crop?: boolean;
   output?: { good: string; perSeason: number; season?: Season | number };
   extraOutputs?: readonly { good: string; perSeason: number }[];

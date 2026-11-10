@@ -1,0 +1,93 @@
+// The saved game. Everything the rules need between seasons lives here; the world is rebuilt from the seed.
+import type { BuildingId, GoodId, Sector, VehicleId } from '@assunguy/data';
+import type { MapState } from './map.js';
+import type { MarketState } from './market.js';
+import type { LandId, LotKey } from './world.js';
+
+/** A home slot: the house's anchor lot and the family's place in it. */
+export type FamilyId = `${LotKey}#${number}`;
+export type Trade = Exclude<Sector, 'services'>;
+export type TaxId = 'lotInstallment' | 'tithe' | 'exportDuty' | 'businessTax';
+export type DestinationId = 'iguape' | 'curitiba' | 'paranagua' | 'saoPaulo';
+
+export interface Family {
+  id: FamilyId;
+  /** Surname, a proper name shown as is in both languages. */
+  surname: string;
+  trade: Trade | null;
+  /** 0 to 100. */
+  skill: number;
+  /** Seasons left with the newcomer wage. */
+  newcomer: number;
+  /** Seasons in a row without work and with a poor home. */
+  idle: number;
+  /** Season the family arrived. */
+  arrived: number;
+  savings: number;
+  origin?: string;
+}
+
+/** A tax in force: a general rate (or amount) and optional rates per good. */
+export interface TaxLaw { general: number; byGood?: Partial<Record<GoodId, number>> }
+
+export interface GreatWork { done?: boolean; paid?: number; seasons?: number }
+
+export interface Effect { satisfaction?: number; seasonsLeft: number; reason: string }
+
+export interface GameState {
+  seed: number;
+  mapVersion: number;
+  map: MapState;
+  /** Building upgrade level, 0 when missing. */
+  upgrades: Record<LotKey, number>;
+  families: Record<FamilyId, Family>;
+  /** Home rating per house, written at the end of each season and read by the next allocation. */
+  homeRating: Record<LotKey, number>;
+  /** Share of families with water and an apothecary nearby (1 before the parish). */
+  health: number;
+  /** Whether each consumer good was found for sale last season (0 to 1). */
+  supply: Partial<Record<GoodId, number>>;
+  /** Season of each field's first harvest; fields are idle until then. */
+  firstHarvest: Record<LotKey, number> | null;
+  market: MarketState;
+  cash: number;
+  influence: number;
+  level: number;
+  milestone: number;
+  deadline: number;
+  goalStart: number;
+  taxes: Record<TaxId, TaxLaw | null>;
+  /** Town laws in force. */
+  laws: Partial<Record<string, true>>;
+  /** Path choices taken at each level. */
+  choices: Partial<Record<number, string>>;
+  greatWorks: Partial<Record<string, GreatWork>>;
+  /** Ongoing problems: an epidemic, disorder. */
+  problems: { epidemic?: number; disorder?: number; [k: string]: number | undefined };
+  /** The crisis under way, if any. */
+  crisis: { id: string; seasonsLeft: number } | null;
+  /** Vehicles at each transport building. */
+  fleet: Record<LotKey, Partial<Record<VehicleId, number>>>;
+  /** Tariff margin set at each transport building. */
+  tariffMargin: Record<LotKey, number>;
+  transport: { volume: Record<LotKey, number>; firewoodShortage: number };
+  /** Freight cut bought by the relief works (0 to 1). */
+  freightRelief: number;
+  /** Families employed by the relief works. */
+  reliefWorkers: Partial<Record<FamilyId, true>>;
+  /** The late-game transport race; not ported yet. */
+  race: null;
+}
+
+export const upgradeOf = (s: Pick<GameState, 'upgrades'>, key: LotKey): number => s.upgrades[key] ?? 0;
+export const hasLaw = (s: Pick<GameState, 'laws'>, id: string): boolean => !!s.laws[id];
+export const hasChoice = (s: Pick<GameState, 'choices'>, id: string): boolean => Object.values(s.choices).includes(id);
+export const workDone = (s: Pick<GameState, 'greatWorks'>, id: string): boolean => !!s.greatWorks[id]?.done;
+export const crisisOn = (s: Pick<GameState, 'crisis'>, id: string): boolean => !!s.crisis && s.crisis.id === id && s.crisis.seasonsLeft > 0;
+export const homeOf = (id: FamilyId): LotKey => id.slice(0, id.indexOf('#')) as LotKey;
+export const taxRate = (s: Pick<GameState, 'taxes'>, id: TaxId, good?: GoodId): number => {
+  const l = s.taxes[id];
+  if (!l) return 0;
+  return good && l.byGood && l.byGood[good] !== undefined ? (l.byGood[good] as number) : l.general || 0;
+};
+export type { BuildingId, LandId };

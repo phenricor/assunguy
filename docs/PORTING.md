@@ -52,6 +52,18 @@ Order of the slices:
 7. Events as declarative effects; the advisor (`conselhos`, `ondeInvestir`) as the role `advisor`.
 8. `tools/bot`: a robot player that follows the advisor, reproducing the canoe and deadline findings.
 
+## Rule changes from the November interface review
+
+These are deliberate departures from the prototype (see `docs/ui-review.md`). The oracle switches the
+same rules off in the prototype before recording, so golden tests still compare like with like.
+
+- Lot installments and their collection policy are gone: no `cobraParcelas`, no `parcelas`/`atraso` on
+  families, no collection setting, and the province report no longer counts arrears. The oracle replaces
+  `cobraParcelas` with a no-op.
+- Relief works are always on.
+- Extra funds and extra time from the province are offered by the advisor when available, not as
+  buttons on the province tab. Advice the colony cannot pay for is listed but blocked.
+
 ## Known prototype quirks kept on purpose
 
 - The Kaingang village lands are still drawn and then turned into forest, so seeds build the same maps.

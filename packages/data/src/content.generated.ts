@@ -647,6 +647,7 @@ export const BUILDINGS = {
     }
   },
   "pineNutGrove": {
+    "nearForest": true,
     "category": "livestock",
     "cost": 50,
     "payer": "colony",
@@ -676,6 +677,7 @@ export const BUILDINGS = {
     ]
   },
   "sawmill": {
+    "nearForest": true,
     "category": "extraction",
     "cost": 250,
     "payer": "colony",
@@ -1029,6 +1031,7 @@ export const BUILDINGS = {
     "fixed": true
   },
   "woodYard": {
+    "nearForest": true,
     "category": "transport",
     "cost": 900,
     "payer": "colony",
