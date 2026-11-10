@@ -42,3 +42,15 @@ export function createTranslator(locale: Locale): Translator {
 }
 
 export const catalogKeys = (locale: Locale): string[] => Object.keys(CATALOGS[locale]);
+
+/** A land's name: its key, or "<name> de Cima" when the biome ran out of names. */
+export const landName = (t: Translator, land: { nameKey: string; upper?: boolean }): string => (land.upper ? t.t('land.upper', { name: t.t(land.nameKey) }) : t.t(land.nameKey));
+
+/** A district's name (see the simulation's districts): a key, the land when needed, a number when repeated. */
+export function districtName(t: Translator, n: { key: string; land?: string; n?: number; custom?: string }, land: (id: string) => string): string {
+  if (n.custom) return n.custom;
+  let s = n.key === 'district.hamlet' ? t.t(n.key, { land: n.land ? land(n.land) : '' }) : t.t(n.key);
+  if (n.land && n.key !== 'district.hamlet') s = t.t('district.withLand', { name: s, land: land(n.land) });
+  if (n.n) s = t.t('district.numbered', { name: s, n: n.n });
+  return s;
+}

@@ -14,6 +14,7 @@ import {
 } from '@assunguy/data';
 import { allocate, computeEconomy, costOf, def, good, hasRoad, recipesOf, SECTOR_ORDER, sectorOf, soilOf, teamEfficiency, upkeepOf, type Economy, type Extra } from './economy.js';
 import { firstHarvest, overplanted, swapCost, swapOptions } from './events.js';
+import { computeDistricts, districtsUnlocked, nameId } from './districts.js';
 import { ARRIVAL_AID, emptySlots, HOME_UPGRADE, SEED_AID } from './families.js';
 import { measure } from './measure.js';
 import { connected, mainNetwork } from './network.js';
@@ -31,7 +32,7 @@ export const ADVICE_RULES = [
 
 export type AdviceAction =
   | { kind: 'screen'; screen: 'level' | 'economy' | 'direction' | 'transport'; tab?: string; law?: 'tithe'; value?: number }
-  | { kind: 'build'; building: BuildingId | 'street' }
+  | { kind: 'build'; building: BuildingId | 'street'; near?: LotKey }
   | { kind: 'select'; key: LotKey; upgrade?: true }
   | { kind: 'swap'; key: LotKey; to: BuildingId; from: BuildingId }
   | { kind: 'land'; land: LandId }
@@ -342,6 +343,7 @@ function colonyAdvice(x: Ctx): Advice[] {
   }
   for (const g of Object.keys(ready) as GoodId[]) { const t = ALL.find((y) => def(y).output?.good === g && can(y)); if (t && (ready[g] as number) >= 2) add(67, 'homesCanGrow', { n: ready[g] as number, good: g, building: t, cost: cost(t) }, build(t)); }
   // services
+  let districts: ReturnType<typeof computeDistricts> | null = null;
   const homes = Object.values(ratings.homes), wanted = target ? (target.satisfaction ?? 60) : 60, mean = ratings.mean;
   if (mean < wanted + 6 && homes.length) {
     const ops = SERVICES.map((sv) => {
@@ -355,7 +357,14 @@ function colonyAdvice(x: Ctx): Advice[] {
     ops.forEach((o, i) => {
       const weight = i === 0 && mean < wanted ? 85 : i === 0 && mean < wanted + 3 ? 62 : 32 + Math.min(14, o.n / 2);
       if (weight < 40 && o.n < Math.max(3, homes.length * 0.25)) return;
-      add(weight, i === 0 && mean < wanted + 3 ? 'service.satisfaction' : 'service.homes', { n: o.n, service: o.sv, building: o.t, cost: cost(o.t), up: Math.max(0.1, Math.round(o.up * 10) / 10), mean, wanted, milestone: target?.id ?? '' }, build(o.t));
+      // with districts, says where: the district with most homes without it, and takes the camera there
+      let where: Record<string, string | number> = {}, act: AdviceAction = build(o.t);
+      if (districtsUnlocked(s)) {
+        const D = (districts ??= computeDistricts(s, w));
+        const pb = D.info.map((d) => ({ d, without: d.homes.filter((h) => ratings.homes[h]?.items.some((it) => it.kind === 'outOfReach' && it.service === o.sv)) })).filter((x) => x.without.length).sort((p, q) => q.without.length - p.without.length)[0];
+        if (pb) { where = { district: nameId(pb.d.name), at: pb.d.id, inDistrict: pb.without.length, all: pb.without.length === o.n ? 1 : 0 }; act = { kind: 'build', building: o.t, near: pb.without[0]! }; }
+      }
+      add(weight, i === 0 && mean < wanted + 3 ? 'service.satisfaction' : 'service.homes', { n: o.n, service: o.sv, building: o.t, cost: cost(o.t), up: Math.max(0.1, Math.round(o.up * 10) / 10), mean, wanted, milestone: target?.id ?? '', ...where }, act);
     });
   }
   // growth

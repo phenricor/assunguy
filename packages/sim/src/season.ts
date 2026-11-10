@@ -9,6 +9,7 @@ import { advanceMarket } from './market.js';
 import { advanceGreatWorks, advanceTransport, applyRelief, grantFactor, levelRequirements, provinceReport, upkeepPerSeason, NEWCOMER_WAGE, type GreatWorkNews } from './province.js';
 import { taxEffect, updateRatings } from './ratings.js';
 import { settle, storedMean } from './settle.js';
+import { nameId, rememberDistricts } from './districts.js';
 import { hasChoice, hasLaw, type GameState } from './state.js';
 import { landOf, parseKey, type LotKey, type World } from './world.js';
 
@@ -111,6 +112,8 @@ export function passSeason(s: GameState, w: World): SeasonReport {
     s.cavesSeen = [...s.cavesSeen, key]; s.influence += 1;
     news.push({ key: 'news.caveExplored', params: { cave: s.map.natureNames[key] ?? 'nature.cave' } }); chronicle(s, 'chronicle.caveExplored', { cave: s.map.natureNames[key] ?? 'nature.cave' });
   }
+  // districts: new ones are news
+  for (const d of rememberDistricts(s, w)) news.push({ key: 'news.districtBorn', params: { district: nameId(d.name), at: d.id, homes: d.homes.length } });
   // a business crushed by taxes for four seasons closes
   if (ef.businessesAtRisk) {
     s.businessStrain = (s.businessStrain || 0) + 1;

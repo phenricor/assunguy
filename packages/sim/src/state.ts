@@ -1,4 +1,5 @@
 // The saved game. Everything the rules need between seasons lives here; the world is rebuilt from the seed.
+import type { DistrictMemory } from './districts.js';
 import type { BuildingId, GoodId, Sector, VehicleId } from '@assunguy/data';
 import type { MapState } from './map.js';
 import type { MarketState } from './market.js';
@@ -150,6 +151,8 @@ export interface GameState {
   intervention: boolean;
   /** Extra families the next milestone asks for, in steps of 5%. */
   extraDemand: number;
+  /** Districts remembered between seasons (from the village on). */
+  districts?: DistrictMemory;
   /** The late-game transport race; not ported yet. */
   race: null;
 }

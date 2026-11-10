@@ -112,6 +112,7 @@ export function legacyState(save: Record<string, unknown>): GameState {
     },
     reliefCost: m.frenteCusto ?? 0, buildCosts: m.obrasEst ?? 0, grantFactor: m.verbaMod ?? 1, ...(m.castigoVerba ? { grantCut: m.castigoVerba } : {}),
     intervention: !!m.intervencao, extraDemand: m.exig ?? 0,
+    ...(m.bairrosVistos || m.bairroNome ? { districts: { ...(m.bairrosVistos ? { seen: [...m.bairrosVistos] } : {}), ...(m.bairrosNomesVistos ? { seenNames: [...m.bairrosNomesVistos] } : {}), ...(m.bairrosArraial ? { hamlets: [...m.bairrosArraial] } : {}), ...(m.bairroNome ? { names: { ...m.bairroNome } } : {}) } } : {}),
     ...(m.histT ? { transportHistory: m.histT.map((h: any) => ({ t: h.t, hauled: h.esc, lost: h.perd, delivered: h.aprov, lostValue: h.perdV })) } : {}),
   };
 }

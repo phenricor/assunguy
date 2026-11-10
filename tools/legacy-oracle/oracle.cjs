@@ -403,6 +403,27 @@ const SCENARIOS = {
     return out;
   },
 
+  // districts on each save: as they come, then remembering the first result, then with a player's name
+  districts: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        (0, eval)(load)(txt);
+        const take = () => { C = calcula(M); const B = calculaBairros(); return JSON.parse(JSON.stringify({ celula: B.celula, info: B.info.map((b) => ({ id: b.id, nome: b.nome, cor: CORES_BAIRRO.indexOf(b.cor), casas: b.casas, centro: b.centro, arraial: b.arraial })), lacos: B.lacos })); };
+        const first = take();
+        M.bairrosVistos = first.info.map((b) => b.id); M.bairrosArraial = first.info.filter((b) => b.arraial).map((b) => b.id);
+        // more homes on new streets, so the remembered anchors have to hold new ones
+        const extra = [];
+        for (const key of Object.keys(M.ruas)) { const [a, b] = par(key); for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { if (extra.length >= 6) break; if (!podeConstruir(M, 'rancho', a + x, b + y)) { M.predios[k(a + x, b + y)] = 'rancho'; extra.push(k(a + x, b + y)); } } }
+        const remembered = take();
+        M.bairroNome = { [first.info[0].id]: 'Praça Velha' };
+        const named = take();
+        return { first, extra, remembered, named, seen: M.bairrosVistos, hamlets: M.bairrosArraial };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
+
 };
 
 (async () => {
