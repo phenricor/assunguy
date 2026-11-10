@@ -10,3 +10,4 @@ export * from './transport.js';
 export * from './ratings.js';
 export * from './families.js';
 export * from './province.js';
+export * from './placement.js';

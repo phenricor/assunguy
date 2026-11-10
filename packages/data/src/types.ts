@@ -50,6 +50,8 @@ export interface BuildingDef {
   color?: string;
   size?: readonly [number, number];
   riverside?: boolean;
+  /** Must have water (river, lake, brook) within this many lots. */
+  nearWater?: number;
   /** Yields more with trees around (up to 4 lots away). */
   nearForest?: boolean;
   crop?: boolean;

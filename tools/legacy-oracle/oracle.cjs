@@ -169,6 +169,19 @@ const SCENARIOS = {
     }
     return out;
   },
+  // where each building type (and a street) may go, on every lot around the colony
+  placement: async (page) => {
+    const [, txt] = saves().find(([n]) => n === 'speedrun');
+    return page.evaluate(([txt, load]) => {
+      const state = (0, eval)(load)(txt);
+      const keys = Object.keys(M.predios).concat(Object.keys(M.ruas)).map(par);
+      const a0 = Math.min(...keys.map((p) => p[0])) - 8, a1 = Math.max(...keys.map((p) => p[0])) + 8, b0 = Math.min(...keys.map((p) => p[1])) - 8, b1 = Math.max(...keys.map((p) => p[1])) + 8;
+      const types = ['rua', 'rancho', 'rMilho', 'rArroz', 'porto', 'pesqueiro', 'moinho', 'mina', 'erval', 'armazem', 'mercado', 'embarcadouro', 'igreja', 'engenho2'];
+      const msgs = [''], out = {};
+      for (const t of types) { let o = ''; for (let a = a0; a <= a1; a++) for (let b = b0; b <= b1; b++) { const r = podeConstruir(M, t, a, b); let i = msgs.indexOf(r); if (i < 0) { msgs.push(r); i = msgs.length - 1; } o += String.fromCharCode(65 + i); } out[t] = o; }
+      return { state, box: [a0, a1, b0, b1], msgs, out };
+    }, [txt, LOAD.toString()]);
+  },
 };
 
 (async () => {

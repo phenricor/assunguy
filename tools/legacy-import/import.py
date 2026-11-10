@@ -182,6 +182,7 @@ def main():
         if t.get('bem'): out['output'] = {'good': goods_id(t['bem']), 'perSeason': t['y'], **({'season': t['est']} if t.get('est') is not None else {})}
         if t.get('bens'): out['extraOutputs'] = [{'good': goods_id(b), 'perSeason': y} for b, y in t['bens']]
         if t.get('matas'): out['nearForest'] = True
+        if t.get('perto'): out['nearWater'] = t['perto']
         if t.get('ruim'): out['nuisance'] = t['ruim']
         if t.get('capO'): out['processingCapacity'] = t['capO']
         if t.get('receitas'):

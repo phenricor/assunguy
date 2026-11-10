@@ -517,6 +517,7 @@ export const BUILDINGS = {
     }
   },
   "riceField": {
+    "nearWater": 3,
     "category": "crops",
     "cost": 60,
     "payer": "families",
