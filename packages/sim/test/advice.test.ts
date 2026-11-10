@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { legacyAdvice, type AdviceAction } from '../src/advisor.js';
+import { advise, legacyAdvice, producerFix, type AdviceAction } from '../src/advisor.js';
 import { defineEvent, resolveEvent } from '../src/events.js';
 import { passSeason } from '../src/season.js';
 import { updateRatings } from '../src/ratings.js';
@@ -66,4 +66,36 @@ describe('advisor on variants of the saves (golden)', () => {
       });
     }
   }
+});
+
+describe('advisor: the November review rules', () => {
+  const load = (name: string) => { const s = legacyState((seasons as unknown as Record<string, { state: Record<string, unknown> }>)[name]!.state); return { s, w: generateWorld(s.seed, s.mapVersion) }; };
+  it('a far land gets a measured store package with a waystation, not a lone store; too dear for the cash, it is blocked', () => {
+    const { s, w } = load('speedrun');
+    const a = advise(s, w), far = a.find((x) => x.rule.startsWith('farLand'));
+    expect(far?.rule).toBe('farLand.storePackage');
+    expect(far?.action).toMatchObject({ kind: 'collect', building: 'store', land: '2,3', with: ['waystation'], fleet: { muleTrain: 2 } });
+    expect(far!.params.gain as number).toBeGreaterThan(0);
+    expect(far!.blocked).toBe(far!.cost > s.cash);
+    expect(a.some((x) => x.rule === 'noCollection' && x.params.land === '2,3')).toBe(false);
+    for (const x of a) expect(x.blocked).toBe(x.cost > Math.max(0, s.cash));
+  });
+  it('the province: extra funds when the cash runs out, more time when the deadline is close', () => {
+    const { s, w } = load('canoes');
+    s.cash = -200; s.influence = 6; s.deadline = s.market.t + 4;
+    const rules = advise(s, w).map((x) => x.rule);
+    expect(rules).toContain('province.extraFunds');
+    expect(rules).toContain('province.extraTime');
+    s.extendedDeadline = true; s.influence = 3;
+    const again = advise(s, w).map((x) => x.rule);
+    expect(again).not.toContain('province.extraTime');
+    expect(again).not.toContain('province.extraFunds');
+  });
+  it('a field losing on the way gets its best measured fix: here, a better crop', () => {
+    const { s, w } = load('speedrun');
+    s.map.buildings['35,51'] = 'tradingPost'; s.fleet['35,51'] = { muleTrain: 2 };
+    const fix = producerFix(s, w, '32,50');
+    expect(fix?.action).toMatchObject({ kind: 'swap', key: '32,50', from: 'cassavaField' });
+    expect(fix!.gain).toBeGreaterThan(50);
+  });
 });

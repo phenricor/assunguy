@@ -1,3 +1,7 @@
+// Advice carries a rule id, the numbers its text needs and an action; display text lives in i18n under
+// advice.<rule>.title and advice.<rule>.body. Parameters named building, to, from, good, service, vehicle,
+// milestone, land, work, chain and cause hold ids the interface turns into names; `at` is a lot whose
+// building and land are named; every other parameter is a number (money in $, percents already x100).
 // The advisor: a ranked list of advice, each measured by the economy where it is about income. Advice carries
 // a rule id, the numbers its text needs and an action; display text lives in i18n under advice.<rule>.*.
 // Ported from the prototype's `conselhosSem` and `conselhosTransp`, with the November review fixes:
@@ -9,7 +13,7 @@ import {
   type BuildingId, type GoodId, type GreatWorkId, type MilestoneDef, type TransportRoleDef, type VehicleDef, type VehicleId,
 } from '@assunguy/data';
 import { allocate, computeEconomy, costOf, def, good, hasRoad, recipesOf, SECTOR_ORDER, sectorOf, soilOf, teamEfficiency, upkeepOf, type Economy, type Extra } from './economy.js';
-import { firstHarvest, overplanted, swapOptions } from './events.js';
+import { firstHarvest, overplanted, swapCost, swapOptions } from './events.js';
 import { ARRIVAL_AID, emptySlots, HOME_UPGRADE, SEED_AID } from './families.js';
 import { measure } from './measure.js';
 import { connected, mainNetwork } from './network.js';
@@ -266,10 +270,10 @@ function colonyAdvice(x: Ctx): Advice[] {
     const ef = taxEffect(s, w), now0 = s.taxes.tithe?.general ?? 0, sug = suggestedTithe(s, w, floor), mean = ratings.mean;
     const act = (value: number): AdviceAction => ({ kind: 'screen', screen: 'direction', tab: 'taxes', law: 'tithe', value });
     const rich = 3000 + c.incomeTotal * 0.2;
-    if (ef.familiesAtRisk) add(90, 'tithe.choking', { n: ef.familiesAtRisk, rate: sug.rate, mean, after: sug.mean }, act(sug.rate));
-    else if (now0 > sug.rate && mean < floor) add(84, 'tithe.hurts', { rate: now0, wanted: floor - 3, suggested: sug.rate, mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
-    else if (s.cash > rich && now0 >= 0.04) add(58, 'tithe.relief', { rate: now0 - 0.04 }, act(Math.round((now0 - 0.04) * 100) / 100));
-    else if (sug.rate >= now0 + 0.04 && sug.mean >= floor + 1 && s.cash < rich / 2) add(now0 ? 62 : 86, now0 ? 'tithe.more' : 'tithe.first', { rate: sug.rate, revenue: Math.round(sug.revenue), mean, after: sug.mean }, act(sug.rate));
+    if (ef.familiesAtRisk) add(90, 'tithe.choking', { n: ef.familiesAtRisk, rate: Math.round(sug.rate * 100), mean, after: sug.mean }, act(sug.rate));
+    else if (now0 > sug.rate && mean < floor) add(84, 'tithe.hurts', { rate: Math.round(now0 * 100), wanted: floor - 3, suggested: Math.round(sug.rate * 100), mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
+    else if (s.cash > rich && now0 >= 0.04) add(58, 'tithe.relief', { rate: Math.round((now0 - 0.04) * 100) }, act(Math.round((now0 - 0.04) * 100) / 100));
+    else if (sug.rate >= now0 + 0.04 && sug.mean >= floor + 1 && s.cash < rich / 2) add(now0 ? 62 : 86, now0 ? 'tithe.more' : 'tithe.first', { rate: Math.round(sug.rate * 100), revenue: Math.round(sug.revenue), mean, after: sug.mean }, act(sug.rate));
   }
   // idle families and jobs with nobody
   const next = LEVELS.find((l) => l.level === s.level + 1), shortOfWork = !!next && a.employed < next.workers;
@@ -400,15 +404,15 @@ function transportAdvice(x: Ctx): Advice[] {
     if (!v) continue;
     const V = VEHICLES[v] as VehicleDef;
     const tight = which === 'gateway' ? gatewayTight(y) : y.peak >= 0.9;
-    if (y.capacity <= 0 && room) { add(74, `noVehicles.${which}`, { building: y.key, vehicle: v, cost: V.price }, { kind: 'buyVehicle', key: y.key, vehicle: v }); continue; }
+    if (y.capacity <= 0 && room) { add(74, `noVehicles.${which}`, { at: y.key, vehicle: v, cost: V.price }, { kind: 'buyVehicle', key: y.key, vehicle: v }); continue; }
     if (tight && room && measuredN < 4) {
       measuredN++;
       const g = gainVehicle(y.key, v);
-      if (g - V.upkeep * 4 >= V.price / 2) add(workWeight(V.price, g), `full.${which}`, { building: y.key, vehicle: v, cost: V.price, upkeep: V.upkeep * 4, gain: Math.round(g) }, { kind: 'buyVehicle', key: y.key, vehicle: v });
-    } else if (tight && !room && upgradeOf(s, y.key) < 2) add(62, 'noSlot', { building: y.key }, { kind: 'select', key: y.key, upgrade: true });
+      if (g - V.upkeep * 4 >= V.price / 2) add(workWeight(V.price, g), `full.${which}`, { at: y.key, vehicle: v, cost: V.price, upkeep: V.upkeep * 4, gain: Math.round(g) }, { kind: 'buyVehicle', key: y.key, vehicle: v });
+    } else if (tight && !room && upgradeOf(s, y.key) < 2) add(62, 'noSlot', { at: y.key }, { kind: 'select', key: y.key, upgrade: true });
     else if (which === 'collection' && collectionState(y as Economy['transport']['collections'][number]) === 'idle' && fleetSize(s, y.key) > 1 && y.tariff > 0.45) {
       const v0 = (Object.keys(y.fleet) as VehicleId[]).find((z) => y.fleet[z]);
-      if (v0) add(46, 'idleCollection', { building: y.key, tariff: y.tariff, vehicle: v0 }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
+      if (v0) add(46, 'idleCollection', { at: y.key, tariff: Math.round(y.tariff * 100) / 100, vehicle: v0 }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
     }
   }
   if (s.level >= 4) for (const r of R.lands.filter((y) => y.producedValue > 0 && y.lostValue > 40 && y.lostValue / y.producedValue > 0.12 && !y.covered).slice(0, 2)) {
@@ -428,9 +432,9 @@ function transportAdvice(x: Ctx): Advice[] {
     }
   }
   // the store package replaces the prototype's lone store for far fields (see storePackage)
-  for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) L.push({ weight: workWeight(costOf('waystation', s.milestone) + 600, y.lost * 3), rule: 'noGateway', params: { building: y.key, lost: Math.round(y.lost) }, action: { kind: 'collect', building: 'waystation', near: y.key }, cost: costOf('waystation', s.milestone) + 600, blocked: false });
+  for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) L.push({ weight: workWeight(costOf('waystation', s.milestone) + 600, y.lost * 3), rule: 'noGateway', params: { at: y.key, lost: Math.round(y.lost) }, action: { kind: 'collect', building: 'waystation', near: y.key }, cost: costOf('waystation', s.milestone) + 600, blocked: false });
   const u = s.transport.last;
-  if (u && u.margin >= 0.25 && u.loss > 0.2) add(60, 'highTariffs', { margin: u.margin, loss: u.loss }, { kind: 'screen', screen: 'transport', tab: 'collections' });
+  if (u && u.margin >= 0.25 && u.loss > 0.2) add(60, 'highTariffs', { margin: Math.round(u.margin * 100), loss: Math.round(u.loss * 100) }, { kind: 'screen', screen: 'transport', tab: 'collections' });
   return L;
 }
 
@@ -440,7 +444,7 @@ function actionCost(s: GameState, a: AdviceAction | null): number {
   switch (a.kind) {
     case 'build': return a.building === 'street' ? 0 : costOf(a.building, s.milestone);
     case 'select': return a.upgrade ? upgradeCost(s.map.buildings[a.key] as BuildingId, upgradeOf(s, a.key), s.milestone) : 0;
-    case 'swap': return 0;
+    case 'swap': return Math.max(0, swapCost(s, a.key, a.to));
     case 'land': return annexCost(s).cash;
     case 'buyVehicle': return (VEHICLES[a.vehicle] as VehicleDef).price;
     default: return 0;
@@ -455,10 +459,87 @@ export function legacyAdvice(s: GameState, w: World): Advice[] {
   return one(colony.concat(transportAdvice(x)).sort((p, q) => q.weight - p.weight));
 }
 
-/** The advisor's list, with the review fixes: costs and blocking, province requests, far-land packages, producer fixes. */
-export function advise(s: GameState, w: World): Advice[] {
-  const list = legacyAdvice(s, w);
-  for (const y of list) { if (!y.cost) y.cost = actionCost(s, y.action); y.blocked = y.cost > Math.max(0, s.cash); }
-  return list;
+/** Producers losing the most on the way, worst first, with the value they lose per year. */
+export function worstOutlets(s: GameState, c: Economy): { key: LotKey; lost: number; share: number }[] {
+  return (Object.keys(c.outlet) as LotKey[]).map((key) => {
+    const o = c.outlet[key]!, t = s.map.buildings[key] as BuildingId | undefined, g = t && def(t).output?.good;
+    return { key, share: o.share, lost: (o.sent - o.delivered) * (g ? good(g as GoodId).localPrice : 1) };
+  }).filter((x) => x.lost > 0).sort((p, q) => q.lost - p.lost);
 }
 
+export interface FarLandPlan { land: LandId; fields: number; lostOnFoot: number; option: 'collection' | 'storePackage'; action: AdviceAction; cost: number; gain: number }
+/**
+ * A land whose fields walk beyond the free distance and lose on the way. Measures a collection point there
+ * and a store with a waystation and mule trains (the store alone, with no gateway in reach, only sells to
+ * the families around it). Returns the better one, or null when neither pays.
+ */
+export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(s, w)): FarLandPlan | null {
+  const G = geography(s, connected(s.map)), byLand: Record<string, { n: number; lost: number }> = {};
+  for (const [key, p] of Object.entries(G.producers) as [LotKey, (typeof G.producers)[LotKey]][]) {
+    if (p.carry <= 6 || p.collections.length) continue;
+    const o = c.outlet[key], t = s.map.buildings[key] as BuildingId, g = def(t).output?.good;
+    if (!o) continue;
+    const x = (byLand[p.land] ??= { n: 0, lost: 0 });
+    x.n += 1; x.lost += o.lost.onFoot * (g ? good(g as GoodId).localPrice : 1);
+  }
+  const [land, info] = (Object.entries(byLand).sort((p, q) => q[1].lost - p[1].lost)[0] ?? []) as [LandId, { n: number; lost: number }] | [];
+  if (!land || !info || info.n < 2 || info.lost < 30) return null;
+  const options: FarLandPlan[] = [];
+  const base = { land, fields: info.n, lostOnFoot: info.lost };
+  for (const [t, v] of [['tradingPost', 'muleTrain'], ['landing', 'canoe']] as const) {
+    if (!unlocked(s, t) || (t === 'landing' && !landHasWater(s, w, land))) continue;
+    const lot = collectionLot(s, w, t, land);
+    if (!lot) continue;
+    const gain = computeEconomy(withPlaced(s, { [lot]: t }, { [lot]: { [v]: 2 } }), w).incomeTotal - c.incomeTotal;
+    options.push({ ...base, option: 'collection', action: { kind: 'collect', building: t, land, lot, fleet: { [v]: 2 } }, cost: costOf(t, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price, gain });
+  }
+  if (unlocked(s, 'store')) {
+    const storeLot = collectionLot(s, w, 'store', land);
+    if (storeLot) {
+      const withStore = withPlaced(s, { [storeLot]: 'store' }), G2 = geography(withStore, connected(withStore.map)), j = G2.commerce.findIndex((x) => x.key === storeLot);
+      if (j >= 0 && G2.commerce[j]!.linked) {
+        const gain = computeEconomy(withStore, w).incomeTotal - c.incomeTotal;
+        options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot }, cost: costOf('store', s.milestone), gain });
+      } else if (unlocked(s, 'waystation')) {
+        const wayLot = collectionLot(withStore, w, 'waystation', null, storeLot);
+        if (wayLot) {
+          const fleet = { muleTrain: 2 } as const;
+          const gain = computeEconomy(withPlaced(s, { [storeLot]: 'store', [wayLot]: 'waystation' }, { [wayLot]: fleet }), w).incomeTotal - c.incomeTotal;
+          options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot, with: ['waystation'], fleet }, cost: costOf('store', s.milestone) + costOf('waystation', s.milestone) + 2 * (VEHICLES.muleTrain as VehicleDef).price, gain });
+        }
+      }
+    }
+  }
+  const best = options.filter((o) => o.gain >= 15).sort((p, q) => workWeight(q.cost, q.gain) - workWeight(p.cost, p.gain))[0];
+  return best ?? null;
+}
+
+/** The advisor's list, with the review fixes: costs and blocking, province requests, far-land packages, producer fixes. */
+export function advise(s: GameState, w: World): Advice[] {
+  const c = computeEconomy(s, w);
+  let list = legacyAdvice(s, w);
+  const add = (a: Omit<Advice, 'blocked'>) => list.push({ ...a, blocked: false });
+  // far fields: a measured collection point or store package replaces the prototype's lone store
+  const far = farLandPlan(s, w, c);
+  if (far) {
+    list = list.filter((y) => !(y.rule === 'noCollection' && y.params.land === far.land));
+    add({ rule: `farLand.${far.option}`, weight: workWeight(far.cost, far.gain), params: { land: far.land, fields: far.fields, lost: Math.round(far.lostOnFoot), cost: far.cost, gain: Math.round(far.gain) }, action: far.action, cost: far.cost });
+  }
+  // the producer losing the most on the way, and what fixes it
+  for (const o of worstOutlets(s, c).slice(0, 3)) {
+    const fix = producerFix(s, w, o.key, c);
+    if (!fix || fix.gain < 15) continue;
+    const same = (y: Advice) => JSON.stringify(y.action) === JSON.stringify(fix.action) || (y.action?.kind === 'swap' && fix.action.kind === 'swap' && y.action.from === fix.action.from && y.action.to === fix.action.to);
+    const dup = list.some(same);
+    if (!dup) add({ rule: fix.rule, weight: Math.min(76, workWeight(fix.cost, fix.gain)), params: { ...fix.params, key: o.key, share: Math.round(o.share * 100), lost: Math.round(o.lost) }, action: fix.action, cost: fix.cost });
+    break;
+  }
+  // the province: more time when the deadline is close and goals are missing; extra funds when cash runs out
+  const target = MILESTONES[s.milestone + 1];
+  if (target && list.some((y) => y.rule === 'deadline') && s.influence >= 6 && !s.extendedDeadline && !s.intervention)
+    add({ rule: 'province.extraTime', weight: 99, params: { influence: 6, seasons: 4, milestone: target.id }, action: { kind: 'province', request: 'extraTime' }, cost: 0 });
+  if (s.influence >= 4 && list.some((y) => y.rule === 'cash.negative' || y.rule === 'cash.runningOut'))
+    add({ rule: 'province.extraFunds', weight: 89, params: { influence: 4, cash: 400, demand: ((s.extraDemand || 0) + 1) * 5 }, action: { kind: 'province', request: 'extraFunds' }, cost: 0 });
+  for (const y of list) { if (!y.cost) y.cost = actionCost(s, y.action); y.blocked = y.cost > Math.max(0, s.cash); }
+  return list.sort((p, q) => q.weight - p.weight);
+}
