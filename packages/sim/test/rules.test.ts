@@ -21,3 +21,19 @@ describe('collection points serve only fields beyond the free walk', () => {
     for (const k of far) expect(G.producers[k]!.collections, k).toContain(post);
   });
 });
+
+describe('outlet: how much of each producer reaches a buyer', () => {
+  it('per-producer losses on the way add up to the colony totals, and shares stay within 0 and 1', async () => {
+    const { computeEconomy } = await import('../src/economy.js');
+    const { generateWorld } = await import('../src/world.js');
+    for (const name of ['speedrun', 'canoes']) {
+      const s = legacyState((fixture as unknown as Record<string, { state: Record<string, unknown> }>)[name]!.state), w = generateWorld(s.seed, s.mapVersion);
+      const c = computeEconomy(s, w), xs = Object.values(c.outlet);
+      expect(xs.length, name).toBeGreaterThan(0);
+      const sum = (f: (o: (typeof xs)[number]) => number) => xs.reduce((x, o) => x + f(o), 0);
+      expect(sum((o) => o.lost.onFoot + o.lost.collection), name).toBeCloseTo(c.lostBy.carrying, 6);
+      expect(sum((o) => o.lost.noGateway), name).toBeCloseTo(c.lostBy.noGateway, 6);
+      for (const o of xs) { expect(o.share).toBeGreaterThanOrEqual(0); expect(o.share).toBeLessThanOrEqual(1); }
+    }
+  });
+});

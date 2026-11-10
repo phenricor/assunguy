@@ -6,7 +6,7 @@ import { cellsOf, type NatureKind } from './map.js';
 import { currentPrice, shockFactor } from './market.js';
 import { connected, mainNetwork } from './network.js';
 import { crisisOn, hasChoice, hasLaw, homeOf, taxRate, upgradeOf, workDone, type Family, type GameState } from './state.js';
-import { finishTransport, haulSeason, exportThroughGateways, startTransport, type TransportSummary } from './transport.js';
+import { finishTransport, haulSeason, exportThroughGateways, startTransport, type ProducerYear, type TransportSummary } from './transport.js';
 import { WORLD } from '@assunguy/data';
 import { landOf, lotKey, parseKey, type LotKey, type World } from './world.js';
 
@@ -295,8 +295,32 @@ const newTotals = (): Totals => ({
   processedBy: {}, tax: { tithe: zero(), export: zero() }, peaks: { market: newPeak(), carts: newPeak(), port: newPeak(), muleTrains: newPeak() },
 });
 
+/** How much of a producer's year reaches a buyer, and where the rest is lost. */
+export interface Outlet { sent: number; delivered: number; share: number; lost: { onFoot: number; collection: number; noGateway: number; gatewayFull: number; noBuyer: number } }
+
+/** Losses past the main commerce (gateways full, no buyer, spoiled) are per good, so each producer bears
+ *  them in proportion to what it delivered there; the losses on the way are its own. */
+export function outletOf(byProducer: Record<LotKey, ProducerYear>, T: Totals): Record<LotKey, Outlet> {
+  const reached = (g: GoodId) => T.produced[g] - (T.lostByGood.carrying[g] ?? 0) - (T.lostByGood.noGateway[g] ?? 0);
+  const part = (g: GoodId, lost: number) => (reached(g) > 1e-9 ? Math.min(1, lost / reached(g)) : 0);
+  const out: Record<LotKey, Outlet> = {};
+  for (const [key, p] of Object.entries(byProducer) as [LotKey, ProducerYear][]) {
+    if (!(p.sent > 1e-9)) continue;
+    let gatewayFull = 0, noBuyer = 0;
+    for (const [g, q] of Object.entries(p.toMain) as [GoodId, number][]) {
+      gatewayFull += q * part(g, T.lostByGood.transport[g] ?? 0);
+      noBuyer += q * part(g, (T.lostByGood.buyer[g] ?? 0) + (T.lostByGood.spoiled[g] ?? 0));
+    }
+    const delivered = Math.max(0, p.sent - p.carrying - p.collection - p.noGateway - gatewayFull - noBuyer);
+    out[key] = { sent: p.sent, delivered, share: delivered / p.sent, lost: { onFoot: p.carrying, collection: p.collection, noGateway: p.noGateway, gatewayFull, noBuyer } };
+  }
+  return out;
+}
+
 export interface Economy extends Totals {
   transport: TransportSummary;
+  /** Per producing building: the share of its year's surplus that reaches a buyer. */
+  outlet: Record<LotKey, Outlet>;
   revenue: { lotInstallment: number; tithe: number; exportDuty: number; businessTax: number; total: number };
   counts: Counts;
   subsistence: number;
@@ -489,7 +513,7 @@ export function computeEconomy(s: GameState, w: World, extra?: Extra): Economy {
   revenue.total = (revenue.lotInstallment + revenue.tithe + revenue.exportDuty + revenue.businessTax) * (s.problems.disorder ? 0.94 : 1);
   const producedTotal = sum(T.produced), ownTableTotal = sum(T.ownTable), marketTotal = sum(T.market);
   return {
-    ...T, transport: finishTransport(TR), revenue, counts: e, subsistence,
+    ...T, transport: finishTransport(TR), outlet: outletOf(TR.acc.byProducer, T), revenue, counts: e, subsistence,
     salesTotal: sum(T.sales), incomeTotal: sum(T.income), lostTotal: sum(T.lost), producedTotal, exportedTotal: sum(T.exported), marketTotal, ownTableTotal,
     stock, producersNeedPerYear: producersNeed * 4, surplus: Math.max(0, producedTotal - ownTableTotal - marketTotal - sum(T.processed)),
   };

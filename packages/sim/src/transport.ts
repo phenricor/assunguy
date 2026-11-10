@@ -107,9 +107,12 @@ interface Accumulators {
   byGateway: Record<LotKey, { volume: number; tariff: number; dest: Partial<Record<DestinationId, number>>; peak?: number }>;
   byCommerce: Record<LotKey, { in: number; lost: number; sold: number }>;
   byLand: Record<LandId, { producedValue: number; lostValue: number; footValue: number; covered: boolean }>;
+  /** Each producer's year: what it sent, what it lost on the way and what reached the main commerce, by good. */
+  byProducer: Record<LotKey, ProducerYear>;
   destVolume: Partial<Record<DestinationId, number>>; destValue: Partial<Record<DestinationId, number>>;
   exportByMode: { river: number; road: number; rail: number };
 }
+export interface ProducerYear { sent: number; carrying: number; collection: number; noGateway: number; toMain: Partial<PerGood> }
 interface CollectionRun extends Collection { capacity: number; tariff: number; margin: number; demand: number }
 interface GatewayRun extends Gateway { capacity: number; tariff: number; margin: number; dests: { d: DestinationId; trip: number; full: number }[] }
 interface Flow { key: LotKey; share: number; good: GoodId; carryArrives: number; collectArrives: number; carryTo: number; carryShare: number; viaCollections: [number, number][]; price: number; land: LandId }
@@ -158,7 +161,7 @@ export function startTransport(s: GameState, w: World, e: Counts): TransportRun 
   for (const d of Object.keys(depositSum)) for (const x of shares[`mine:${d}`] ?? []) x.f /= depositSum[d] as number;
   const acc: Accumulators = {
     mode: { river: 0, road: 0, rail: 0, foot: 0, lost: 0 }, delivered: 0, lostValue: 0, tariffs: 0,
-    byCollection: {}, byGateway: {}, byCommerce: {}, byLand: {}, destVolume: {}, destValue: {}, exportByMode: { river: 0, road: 0, rail: 0 },
+    byCollection: {}, byGateway: {}, byCommerce: {}, byLand: {}, byProducer: {}, destVolume: {}, destValue: {}, exportByMode: { river: 0, road: 0, rail: 0 },
   };
   return { s, G, collections, gateways, competitiveness, shares, acc, flows: {} };
 }
@@ -193,15 +196,19 @@ export function haulSeason(TR: TransportRun, bySource: [string, GoodId, number][
     if (L.used < 0.999) main[g] = (main[g] ?? 0) + q * (1 - L.used);
   }
   const fill = TR.collections.map((c) => (c.demand > 0 ? Math.min(1, c.capacity / c.demand) : 1));
-  const deliver = (j: number, g: GoodId, x: number) => {
+  // per producer: what reached an isolated commerce this season, settled once its sales are known
+  const toIsolated: Record<LotKey, Record<number, number>> = {};
+  const byProd = (key: LotKey) => (A.byProducer[key] ??= { sent: 0, carrying: 0, collection: 0, noGateway: 0, toMain: {} });
+  const deliver = (j: number, g: GoodId, x: number, from?: LotKey) => {
     const c = G.commerce[j] as Commerce;
-    if (c.linked) main[g] = (main[g] ?? 0) + x;
-    else { const o = (isolated[j] ??= {}); o[g] = (o[g] ?? 0) + x; }
+    if (c.linked) { main[g] = (main[g] ?? 0) + x; if (tot && from) { const pp = byProd(from); pp.toMain[g] = (pp.toMain[g] ?? 0) + x; } }
+    else { const o = (isolated[j] ??= {}); o[g] = (o[g] ?? 0) + x; if (tot && from) { const ti = (toIsolated[from] ??= {}); ti[j] = (ti[j] ?? 0) + x; } }
     if (tot) { const pc = (A.byCommerce[c.key] ??= { in: 0, lost: 0, sold: 0 }); pc.in += x; }
   };
   const byCol = (key: LotKey) => (A.byCollection[key] ??= { carried: 0, foot: 0, lost: 0, tariff: 0, peak: 0 });
   const byLand = (land: LandId) => (A.byLand[land] ??= { producedValue: 0, lostValue: 0, footValue: 0, covered: false });
   for (const [fl, qq] of flows) {
+    if (tot) byProd(fl.key).sent += qq;
     let foot = qq * fl.carryShare;
     if (tot && fl.viaCollections.length) for (const [ci] of fl.viaCollections) byCol((TR.collections[ci] as CollectionRun).key).foot += (qq * fl.carryShare) / fl.viaCollections.length;
     for (const [ci, sh] of fl.viaCollections) {
@@ -210,22 +217,22 @@ export function haulSeason(TR: TransportRun, bySource: [string, GoodId, number][
       if (tot) byCol(C.key).foot += qq * sh * (1 - (fill[ci] as number));
       if (carried <= 0) continue;
       const arrives = carried * fl.collectArrives;
-      for (const { j, share } of C.to) deliver(j, fl.good, arrives * share);
+      for (const { j, share } of C.to) deliver(j, fl.good, arrives * share, fl.key);
       if (tot) {
         const tf = carried * C.tariff;
         tot.income[fl.good] -= tf; tot.freight[fl.good] += tf; A.tariffs += tf;
         const pc = byCol(C.key);
         pc.carried += carried; pc.tariff += tf; pc.lost += carried - arrives;
         A.mode[C.mode] += arrives; A.mode.lost += carried - arrives; A.delivered += arrives * fl.price; A.lostValue += (carried - arrives) * fl.price;
-        lose(tot, fl.good, 'carrying', carried - arrives);
+        lose(tot, fl.good, 'carrying', carried - arrives); byProd(fl.key).collection += carried - arrives;
       }
     }
     if (foot > 0) {
       const arrives = foot * fl.carryArrives;
-      deliver(fl.carryTo, fl.good, arrives);
+      deliver(fl.carryTo, fl.good, arrives, fl.key);
       if (tot) {
         A.mode.foot += arrives; A.mode.lost += foot - arrives; A.delivered += arrives * fl.price; A.lostValue += (foot - arrives) * fl.price;
-        lose(tot, fl.good, 'carrying', foot - arrives);
+        lose(tot, fl.good, 'carrying', foot - arrives); byProd(fl.key).carrying += foot - arrives;
         const pt = byLand(fl.land);
         pt.footValue += foot * fl.price; pt.lostValue += (foot - arrives) * fl.price;
       }
@@ -234,8 +241,10 @@ export function haulSeason(TR: TransportRun, bySource: [string, GoodId, number][
   }
   if (tot) TR.collections.forEach((c) => { const pc = byCol(c.key); pc.peak = Math.max(pc.peak, c.capacity > 0 ? Math.min(1.5, c.demand / c.capacity) : 0); });
   // a commerce with no gateway sells only to the families around it; the rest is lost
+  const soldShare: Record<number, number> = {};
   for (const [jStr, o] of Object.entries(isolated)) {
     const C0 = G.commerce[Number(jStr)] as Commerce, total = Object.values(o).reduce((x, y) => x + (y ?? 0), 0), room = C0.families * 1.2, f = total > 0 ? Math.min(1, room / total) : 0;
+    soldShare[Number(jStr)] = f;
     for (const g of Object.keys(o) as GoodId[]) {
       const sold = (o[g] as number) * f, lost = (o[g] as number) - sold;
       if (!tot) continue;
@@ -246,6 +255,7 @@ export function haulSeason(TR: TransportRun, bySource: [string, GoodId, number][
       if (pc) { pc.lost += lost; pc.sold += sold; }
     }
   }
+  if (tot) for (const [key, by] of Object.entries(toIsolated)) for (const [j, x] of Object.entries(by)) byProd(key as LotKey).noGateway += x * (1 - (soldShare[Number(j)] ?? 0));
   return main;
 }
 
