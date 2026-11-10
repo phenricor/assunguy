@@ -13,8 +13,21 @@ playtester's saves in `legacy/saves`.
 | World | `sim/world` | `geraMundo`, `geraRio`, `geraTerras`, `geraRelevo`, `ruido` | 6 seeds, map v1 and v2 |
 | Starting map, trees, nature | `sim/map` | `mapaInicial`, `arvoresIniciais`, `geraNatureza` | 4 seeds |
 | Street network, service reach | `sim/network` | `redePrincipal`, `ligados`, `alcance`, `distRet` | both saves |
+| Jobs, production, the season economy | `sim/economy` | `alocar`, `contaEconomia`, `economiaSem`, `serveMesa` | both saves |
+| Transport flows | `sim/transport` | `prepGeo`, `transpInicio`, `escoaEstacao`, `exportaPortas`, `transpFim` | both saves |
+| Home ratings, mood, taxes | `sim/ratings` | `calcula`, `satGlobal`, `satCidade`, `satTransp`, `efeitoImpostos`, `quedaPorFamilia` | both saves, plus taxes in force |
+| Families | `sim/families` | `novaFamilia`, `sincronizaFamilias`, `passaFamilias`, `atualizaAbast`, `familiasInvestem`, `receberLeva`, `filhosQueCasam` | new game, speedrun |
 
-## Next: the season economy
+## Next: the season step
+
+Still to port, in this order: relief works (`aplicaFrente`), the purse (`passaEstacao` accounts,
+`manutencaoDe`, `prestaContas`), `avancaTransporte`, goals (`confereMeta`, `ritmoDaMeta`), great works,
+city problems, crises (`avancaAcontecimentos`), the event queue (`rolaAcontecimentos`, dilemmas, crises,
+groups of immigrants, crop swaps, path choices, decrees) as declarative events with i18n text, then
+`passaEstacao` as one command with a multi-season golden run that auto-resolves events by a fixed policy.
+The district names (`calculaBairros`) and the late-game race stay for later.
+
+## How the season economy was ported
 
 The prototype computes one season's economy through a web of functions that read each other's cached
 results from the state object. The port has to make that order explicit.
