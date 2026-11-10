@@ -1,0 +1,98 @@
+{
+ "ranges": [
+  [
+   1,
+   425
+  ],
+  [
+   429,
+   436
+  ],
+  [
+   441,
+   725
+  ],
+  [
+   1062,
+   1063
+  ],
+  [
+   1585,
+   3113
+  ],
+  [
+   3113,
+   3378
+  ],
+  [
+   3378,
+   4300
+  ],
+  [
+   4302,
+   4303
+  ],
+  [
+   7135,
+   7172
+  ],
+  [
+   7623,
+   7749
+  ],
+  [
+   8338,
+   8346
+  ],
+  [
+   8548,
+   8594
+  ],
+  [
+   8594,
+   8712
+  ],
+  [
+   8712,
+   8758
+  ],
+  [
+   8814,
+   9160
+  ]
+ ],
+ "names": [
+  "C",
+  "ICONES",
+  "TRANSP",
+  "EVENTOS_FDJ",
+  "fmt",
+  "sinal",
+  "temEscolha",
+  "perto",
+  "plantaVerde",
+  "temEstradaEm",
+  "folha",
+  "dica"
+ ],
+ "exclude": [
+  "CHAVE",
+  "carrega",
+  "salva",
+  "abreCamadas",
+  "escolheCamada",
+  "calculaBairros",
+  "statsBairro",
+  "abreBairro",
+  "blocoBairros",
+  "mostraFaixaRec",
+  "bairrosAtuais",
+  "cacheBairros"
+ ],
+ "replace": [],
+ "declare": {
+  "M": "null",
+  "volta": "null",
+  "ignoraCarencia": "false"
+ }
+}

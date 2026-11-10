@@ -1,0 +1,20 @@
+{
+  "name": "@assunguy/game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@assunguy/data": "workspace:*",
+    "@assunguy/i18n": "workspace:*",
+    "@assunguy/sim": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "5.4.21",
+    "vite-plugin-singlefile": "2.0.3"
+  }
+}

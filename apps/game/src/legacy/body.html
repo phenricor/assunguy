@@ -1,0 +1,29 @@
+<div id="app">
+  <canvas id="tela" aria-label="Mapa da colônia"></canvas>
+  <header id="hud" class="folhinha">
+    <button type="button" id="bNivel" class="nivelb" aria-label="Ver o nível da colônia"><b id="sNivel">1</b>Nível<span class="barra"><i id="mNivel" style="width:0"></i></span></button><div class="sat"><div><span id="numero" aria-label="Satisfação geral">0</span></div><small>Satisfação</small><span class="barra"><i id="medida" style="width:0"></i></span></div>
+    <ul id="stats">
+      <li><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.5-4 3-6 6-6s5.500 2 6 6M16 5a3.500 3.500 0 0 1 0 7M18 14c2 .7 3 3 3.500 6"/></svg><b id="sFam">0</b> famílias</li>
+      <li><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg><b id="sTer">1</b>/42 terras</li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.500"/><path d="M12 7v10M15 9.500c-.8-1-2-1.500-3.200-1.500-1.500 0-2.800.8-2.800 2s1.300 1.800 3 2 3 .8 3 2-1.300 2-2.900 2c-1.300 0-2.500-.5-3.300-1.500"/></svg><b>$ <span id="sCaixa">0</span></b></li>
+      <li><svg viewBox="0 0 24 24"><path d="M12 3l3 9-3 9-3-9zM3 12h18"/></svg><b id="sInf">3</b> influência</li>
+    </ul>
+    <button type="button" id="bData" class="datah" aria-label="Ver os relatórios"></button>
+  </header>
+  <div id="guia" class="folhinha" hidden><button type="button" id="guiaAc"></button><button type="button" id="guiaX" aria-label="Fechar primeiros passos"></button></div>
+  <div id="dica" role="status"></div>
+  <div id="faixaRec" hidden></div>
+  <nav id="ctrl" class="folhinha" aria-label="Controles do mapa">
+    <button id="gD" type="button" aria-label="Girar o mapa"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.500"/><g id="agulha"><path d="M12 5l2.800 7h-5.600z" fill="currentColor"/><path d="M12 19l-2.800-7h5.600z"/></g></svg></button>
+    <button id="zM" type="button" aria-label="Aproximar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="zN" type="button" aria-label="Afastar"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    <button id="menu" type="button" aria-label="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></button>
+    <button id="btSat" type="button" aria-pressed="false" aria-label="Camadas do mapa"><svg viewBox="0 0 24 24"><path d="M12 4l8 4.500-8 4.500-8-4.500z"/><path d="M4 12.500l8 4.500 8-4.500"/><path d="M4 16.500l8 4.500 8-4.500"/></svg></button>
+  </nav>
+  <section id="folha" class="folhinha" aria-live="polite"></section>
+  <button type="button" id="bInacio" class="balao esq" aria-label="Inácio"><span class="balao-c"><b>I</b><span id="nInacio" class="balao-n"></span></span><span>Inácio</span></button>
+  <button type="button" id="bObras" class="balao dir" aria-label="Construir"><span class="balao-c"><svg viewBox="0 0 24 24"><path d="M4 20l9-9M14 4l6 6-3 3-6-6zM3 21l2-2"/></svg></span><span>Construir</span></button>
+  <section id="econ" hidden aria-label="Tela"></section>
+  <div id="evento" class="evento" hidden role="dialog" aria-modal="true"></div>
+  <div id="infoPop" hidden role="dialog" aria-modal="true"></div>
+</div>

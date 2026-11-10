@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "../..", "outDir": "dist", "lib": ["ES2022", "DOM", "DOM.Iterable"], "composite": false, "declaration": false, "noEmit": true },
+  "include": ["src"],
+  "references": [{ "path": "../../packages/data" }, { "path": "../../packages/i18n" }, { "path": "../../packages/sim" }]
+}
