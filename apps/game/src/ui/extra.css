@@ -32,3 +32,9 @@ svg.lin { fill: none !important; stroke: currentColor; stroke-width: 1.7; stroke
   #econ.com-barra ~ #folha, #folha.barra-so { width: 560px; }
   #evento > div { max-width: 560px; margin-left: auto; margin-right: auto; }
 }
+/* sober press feedback: a slight dip and a faint glow instead of the squash and the golden ripple */
+@keyframes aperta { 0% { transform: none; } 40% { transform: scale(.985); } 100% { transform: none; } }
+button.aperta { animation: aperta .12s ease-out; }
+.toque { opacity: .35; animation-duration: .25s !important; }
+#menuIni ~ .toque, .toque.no-menu { display: none; }
+@media (prefers-reduced-motion: reduce) { button.aperta { animation: none; } .toque { display: none; } }
