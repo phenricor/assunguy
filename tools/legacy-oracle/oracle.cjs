@@ -378,6 +378,31 @@ const SCENARIOS = {
     return out;
   },
 
+  // a new game, built the way the prototype's "new colony" does, then eight seasons with the fixed event policy
+  newGame: async (page) => {
+    const out = {};
+    for (const seed of [1869, 4242]) {
+      out[seed] = await page.evaluate((seed) => {
+        abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {};
+        geraMundo(seed, 2); limpaPedacos();
+        M = mapaInicial(); M.mercadoSim = mercadoInicial(); sincronizaFamilias(M, true); atualizaAbast(economia(M));
+        garanteEstado(M); M.fila.push({ tipo: 'intro' }); mudou();
+        const start = JSON.parse(JSON.stringify(M));
+        const seasons = [];
+        // the intro decree first, then seasons
+        while (M.fila.length) { const d = defEvento(M.fila[0]); resolveEvento(d.ops.findIndex((o) => !o.pode || o.pode(M))); }
+        for (let i = 0; i < 8; i++) {
+          passaEstacao();
+          let guard = 0;
+          while (M.fila.length && guard++ < 20) { const ev = M.fila[0]; if (ev.tipo === 'fim' || ev.tipo === 'vitoria') break; const d = defEvento(ev); resolveEvento(d.ops.findIndex((o) => !o.pode || o.pode(M))); }
+          seasons.push(JSON.parse(JSON.stringify({ t: M.mercadoSim.t, caixa: M.caixa, inf: M.influencia, nivelC: M.nivelC, marco: M.marco || 0, predios: M.predios, nivel: M.nivel, fams: Object.keys(M.fams).sort(), notaCasa: M.notaCasa, fila: M.fila.length })));
+        }
+        return { start, seasons };
+      }, seed);
+    }
+    return out;
+  },
+
 };
 
 (async () => {
