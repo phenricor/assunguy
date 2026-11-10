@@ -303,6 +303,81 @@ const SCENARIOS = {
     return out;
   },
 
+  // the player's commands, done the way the prototype's screens do them, then four seasons; a snapshot after
+  // each command and each season. Arguments found here are recorded, so the port replays the same script.
+  commands: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        const state = (0, eval)(load)(txt);
+        abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {}; aviso = () => {}; efx = () => {};
+        const snap = () => JSON.parse(JSON.stringify({
+          caixa: M.caixa, inf: M.influencia, obrasEst: M.obrasEst, exig: M.exig || 0, prazo: M.prazo, prazoPedido: !!M.prazoPedido,
+          predios: M.predios, nivel: M.nivel, ruas: Object.keys(M.ruas).sort(), terras: M.terras, veic: M.veic || {}, tarifa: M.tarifa || {},
+          fams: Object.keys(M.fams).sort(), notaCasa: M.notaCasa, plantio: M.plantio, arv: Object.keys(M.arv).length,
+          pend: M.pend || {}, pendNivel: M.pendNivel || {}, pendNv0: M.pendNv0 || {}, pendRua: M.pendRua || {}, pendTroca: M.pendTroca || {},
+          pendentes: M.pendentes || {}, pendC: M.pendC || {}, leisC: M.leisC || {}, gobras: M.gobras || {}, agente: !!M.agente,
+        }));
+        const free = (t, avoid = []) => { for (const key of Object.keys(M.ruas)) { const [a, b] = par(key); for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const c = k(a + x, b + y); if (avoid.includes(c)) continue; if (!podeConstruir(M, t, a + x, b + y)) return c; } } return null; };
+        // the screens' handlers, inlined
+        const build = (tipo, key) => { const [a, b] = par(key); medindo(() => { M.predios[key] = tipo; celulasDe(a, b, tipo).forEach(([x, y]) => { delete M.arv[k(x, y)]; }); }); M.caixa -= CUSTO[tipo] || 0; M.obrasEst += CUSTO[tipo] || 0; M.pend = M.pend || {}; M.pend[key] = CUSTO[tipo] || 0; mudou(); };
+        const move = (origem, key) => { const tipo = M.predios[origem], [a, b] = par(key); medindo(() => {
+            if (TIPOS[tipo].moradia) famsDaCasa(M, origem).forEach((f) => { const n0 = f.id.split('#')[1], novo = `${key}#${n0}`; delete M.fams[f.id]; f.id = novo; M.fams[novo] = f; if (M.vagos && M.vagos[f.id]) delete M.vagos[f.id]; });
+            delete M.predios[origem]; if (M.nivel[origem]) { M.nivel[key] = M.nivel[origem]; delete M.nivel[origem]; }
+            M.predios[key] = tipo; celulasDe(a, b, tipo).forEach(([x, y]) => { delete M.arv[k(x, y)]; }); });
+          ['pend', 'pendNivel', 'pendNv0', 'pendTroca'].forEach((c) => { if (M[c] && origem in M[c]) { M[c][key] = M[c][origem]; delete M[c][origem]; } }); mudou(); };
+        const demolish = (key) => { const devolve = ((M.pend || {})[key] || 0) + ((M.pendNivel || {})[key] || 0) + (((M.pendTroca || {})[key] || {}).custo || 0);
+          medindo(() => { delete M.predios[key]; delete M.nivel[key]; });
+          if (devolve) { M.caixa += devolve; M.obrasEst = Math.max(0, M.obrasEst - devolve); if (M.pend) delete M.pend[key]; if (M.pendNivel) delete M.pendNivel[key]; if (M.pendTroca) delete M.pendTroca[key]; } mudou(); };
+        const upgrade = (key) => { const tipo = M.predios[key], custo = custoMelhoria(tipo, nivelDeKey(M, key)); M.caixa -= custo; M.obrasEst += custo;
+          M.pendNivel = M.pendNivel || {}; M.pendNv0 = M.pendNv0 || {}; if (M.pendNivel[key] === undefined) M.pendNv0[key] = (M.nivel || {})[key]; M.pendNivel[key] = (M.pendNivel[key] || 0) + custo;
+          M.nivel = M.nivel || {}; medindo(() => { M.nivel[key] = (M.nivel[key] || 0) + 1; }); mudou(); };
+        const street = (cells) => { for (const [p, q] of cells) { if (M.ruas[k(p, q)]) continue; if (podeConstruir(M, 'rua', p, q) || M.caixa < CUSTO.rua) break; M.ruas[k(p, q)] = 1; delete M.arv[k(p, q)]; M.caixa -= CUSTO.rua; M.obrasEst += CUSTO.rua; M.ruasEst = (M.ruasEst || 0) + 1; M.pendRua = M.pendRua || {}; M.pendRua[k(p, q)] = CUSTO.rua; } mudou(); };
+        const explore = (id) => { M.caixa -= CUSTO_EXPEDICAO; M.obrasEst += CUSTO_EXPEDICAO; M.terras[id] = 'vista'; cronica('x'); M.cronica.pop(); };
+        const script = [], snaps = [];
+        const run = (cmd) => { script.push(cmd); const [op, ...a] = cmd;
+          if (op === 'build') build(a[0], a[1]); else if (op === 'move') move(a[0], a[1]); else if (op === 'demolish') demolish(a[0]); else if (op === 'upgrade') upgrade(a[0]);
+          else if (op === 'streets') street(a[0]); else if (op === 'explore') explore(a[0]); else if (op === 'annex') { anexar(a[0]); mudou(); }
+          else if (op === 'buy') compraVeiculo(a[0], a[1]); else if (op === 'sell') vendeVeiculo(a[0], a[1]); else if (op === 'margin') defineMargem(a[0], a[1]);
+          else if (op === 'swap') trocaCultura(a[0], a[1]); else if (op === 'tax') { M.pendentes[a[0]] = a[1]; } else if (op === 'law') { M.pendC[a[0]] = true; C = calcula(M); }
+          else if (op === 'funds') { soma({ inf: -4, caixa: 400, exig: 1 }); } else if (op === 'time') { soma({ inf: -6 }); M.prazo += 4; M.prazoPedido = true; }
+          snaps.push(snap()); };
+        M.caixa = 4000; M.influencia = Math.max(M.influencia, 12); M.nivelC = Math.max(M.nivelC || 1, TIPOS.camara.nv || 1); mudou();
+        state.caixa = M.caixa; state.influencia = M.influencia; state.nivelC = M.nivelC;
+        const hut = free('rancho'); run(['build', 'rancho', hut]);
+        const field = free('rMilho', [hut]); run(['build', 'rMilho', field]);
+        run(['build', 'igreja', free('igreja')]);
+        const store = Object.keys(M.predios).find((x) => M.predios[x] === 'armazem'); run(['upgrade', store]);
+        // a street line out of the network
+        let line = null;
+        for (const key of Object.keys(M.ruas)) { const [a, b] = par(key); for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cells = [1, 2, 3].map((i) => [a + x * i, b + y * i]); if (cells.every(([p, q]) => !M.ruas[k(p, q)] && !podeConstruir(M, 'rua', p, q))) { line = cells; break; } } if (line) break; }
+        if (line) run(['streets', line]);
+        run(['move', hut, free('rancho', [hut])]);
+        run(['demolish', field]);
+        const crop = Object.keys(M.predios).find((x) => M.predios[x] === 'rMilho' && !plantaVerde(M, x) && !(M.pend || {})[x]);
+        if (crop) run(['swap', crop, 'rFeijao']);
+        const hidden = Object.keys(TERRAS).find((id) => !M.terras[id] && vizinhaDeNossa(id));
+        if (hidden) { run(['explore', hidden]); run(['annex', hidden]); }
+        const port = Object.keys(M.predios).find((x) => M.predios[x] === 'porto');
+        if (port) { run(['sell', port, 'canoa']); run(['buy', port, 'canoa']); run(['margin', port, .2]); }
+        run(['build', 'camara', free('camara')]);
+        run(['tax', 'dizimo', { geral: .08, por: {} }]);
+        run(['law', 'feira']);
+        run(['time']);
+        run(['funds']);
+        for (let i = 0; i < 4; i++) {
+          passaEstacao();
+          let guard = 0;
+          while (M.fila.length && guard++ < 20) { const ev = M.fila[0]; if (ev.tipo === 'fim' || ev.tipo === 'vitoria') break; const d = defEvento(ev); resolveEvento(d.ops.findIndex((o) => !o.pode || o.pode(M))); }
+          snaps.push({ ...snap(), rel: JSON.parse(JSON.stringify(M.relatorios[M.relatorios.length - 1] || null)) });
+          if (M.fila.length) break;
+        }
+        return { state, script, snaps };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
+
 };
 
 (async () => {

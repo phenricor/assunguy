@@ -8,16 +8,17 @@ import { childrenMarry, familiesInvest, passFamilies, syncFamilies, updateSupply
 import { advanceMarket } from './market.js';
 import { advanceGreatWorks, advanceTransport, applyRelief, grantFactor, levelRequirements, provinceReport, upkeepPerSeason, NEWCOMER_WAGE, type GreatWorkNews } from './province.js';
 import { taxEffect, updateRatings } from './ratings.js';
+import { settle, storedMean } from './settle.js';
 import { hasChoice, hasLaw, type GameState } from './state.js';
 import { landOf, parseKey, type LotKey, type World } from './world.js';
 
-const AGENT_COST = (s: GameState) => (s.milestone >= 3 ? 260 : 180);
+export const AGENT_COST = (s: GameState) => (s.milestone >= 3 ? 260 : 180);
 
 export interface GoalCheck { levelUp?: number; milestone?: string; missed?: string; misses?: number }
 /** Levels up when every requirement is met; a missed deadline is announced once. */
 export function checkGoals(s: GameState, w: World, c: Economy): GoalCheck | null {
   const n = s.level + 1, t = s.market.t, lv = LEVELS.find((l) => l.level === n);
-  if (lv && levelRequirements(s, w, n, c).every((x) => x.ok)) {
+  if (lv && levelRequirements(s, w, n, c, true).every((x) => x.ok)) {
     s.level = n;
     s.influence = Math.max(0, Math.min(15, s.influence + 1));
     if (PATH_CHOICES[n]) s.queue.push({ kind: 'pathChoice', level: n });
@@ -53,7 +54,7 @@ export interface SeasonReport {
 
 export function passSeason(s: GameState, w: World): SeasonReport {
   const cashBefore = s.cash, worksBefore = s.buildCosts, arrivalsBefore = s.arrivalCosts;
-  const satBefore = updateRatings(s, w).mean;
+  const satBefore = storedMean(s);
   s.vacated = {};
   const c0 = computeEconomy(s, w);
   const taxes = (c0.revenue.total / 4) * (hasLaw(s, 'landRegistry') ? 1.1 : 1);
@@ -85,7 +86,8 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   // families at risk from taxes move closer to leaving
   if (ef.familiesAtRisk) for (const f of Object.values(s.families).sort((a, b) => a.skill - b.skill).slice(0, ef.familiesAtRisk)) f.idle += 1;
   // town laws passed last season come into force
-  for (const id of Object.keys(s.pendingLaws)) { s.laws[id] = true; chronicle(s, 'chronicle.lawPassed', { law: id }); }
+  // the prototype measured each law before and after it passed, re-rating the homes both times (fotoColonia)
+  for (const id of Object.keys(s.pendingLaws)) { updateRatings(s, w); s.laws[id] = true; updateRatings(s, w); chronicle(s, 'chronicle.lawPassed', { law: id }); }
   s.pendingLaws = {};
   news.push(...rollEvents(s, w, c, ratings));
   const workNews: GreatWorkNews[] = [];
@@ -125,6 +127,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   if (province) { if (province.factor > 1 && s.market.t % 4 === 0) s.influence = Math.max(0, Math.min(15, s.influence + 1)); else if (province.factor < 1) s.influence = Math.max(0, Math.min(15, s.influence - 1)); }
   { const n = s.level + 1, lv = LEVELS.find((l) => l.level === n); s.progress = lv ? Math.min(1, Math.min(allocate(s).employed / lv.workers, c.incomeTotal / lv.income)) : 1; }
   ratings = updateRatings(s, w);
+  settle(s, w); // the prototype re-rated once more in `mudou`
   const report: SeasonReport = {
     t: s.market.t, news, goal, province,
     cash: { before: Math.round(cashBefore + worksBefore + arrivalsBefore), after: Math.round(s.cash), taxes: Math.round(taxes), grant, share, upkeep: Math.round(upkeep), wages, relief: relief.cost, works: Math.round(s.buildCosts - greatWorks), greatWorks: Math.round(greatWorks), agent, fleet: tr.fleetCost, tariffs: tr.tariffIncome, arrivals: Math.round(s.arrivalCosts) },

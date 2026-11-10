@@ -2,7 +2,7 @@
 // here with its options and effects; all text lives in the i18n catalogs under event.<id>.*.
 // Every random draw comes from the market's seed, in the prototype's order.
 import { BUILDINGS, GOODS, GOOD_IDS, LEVELS, WEATHER_ODDS, type BuildingId, type GoodId } from '@assunguy/data';
-import { allocate, def, hasRoad, sectorOf, soilOf, type Economy } from './economy.js';
+import { allocate, costOf, def, hasRoad, sectorOf, soilOf, type Economy } from './economy.js';
 import { arrivalChance, arrivalSize, emptySlots, loseFamilies, receiveFamilies, syncFamilies } from './families.js';
 import { measure } from './measure.js';
 import { lcgNext } from './rng.js';
@@ -166,8 +166,9 @@ export function resolveEvent(s: GameState, w: World, option: number): void {
   if (!op || (op.can && !op.can(s))) return;
   s.queue.shift();
   chronicle(s, `event.${d.id}.option.${option}.chronicle`, d.params);
-  op.apply(s, w);
-  if (d.changesGame) { if (ev.kind !== 'intro') { syncFamilies(s); updateRatings(s, w); } return; }
+  if (d.changesGame) { op.apply(s, w); if (ev.kind !== 'intro') { syncFamilies(s); updateRatings(s, w); } return; }
+  // the prototype measured the colony before and after (re-rating it both times), then re-rated once more
+  updateRatings(s, w); op.apply(s, w); syncFamilies(s); updateRatings(s, w);
   s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option });
   updateRatings(s, w);
 }
@@ -277,10 +278,10 @@ export function swapOptions(s: GameState, w: World, key: LotKey): { t: BuildingI
     .sort((x, y) => y.gain - x.gain);
 }
 export function swapCost(s: GameState, key: LotKey, to: BuildingId): number {
-  const p = s.seasonWork.buildings[key] as number | true | undefined, pt = s.seasonWork.swaps[key] as unknown as { from: BuildingId; cost: number } | true | undefined;
-  if (typeof p === 'number') return (BUILDINGS[to].cost || 0) - p;
-  if (pt && typeof pt === 'object' && to === pt.from) return -pt.cost;
-  return Math.round((BUILDINGS[to].cost || 0) * SWAP_FACTOR);
+  const p = s.seasonWork.buildings[key], pt = s.seasonWork.swaps[key];
+  if (p !== undefined) return costOf(to, s.milestone) - p;
+  if (pt && to === pt.from) return -pt.cost;
+  return Math.round(costOf(to, s.milestone) * SWAP_FACTOR);
 }
 
 /**

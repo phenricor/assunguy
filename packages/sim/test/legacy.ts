@@ -105,7 +105,11 @@ export function legacyState(save: Record<string, unknown>): GameState {
     freightRelief: m.frenteFrete ?? 0, reliefWorkers: { ...(m.frenteIds ?? {}) }, race: null,
     vacated: { ...(m.vagos ?? {}) }, arrivalCosts: m.chegadasEst ?? 0, immigrationAgent: m.agente ? { ...(m.agente.origem ? { origin: table('origins')[m.agente.origem] } : {}) } : null,
     ...(m.filhosAno !== undefined ? { childrenThisYear: m.filhosAno } : {}), produced: byGood(m.prodBem),
-    seasonWork: { buildings: { ...(m.pend ?? {}) }, streets: { ...(m.pendRua ?? {}) }, upgrades: { ...(m.pendNivel ?? {}) }, swaps: { ...(m.pendTroca ?? {}) } },
+    seasonWork: {
+      buildings: { ...(m.pend ?? {}) }, streets: { ...(m.pendRua ?? {}) },
+      upgrades: Object.fromEntries(Object.entries(m.pendNivel ?? {}).map(([k, v]) => [k, { cost: v as number, from: (m.pendNv0 ?? {})[k] ?? 0 }])),
+      swaps: Object.fromEntries(Object.entries(m.pendTroca ?? {}).map(([k, v]: [string, any]) => [k, { from: table('buildings')[v.de] as never, cost: v.custo ?? 0, firstHarvest: v.plantio ?? 0 }])) as GameState['seasonWork']['swaps'],
+    },
     reliefCost: m.frenteCusto ?? 0, buildCosts: m.obrasEst ?? 0, grantFactor: m.verbaMod ?? 1, ...(m.castigoVerba ? { grantCut: m.castigoVerba } : {}),
     intervention: !!m.intervencao, extraDemand: m.exig ?? 0,
     ...(m.histT ? { transportHistory: m.histT.map((h: any) => ({ t: h.t, hauled: h.esc, lost: h.perd, delivered: h.aprov, lostValue: h.perdV })) } : {}),

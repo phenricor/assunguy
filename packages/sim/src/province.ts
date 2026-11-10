@@ -3,7 +3,7 @@
 import { BALANCE, BUILDINGS, GREAT_WORKS, VEHICLES, GREAT_WORK_IDS, LEVELS, MILESTONES, type BuildingId, type GreatWorkId, type LevelDef, type MilestoneDef } from '@assunguy/data';
 import { allocate, computeEconomy, def, hasRoad, upkeepOf, type Economy } from './economy.js';
 import { connected } from './network.js';
-import { rateHomes } from './ratings.js';
+import { rateHomes, updateRatings } from './ratings.js';
 import { workDone, type FamilyId, type GameState } from './state.js';
 import { fleetUpkeep } from './transport.js';
 import { RELIEF_WAGE } from './families.js';
@@ -85,8 +85,12 @@ export function advanceGreatWorks(s: GameState, news: GreatWorkNews[]): number {
 
 export interface GoalItem { kind: 'families' | 'road' | 'lands' | 'satisfaction' | 'building' | 'workers' | 'income'; target: number; current: number; ok: boolean; building?: BuildingId; extraDemand?: number }
 
-/** What a milestone still asks for. `meanRating` defaults to rating the homes now. */
-export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, meanRating?: number): GoalItem[] {
+/**
+ * What a milestone still asks for. `meanRating` defaults to rating the homes now; 'live' re-rates the live
+ * colony twice, as the prototype's `faltasDaMeta` did inside the season (the check uses the first, the
+ * figure shown the second; they differ only while taxes weigh on the ratings).
+ */
+export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, meanRating?: number | 'live'): GoalItem[] {
   const linked = connected(s.map), count: Partial<Record<BuildingId, number>> = {};
   for (const key of Object.keys(s.map.buildings) as LotKey[]) if (linked.has(key)) { const t = s.map.buildings[key] as BuildingId; count[t] = (count[t] ?? 0) + 1; }
   const fam = Object.keys(s.families).length;
@@ -94,8 +98,8 @@ export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, mean
   const items: GoalItem[] = [{ kind: 'families', target: famTarget, current: fam, ok: fam >= famTarget, ...(s.extraDemand ? { extraDemand: s.extraDemand * 5 } : {}) }];
   if (target.road) { const r = hasRoad(s); items.push({ kind: 'road', target: 1, current: r ? 1 : 0, ok: r }); }
   if (target.lands) { const n = Object.values(s.map.lands).filter((x) => x === 'ours').length; items.push({ kind: 'lands', target: target.lands, current: n, ok: n >= target.lands }); }
-  const mean = meanRating ?? rateHomes(s, w).mean;
-  items.push({ kind: 'satisfaction', target: target.satisfaction ?? 0, current: mean, ok: mean >= (target.satisfaction ?? 0) });
+  const first = meanRating === 'live' ? updateRatings(s, w).mean : meanRating ?? rateHomes(s, w).mean, mean = meanRating === 'live' ? updateRatings(s, w).mean : first;
+  items.push({ kind: 'satisfaction', target: target.satisfaction ?? 0, current: mean, ok: first >= (target.satisfaction ?? 0) });
   for (const [t, q] of Object.entries(target.requires ?? {}) as [BuildingId, number][]) {
     const have = (count[t] ?? 0) + (t === 'chapel' ? count.church ?? 0 : 0);
     items.push({ kind: 'building', building: t, target: q, current: have, ok: have >= q });
@@ -104,15 +108,15 @@ export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, mean
 }
 
 /** What the next level asks for: families at work, yearly income, buildings, and the milestone it carries. */
-export function levelRequirements(s: GameState, w: World, n: number, c: Economy): GoalItem[] {
+export function levelRequirements(s: GameState, w: World, n: number, c: Economy, live = false): GoalItem[] {
   const lv = levelDef(n) as LevelDef, workers = allocate(s).employed;
   const items: GoalItem[] = [{ kind: 'workers', target: lv.workers, current: workers, ok: workers >= lv.workers }, { kind: 'income', target: lv.income, current: c.incomeTotal, ok: c.incomeTotal >= lv.income }];
   for (const [t, q] of Object.entries(lv.requires ?? {}) as [BuildingId, number][]) { const have = Object.values(s.map.buildings).filter((x) => x === t).length; items.push({ kind: 'building', building: t, target: q, current: have, ok: have >= q }); }
-  return lv.milestone ? items.concat(milestoneGaps(s, w, MILESTONES[lv.milestone] as MilestoneDef)) : items;
+  return lv.milestone ? items.concat(milestoneGaps(s, w, MILESTONES[lv.milestone] as MilestoneDef, live ? 'live' : undefined)) : items;
 }
 
 /** How much of the milestone is done against how much of the deadline has passed (families weigh 80%). */
-export function goalPace(s: GameState, w: World, meanRating?: number): { milestone: string; time: number; done: number; behind: number } | null {
+export function goalPace(s: GameState, w: World, meanRating?: number | 'live'): { milestone: string; time: number; done: number; behind: number } | null {
   const target = MILESTONES[s.milestone + 1];
   if (!target) return null;
   const start = s.goalStart, total = Math.max(1, s.deadline - start), time = Math.min(1, Math.max(0, (s.market.t - start) / total));
@@ -132,7 +136,7 @@ export function provinceReport(s: GameState, w: World, halfYearBalance: number, 
   let score = 0;
   if (meanRating >= 60) { score += 1; reasons.push({ reason: 'satisfied' }); } else if (meanRating < 45) { score -= 1; reasons.push({ reason: 'dissatisfied' }); }
   if (s.cash < 0) { score -= 1; reasons.push({ reason: 'inTheRed' }); } else if (halfYearBalance < -500) { score -= 1; reasons.push({ reason: 'cashFell' }); }
-  const p = goalPace(s, w, meanRating);
+  const p = goalPace(s, w, 'live');
   if (p) {
     if (p.behind > 0.15) { score -= p.behind > 0.3 ? 2 : 1; reasons.push({ reason: 'behindPace', params: { milestone: p.milestone, done: Math.round(p.done * 100), time: Math.round(p.time * 100) } }); }
     else if (p.behind < -0.1) { score += 1; reasons.push({ reason: 'aheadOfPace', params: { milestone: p.milestone } }); }

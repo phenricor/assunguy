@@ -4,7 +4,7 @@ import { BUILDINGS, GOOD_IDS, type BuildingId, type GoodId, type Sector } from '
 import { allocate, def, good, sectorOf, type Economy } from './economy.js';
 import { mulberry32, hashKey } from './rng.js';
 import { crisisOn, homeOf, upgradeOf, workDone, type Family, type FamilyId, type GameState, type Trade } from './state.js';
-import { rateHomes, taxEffect } from './ratings.js';
+import { taxEffect, updateRatings } from './ratings.js';
 import type { LotKey, World } from './world.js';
 
 /** Surnames by origin; proper names, shown as they are in both languages. */
@@ -158,7 +158,7 @@ export function familiesInvest(s: GameState, w: World, c: Economy) {
     const lv = upgradeOf(s, key), f = a.byBuilding[key]?.families[0];
     if (lv < 2 && f && (f.savings || 0) >= (FIELD_UPGRADE_COST[lv] as number)) { f.savings -= FIELD_UPGRADE_COST[lv] as number; s.upgrades[key] = lv + 1; done.fields += 1; done.spent += FIELD_UPGRADE_COST[lv] as number; }
   }
-  const ratings = rateHomes(s, w).homes;
+  const ratings = updateRatings(s, w).homes; // the prototype's calcula here re-rated the live colony
   for (const key of Object.keys(s.map.buildings) as LotKey[]) {
     const t = s.map.buildings[key] as BuildingId, up = HOME_UPGRADE[t];
     if (!up || (def(up.to).minLevel ?? 1) > s.level) continue;

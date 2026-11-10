@@ -132,7 +132,13 @@ export interface GameState {
   /** Last season's production by good, for screens and home upgrades. */
   produced: Partial<Record<GoodId, number>>;
   /** What the player built this season (relief works staff them). */
-  seasonWork: { buildings: Partial<Record<LotKey, true>>; streets: Partial<Record<LotKey, true>>; upgrades: Partial<Record<LotKey, true>>; swaps: Partial<Record<LotKey, true>> };
+  /** What the player did this season, with what it cost, so it can be undone until the season passes (and relief works staff it). */
+  seasonWork: {
+    buildings: Partial<Record<LotKey, number>>;
+    streets: Partial<Record<LotKey, number>>;
+    upgrades: Partial<Record<LotKey, { cost: number; from: number }>>;
+    swaps: Partial<Record<LotKey, { from: BuildingId; cost: number; firstHarvest: number }>>;
+  };
   reliefCost: number;
   /** Spent on building this season, shown in the report. */
   buildCosts: number;
