@@ -92,6 +92,23 @@ export interface GameState {
   extraStreets?: number;
   /** A missed deadline was already announced. */
   warned: boolean;
+  /** Deadlines missed for the current milestone. */
+  misses?: number;
+  /** The province already granted one extension for this milestone. */
+  extendedDeadline?: boolean;
+  /** Taxes and town laws passed this season; they come into force at the turn. */
+  pendingTaxes: Partial<Record<TaxId, TaxLaw | null>>;
+  pendingLaws: Partial<Record<string, true>>;
+  taxHistory: { id: TaxId; t: number }[];
+  /** Cash change since the last province report. */
+  halfYearBalance?: number;
+  lastProvinceReport?: unknown;
+  cavesSeen: LotKey[];
+  /** Seasons in a row a business has been crushed by taxes. */
+  businessStrain?: number;
+  /** Progress toward the next level, 0 to 1. */
+  progress?: number;
+  reports: unknown[];
   /** Vehicles at each transport building. */
   fleet: Record<LotKey, Partial<Record<VehicleId, number>>>;
   /** Tariff margin set at each transport building. */

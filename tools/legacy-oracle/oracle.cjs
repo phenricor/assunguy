@@ -195,6 +195,48 @@ const SCENARIOS = {
     }
     return out;
   },
+  // whole seasons from each save, events resolved by a fixed policy (first option the colony can take);
+  // the rules removed in the November review are switched off in the prototype too
+  seasons: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        const state = (0, eval)(load)(txt);
+        cobraParcelas = () => ({ recebido: 0, pagas: 0, atrasos: 0, perderam: [] });
+        prestaContas = (0, eval)('(' + prestaContas.toString().replace("if (parte < .2) { nota += 1; razoes.push('parcelas em dia'); } else if (parte > .4) { nota -= 1; razoes.push('muitas parcelas atrasadas'); }", '') + ')');
+        pedidoDeTroca = (0, eval)('(' + pedidoDeTroca.toString().replace('(f.parcelas || 0) >= 5', 'M.mercadoSim.t - f.chegou >= 24') + ')');
+        abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {};
+        const snap = () => JSON.parse(JSON.stringify({
+          t: M.mercadoSim.t, seed: M.mercadoSim.semente, caixa: M.caixa, inf: M.influencia, nivelC: M.nivelC, marco: M.marco || 0, prazo: M.prazo, exig: M.exig || 0, verbaMod: M.verbaMod,
+          fams: Object.values(M.fams).map((f) => [f.id, f.nome, f.oficio, f.hab, f.nova, f.parada, f.chegou, f.fundo]),
+          predios: M.predios, nivel: M.nivel, efeitos: M.efeitos.map((e) => [e.sat, e.restam]), eventos: M.mercadoSim.eventos.map((e) => [e.b, e.tipo, e.f, e.restam]),
+          notaCasa: M.notaCasa, vol: (M.transp || {}).vol, frenteIds: Object.keys(M.frenteIds || {}).sort(), usados: M.usados, agenda: M.agenda, prob: M.prob, abast: M.abast, variedade: M.variedade,
+          plantio: M.plantio, escolhas: M.escolhas, gobras: M.gobras, aviso: !!M.aviso, atrasos: M.atrasos || 0, intervencao: !!M.intervencao, proxLeva: M.proxLeva, proxPedidoTroca: M.proxPedidoTroca, ultimoDilema: M.ultimoDilema,
+          price: Object.fromEntries(Object.keys(M.mercadoSim.hist).map((b) => [b, M.mercadoSim.hist[b][M.mercadoSim.hist[b].length - 1]])),
+        }));
+        const seasons = [];
+        for (let i = 0; i < 12; i++) {
+          passaEstacao();
+          const queued = M.fila.map((e) => JSON.parse(JSON.stringify(e)));
+          const picks = [];
+          let guard = 0;
+          while (M.fila.length && guard++ < 20) {
+            const ev = M.fila[0];
+            if (ev.tipo === 'fim' || ev.tipo === 'vitoria') break;
+            const d = defEvento(ev);
+            const i0 = d.ops.findIndex((o) => !o.pode || o.pode(M));
+            picks.push(i0);
+            resolveEvento(i0);
+          }
+          seasons.push({ queued, picks, after: snap() });
+          if (M.fila.length) break;
+        }
+        return { state, seasons };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
+
 };
 
 (async () => {
