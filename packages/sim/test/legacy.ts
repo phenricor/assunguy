@@ -1,5 +1,6 @@
 // Helpers for golden tests against the frozen prototype (see tools/legacy-oracle).
 import type { MapState } from '../src/map.js';
+import type { Family, FamilyId, GameState, TaxId } from '../src/state.js';
 import idMap from '../../../legacy/id-map.json' with { type: 'json' };
 
 export const LEGACY = idMap as unknown as Record<string, Record<string, string>>;
@@ -32,5 +33,42 @@ export function legacyMap(save: Record<string, unknown>): MapState {
     lands: Object.fromEntries(Object.entries(s.terras).filter(([, v]) => LAND_STATUS[v]).map(([k, v]) => [k, LAND_STATUS[v]])) as MapState['lands'],
     nature: remap(s.natureza, 'nature'),
     natureNames: Object.fromEntries(Object.entries(s.natNomes ?? {}).map(([k, n]) => [k, `nature.cave.place.${caves.indexOf(n)}`])),
+  };
+}
+
+const GREAT_WORKS: Record<string, string> = { telegrafo: 'telegraph', rodagem: 'macadamRoad', ramal: 'railSpur', escolaNormal: 'normalSchool', charqueada: 'jerkyPlant', usinaCal: 'limeWorks', hospital: 'hospital', serrariaVapor: 'steamSawmill' };
+const CRISES: Record<string, string> = { federalista: 'federalist' };
+const TAX_IDS: Record<string, TaxId> = { lote: 'lotInstallment', dizimo: 'tithe', exportacao: 'exportDuty', negocio: 'businessTax' };
+const byGood = (o: Record<string, number> | undefined) => Object.fromEntries(Object.entries(o ?? {}).map(([g, v]) => [goodFromLegacy(g), v]));
+
+/** A whole normalized prototype save as the port's game state. */
+export function legacyState(save: Record<string, unknown>): GameState {
+  const m = save as any;
+  const families: Record<string, Family> = {};
+  for (const [id, f] of Object.entries(m.fams ?? {}) as [string, any][]) {
+    families[id] = { id: id as FamilyId, surname: f.nome, trade: f.oficio ? (table('sectors')[f.oficio] as Family['trade']) : null, skill: f.hab, newcomer: f.nova, idle: f.parada, arrived: f.chegou, savings: f.fundo ?? 0, ...(f.origem ? { origin: table('origins')[f.origem] } : {}) };
+  }
+  const taxes = Object.fromEntries(Object.entries(TAX_IDS).map(([pt, en]) => {
+    const l = m.leis?.[pt];
+    return [en, l ? { general: l.geral ?? 0, ...(l.por ? { byGood: byGood(l.por) } : {}) } : null];
+  })) as GameState['taxes'];
+  return {
+    seed: m.semente, mapVersion: m.mapaV || 1, map: legacyMap(save), upgrades: { ...(m.nivel ?? {}) },
+    families: families as GameState['families'], homeRating: { ...(m.notaCasa ?? {}) }, health: m.saude ?? 1, supply: byGood(m.abast),
+    firstHarvest: m.plantio ? { ...m.plantio } : null,
+    market: {
+      t: m.mercadoSim.t, seed: m.mercadoSim.semente, history: byGood(m.mercadoSim.hist as any) as any,
+      shocks: (m.mercadoSim.eventos ?? []).map((e: any) => ({ good: e.b === '_porto' ? '_port' : goodFromLegacy(e.b), kind: SHOCK_KIND[e.tipo], factor: e.f, seasonsLeft: e.restam, reason: 'legacy' })),
+    },
+    cash: m.caixa, influence: m.influencia ?? 3, level: m.nivelC ?? 1, milestone: m.marco ?? 0, deadline: m.prazo, goalStart: m.metaInicio ?? 12,
+    taxes, laws: Object.fromEntries(Object.keys(m.leisC ?? {}).filter((k) => m.leisC[k]).map((k) => [table('laws')[k], true])),
+    choices: Object.fromEntries(Object.entries(m.escolhas ?? {}).map(([n, c]) => [n, table('choices')[c as string]])),
+    greatWorks: Object.fromEntries(Object.entries(m.gobras ?? {}).map(([k, g]: [string, any]) => [GREAT_WORKS[k] ?? k, { done: !!g.feito }])),
+    problems: { epidemic: m.prob?.epi ? 1 : 0, disorder: m.prob?.desordem ? 1 : 0 },
+    crisis: m.acont ? { id: CRISES[m.acont.id] ?? m.acont.id, seasonsLeft: m.acont.restam } : null,
+    fleet: Object.fromEntries(Object.entries(m.veic ?? {}).map(([k, f]) => [k, Object.fromEntries(Object.entries(f as Record<string, number>).map(([v, n]) => [table('vehicles')[v], n]))])),
+    tariffMargin: { ...(m.tarifa ?? {}) },
+    transport: { volume: { ...(m.transp?.vol ?? {}) }, firewoodShortage: m.transp?.lenhaFalta ?? 0 },
+    freightRelief: m.frenteFrete ?? 0, reliefWorkers: { ...(m.frenteIds ?? {}) }, race: null,
   };
 }

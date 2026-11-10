@@ -80,6 +80,29 @@ const SCENARIOS = {
     }
     return out;
   },
+  // one season's economy (three simulated years, the last one kept) for each playtester save
+  economy: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        const state = (0, eval)(load)(txt);
+        const c = economiaSem(M);
+        const pick = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => Math.abs(v) > 1e-9));
+        const per = {}; for (const k of ['prod', 'proprio', 'mercado', 'fora', 'frete', 'perda', 'renda', 'proc', 'procura', 'fat']) per[k] = pick(c[k]);
+        const a = c.e.a;
+        return {
+          state,
+          per, estoque: pick(c.estoque), imp: { dizimo: pick(c.imp.dizimo), fora: pick(c.imp.fora) },
+          scalars: { fome: c.fome, faltaProdutor: c.faltaProdutor, demMercado: c.demMercado, viaC: c.viaC, viaT: c.viaT, rendaTotal: c.rendaTotal, perdaTotal: c.perdaTotal, prodTotal: c.prodTotal, foraTotal: c.foraTotal, mercadoTotal: c.mercadoTotal, proprioTotal: c.proprioTotal, fatTotal: c.fatTotal, subsistencia: c.subsistencia, excedente: c.excedente },
+          perdaPor: c.perdaPor, arrec: c.arrec,
+          e: { n: c.e.n, fam: c.e.fam, vagas: c.e.vagas, rend: c.e.rend, mercado: c.e.mercado, tropas: c.e.tropas, somaF: c.e.somaF, veios: c.e.veios, semLigacao: c.e.semLigacao },
+          alloc: { setor: Object.fromEntries(Object.entries(a.setor).map(([k, v]) => [k, { vagas: v.vagas, ocup: v.ocup, ef: v.ef, rend: v.rend }])), livres: a.livres.map((f) => f.id), ocupadas: a.ocupadas, por: Object.fromEntries(Object.entries(a.por).map(([k, v]) => [k, v.fams.map((f) => f.id)])) },
+          transp: { caps: c.transp.caps.map((x) => ({ key: x.key, capEst: x.capEst, leva: x.leva, lombo: x.lombo, tarifa: x.tarifa, pico: x.pico })), portas: c.transp.portas.map((x) => ({ key: x.key, capEst: x.capEst, vol: x.vol, tarifa: x.tarifa, pico: x.pico, dests: x.dests })), modo: c.transp.modo, aprov: c.transp.aprov, perdV: c.transp.perdV, tarifas: c.transp.tarifas, custoEst: c.transp.custoEst, terras: c.transp.terras.map((x) => ({ id: x.id, prodV: x.prodV, perdeV: x.perdeV, lomboV: x.lomboV, coberto: x.coberto })) },
+        };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
 };
 
 (async () => {
