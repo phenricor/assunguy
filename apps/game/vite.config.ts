@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// The prototype's static markup and its sprite generator (plus the game's bird models) go into the page itself: the renderer looks the
+// The prototype's static markup and its sprite generator (plus the game's bird models and adult araucaria) go into the page itself: the renderer looks the
 // generator up by id (to start Web Workers from its text) and expects the markup when it loads.
 const legacyShell = (): Plugin => ({
   name: 'legacy-shell',
@@ -11,7 +11,11 @@ const legacyShell = (): Plugin => ({
     const gen = readFileSync(new URL('./src/legacy/spr3d.js', import.meta.url), 'utf8');
     // the game's own models (the river birds) go after the prototype's generator, which stays as it was
     const birds = readFileSync(new URL('./src/birdModels.js', import.meta.url), 'utf8');
-    const source = (JSON.parse(gen.slice(gen.indexOf('export const SOURCE = ') + 22, gen.lastIndexOf(';'))) as string) + '\n' + birds;
+    let source = JSON.parse(gen.slice(gen.indexOf('export const SOURCE = ') + 22, gen.lastIndexOf(';'))) as string;
+    // the adult araucaria is the game's own (wider and fuller, like the real tree): it replaces the prototype's function
+    const a = source.indexOf('  function araucaria(r, x, y, H) {'), b = source.indexOf('  // araucária jovem');
+    if (a < 0 || b < a) throw new Error('legacy-shell: araucaria() not found in the sprite generator');
+    source = source.slice(0, a) + readFileSync(new URL('./src/araucaria.js', import.meta.url), 'utf8') + source.slice(b) + '\n' + birds;
     return html.replace('<!--legacy-body-->', body).replace('<!--legacy-generator-->', `<script id="gerador">${source.replace(/<\/script/gi, '<\\/script')}</script>`);
   },
 });
