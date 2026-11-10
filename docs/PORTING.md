@@ -24,14 +24,43 @@ playtester's saves in `legacy/saves`.
 | The season | `sim/season` | `passaEstacao`, `confereMeta` | 12 seasons from each save, events resolved by a fixed policy |
 | Outlet per producer | `sim/economy` (`outletOf`) | none: new, from the transport run | totals add up to the colony's losses |
 | The advisor | `sim/advisor` | `conselhosSem`, `conselhosTransp`, `ondeInvestir`, `sugestaoTroca`, `dizimoSugerido` | 13 states of each save's run, plus 5 variants of each save |
+| Player commands | `sim/commands`, `sim/settle` | the screens' handlers (build, move, demolish, upgrade, streets, explore, annex, vehicles, margins, crop swaps, taxes, laws, province requests) | a scripted session of 18 commands from each save, then four seasons |
+| New game | `sim/game` | `novoMapa`, `mapaInicial`, `garanteEstado` | two seeds, then eight seasons |
+| Districts | `sim/districts` | `calculaBairros`, `contornosBairros` | both saves: as they come, remembered after new homes, with a player's name |
+| Season report | `sim/report` | `calculaRetorno`, `fotoColonia`, `difColonia`, `M.serie` | each good's year through the command runs |
+| Robot player | `tools/bot` | none: new | determinism and policy tests; `pnpm balance` for the report |
 
 ## Next
 
-1. Player commands: build, demolish, move, upgrade, annex, buy and sell vehicles, swap crops, taxes and
-   laws, province requests. Golden against the prototype's command functions.
-2. `tools/bot`: a robot player that follows the advisor (top advice it can pay for) through these
-   commands, with balance checks: milestones against their deadlines, cash, gateway occupancy.
-3. Districts (`calculaBairros`), series and graphs, report decision diffs; the late-game race stays for later.
+The simulation is ported. What is left is the late-game transport race (`corrida`), kept for later as
+planned, and the new interface (`packages/ui`) built on these modules and the catalog decisions.
+
+## Re-rating the live colony
+
+The prototype re-rated the homes (`calcula`) many times in a season and around each decision, not only
+once: when families invest, when measuring a change (`medindo` rates before and after), when a law passes,
+when goals are checked (`faltasDaMeta`), after an event and at the end of the season (twice). Each pass
+measures the tax burden with the ratings of the pass before, so while taxes weigh on the ratings the result
+drifts a little with each pass. The port re-rates at the same points (`measuredChange`, `settle`, the
+`'live'` goal checks), which the command golden test needed. The advisor does not re-rate: the oracle stops
+the two helpers that did it in the middle of the prototype's advice.
+
+## Robot player and balance
+
+`pnpm balance [seasons] [seed ...]` plays new games by following the advisor, with two policies: greedy
+(takes the heaviest advice it can pay for) and patient (saves for heavier advice it cannot pay for yet).
+The advisor never suggests opening streets, so the robot keeps streets ahead of the houses on its own.
+
+Findings, three seeds (1869, 4242, 777), both policies, November 2026:
+
+- No run reaches the parish. At its deadline (season 44) the colonies have 46 to 52 families of the 90 it
+  asks for; the province grants more time, the inspector comes, and every run ends at season 58.
+- The purse is the bottleneck: the median cash over a run is $ 67 to $ 93. The grant barely covers upkeep
+  until taxes, so heavier advice (school, directorate, store package) waits for money that does not come.
+- Idle families stay at 30% to 40%, so the advisor stops asking for huts (it wants jobs first) while jobs
+  wait for cash.
+- The pier is full (85% or more) in up to 16 of 35 seasons of a run.
+- A human did better on the same rules: the speedrun save reached the parish by season 42.
 
 ## The advisor
 
