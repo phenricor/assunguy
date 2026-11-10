@@ -32,7 +32,8 @@ export interface Family {
 /** A tax in force: a general rate (or amount) and optional rates per good. */
 export interface TaxLaw { general: number; byGood?: Partial<Record<GoodId, number>> }
 
-export interface GreatWork { done?: boolean; paid?: number; seasons?: number }
+/** A great work under way: seasons paid, relief-work advance banked, and whether it stalled for lack of cash. */
+export interface GreatWork { active?: boolean; done?: boolean; paid?: number; extra?: number; stalled?: boolean }
 
 /** A passing effect on the colony's mood (a festival, a scandal), with an i18n key for its reason. */
 export interface Effect { satisfaction?: number; seasonsLeft: number; reason: string; params?: Record<string, string | number> }
@@ -73,7 +74,8 @@ export interface GameState {
   fleet: Record<LotKey, Partial<Record<VehicleId, number>>>;
   /** Tariff margin set at each transport building. */
   tariffMargin: Record<LotKey, number>;
-  transport: { volume: Record<LotKey, number>; firewoodShortage: number; last?: { margin: number; loss: number } };
+  transport: { volume: Record<LotKey, number>; firewoodShortage: number; last?: { margin: number; loss: number }; fullNoted?: Partial<Record<LotKey, 1>> };
+  transportHistory?: { t: number; hauled: number; lost: number; delivered: number; lostValue: number }[];
   effects: Effect[];
   /** How many dishes the families' table had last season. */
   variety?: number;
@@ -90,6 +92,19 @@ export interface GameState {
   childrenThisYear?: number;
   /** Last season's production by good, for screens and home upgrades. */
   produced: Partial<Record<GoodId, number>>;
+  /** What the player built this season (relief works staff them). */
+  seasonWork: { buildings: Partial<Record<LotKey, true>>; streets: Partial<Record<LotKey, true>>; upgrades: Partial<Record<LotKey, true>>; swaps: Partial<Record<LotKey, true>> };
+  reliefCost: number;
+  /** Spent on building this season, shown in the report. */
+  buildCosts: number;
+  /** Grant multiplier set by the last province report. */
+  grantFactor: number;
+  /** Seasons left of a grant cut imposed by an event. */
+  grantCut?: number;
+  /** The inspector is in charge after a missed deadline. */
+  intervention: boolean;
+  /** Extra families the next milestone asks for, in steps of 5%. */
+  extraDemand: number;
   /** The late-game transport race; not ported yet. */
   race: null;
 }

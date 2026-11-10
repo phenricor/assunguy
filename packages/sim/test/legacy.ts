@@ -63,7 +63,7 @@ export function legacyState(save: Record<string, unknown>): GameState {
     cash: m.caixa, influence: m.influencia ?? 3, level: m.nivelC ?? 1, milestone: m.marco ?? 0, deadline: m.prazo, goalStart: m.metaInicio ?? 12,
     taxes, laws: Object.fromEntries(Object.keys(m.leisC ?? {}).filter((k) => m.leisC[k]).map((k) => [table('laws')[k], true])),
     choices: Object.fromEntries(Object.entries(m.escolhas ?? {}).map(([n, c]) => [n, table('choices')[c as string]])),
-    greatWorks: Object.fromEntries(Object.entries(m.gobras ?? {}).map(([k, g]: [string, any]) => [GREAT_WORKS[k] ?? k, { done: !!g.feito }])),
+    greatWorks: Object.fromEntries(Object.entries(m.gobras ?? {}).map(([k, g]: [string, any]) => [GREAT_WORKS[k] ?? k, { ...(g.ativo ? { active: true } : {}), ...(g.feito ? { done: true } : {}), ...(g.pago ? { paid: g.pago } : {}), ...(g.extra ? { extra: g.extra } : {}), ...(g.parou ? { stalled: true } : {}) }])),
     problems: { epidemic: m.prob?.epi ? 1 : 0, disorder: m.prob?.desordem ? 1 : 0 },
     crisis: m.acont ? { id: CRISES[m.acont.id] ?? m.acont.id, seasonsLeft: m.acont.restam } : null,
     fleet: Object.fromEntries(Object.entries(m.veic ?? {}).map(([k, f]) => [k, Object.fromEntries(Object.entries(f as Record<string, number>).map(([v, n]) => [table('vehicles')[v], n]))])),
@@ -74,5 +74,9 @@ export function legacyState(save: Record<string, unknown>): GameState {
     freightRelief: m.frenteFrete ?? 0, reliefWorkers: { ...(m.frenteIds ?? {}) }, race: null,
     vacated: { ...(m.vagos ?? {}) }, arrivalCosts: m.chegadasEst ?? 0, immigrationAgent: m.agente ? { ...(m.agente.origem ? { origin: table('origins')[m.agente.origem] } : {}) } : null,
     ...(m.filhosAno !== undefined ? { childrenThisYear: m.filhosAno } : {}), produced: byGood(m.prodBem),
+    seasonWork: { buildings: { ...(m.pend ?? {}) }, streets: { ...(m.pendRua ?? {}) }, upgrades: { ...(m.pendNivel ?? {}) }, swaps: { ...(m.pendTroca ?? {}) } },
+    reliefCost: m.frenteCusto ?? 0, buildCosts: m.obrasEst ?? 0, grantFactor: m.verbaMod ?? 1, ...(m.castigoVerba ? { grantCut: m.castigoVerba } : {}),
+    intervention: !!m.intervencao, extraDemand: m.exig ?? 0,
+    ...(m.histT ? { transportHistory: m.histT.map((h: any) => ({ t: h.t, hauled: h.esc, lost: h.perd, delivered: h.aprov, lostValue: h.perdV })) } : {}),
   };
 }

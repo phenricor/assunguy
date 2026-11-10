@@ -143,6 +143,32 @@ const SCENARIOS = {
     }, [txt, LOAD.toString()]);
     return { ...fresh, season };
   },
+  // the purse and the province: upkeep, grant, relief works, great works, transport, report and goals
+  province: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        const L = (0, eval)(load);
+        const state = L(txt);
+        const manut = Object.values(M.predios).reduce((x, t) => x + manutencaoDe(t), 0) + Object.keys(M.ruas).length * manutRua(M) + manutObras(M) + servicoUrbano(M);
+        const verba = Math.round(MARCOS[M.marco || 0].verba * (M.verbaMod || 1) * fatorVerbaEvento(M));
+        const plan = planoFrente(M);
+        const ritmo = ritmoDaMeta(M);
+        const faltas = faltasDaMeta(M, MARCOS[(M.marco || 0) + 1]).map((x) => [x.ok, x.atual]);
+        const req = requisitosDoNivel((M.nivelC || 1) + 1, economiaSem(M)).map((x) => [x.ok, x.atual]);
+        const conta = prestaContas(M, -600, economiaSem(M));
+        L(txt); const n1 = []; const custoFrente = aplicaFrente(n1);
+        const relief = { ids: Object.keys(M.frenteIds).sort(), caixa: M.caixa, frete: M.frenteFrete, custo: custoFrente };
+        L(txt); const tr = avancaTransporte([]);
+        const transp = { tr, transp: M.transp, caixa: M.caixa, hist: M.histT[M.histT.length - 1] };
+        L(txt); M.caixa = 5000; M.gobras = { telegrafo: { ativo: true, pago: 7, extra: 1.2 }, hospital: { ativo: true, pago: 0, extra: 0.4 }, usinaCal: { ativo: true, pago: 2, parou: true } };
+        const n2 = []; const pago = avancaGrandesObras(n2);
+        const works = { pago, gobras: M.gobras, caixa: M.caixa, n: n2.length, inf: M.influencia };
+        return { state, manut, verba, plan: { itens: plan.itens.map((x) => [x.id, x.q, x.tem]), q: plan.q, custo: plan.custo, frete: plan.frete }, ritmo, faltas, req, conta: { razoes: conta.razoes, mod: conta.mod }, relief, transp, works };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
 };
 
 (async () => {
