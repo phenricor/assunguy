@@ -76,6 +76,10 @@ same rules off in the prototype before recording (see the patches at the top of 
 - A commerce's whole land is no longer lossless on foot; only the free distance (6 lots) from the nearest
   commerce is. On the saves this costs 3% of income (canoes) and 0.4% (speedrun). The advisor must suggest a
   trading post or landing for far fields, and a commerce only where there are families and a gateway.
+- A field within the free walking distance (6 lots) of a commerce never sends cargo through a collection
+  point: walking there loses nothing, so paying a tariff for it made no sense. The prototype's soft route
+  choice sent 5% to 26% of such a field's cargo to any collection point in reach. The oracle guards the
+  prototype's collection list the same way. Neither save has such a field, so their numbers are unchanged.
 - Relief works are always on.
 - Extra funds and extra time from the province are offered by the advisor when available, not as
   buttons on the province tab. Advice the colony cannot pay for is listed but blocked.

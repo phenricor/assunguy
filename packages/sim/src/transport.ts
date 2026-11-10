@@ -81,9 +81,10 @@ export function geography(s: GameState, linked: Set<LotKey>): Geography {
     let jL = 0, dL = 1e9;
     commerce.forEach((c, j) => { const d = distance(key, c.key); if (d < dL) { dL = d; jL = j; } });
     // on foot, nothing is lost within the free distance of the nearest commerce; farther, it is lost on the way
-    // (the prototype also made a commerce's whole land lossless; removed in the November review)
+    // (the prototype also made a commerce's whole land lossless; removed in the November review).
+    // Within that distance walking is free, so nobody pays a collection point (November review, too).
     const reach: number[] = [];
-    collections.forEach((c, i) => { if (distance(key, c.key) <= c.reach) reach.push(i); });
+    if (dL > FREE_CARRY) collections.forEach((c, i) => { if (distance(key, c.key) <= c.reach) reach.push(i); });
     producers[key] = { carry: dL, carryTo: jL, collections: reach, land: landOf(...parseKey(key)) };
   }
   return { commerce, collections, gateways, producers };

@@ -234,6 +234,33 @@ const SCENARIOS = {
     return out;
   },
 
+  // the advisor's list at the start and after each season of the same runs as `seasons`
+  advice: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        (0, eval)(load)(txt);
+        abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {};
+        const list = () => { C = calcula(M); return conselhos().map((x) => ({ w: x.peso, tit: x.tit, sub: x.sub, ac: x.ac || null })); };
+        const states = [list()];
+        for (let i = 0; i < 12; i++) {
+          passaEstacao();
+          let guard = 0;
+          while (M.fila.length && guard++ < 20) {
+            const ev = M.fila[0];
+            if (ev.tipo === 'fim' || ev.tipo === 'vitoria') break;
+            const d = defEvento(ev);
+            resolveEvento(d.ops.findIndex((o) => !o.pode || o.pode(M)));
+          }
+          states.push(list());
+          if (M.fila.length) break;
+        }
+        return states;
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
+
 };
 
 (async () => {
@@ -252,6 +279,7 @@ const SCENARIOS = {
     prestaContas = patch(prestaContas, "if (parte < .2) { nota += 1; razoes.push('parcelas em dia'); } else if (parte > .4) { nota -= 1; razoes.push('muitas parcelas atrasadas'); }", '');
     pedidoDeTroca = patch(pedidoDeTroca, '(f.parcelas || 0) >= 5', 'M.mercadoSim.t - f.chegou >= 24');
     prepGeo = patch(prepGeo, 'if (dL > LOMBO_LIVRE) {', 'if (false) {');
+    prepGeo = patch(prepGeo, 'cap.forEach((c, i) => { if (distK(key, c.key) <= c.al) caps.push(i); });', 'if (dL > LOMBO_LIVRE) cap.forEach((c, i) => { if (distK(key, c.key) <= c.al) caps.push(i); });');
   });
   const out = await SCENARIOS[name](page, process.argv[3]);
   fs.mkdirSync(FIXTURES, { recursive: true });
