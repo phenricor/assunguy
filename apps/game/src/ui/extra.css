@@ -53,3 +53,8 @@ textarea.fb-txt[readonly] { min-height: 96px; color: #5A4A3A; }
 #menuIni .mi-links a:focus-visible { outline: 2px solid var(--anil); outline-offset: 2px; }
 #menuIni .mi-links svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #menuIni .mi-aviso { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 50px); margin: 0; padding: 6px 10px; font-size: 13px; color: #3D3126; background: rgba(246, 239, 223, .95); border-radius: 3px; user-select: text; }
+/* report: what each decision did. The label on its line, the effects under it, wrapping on narrow screens */
+.linhas li.efeito { flex-direction: column; gap: 2px; }
+.linhas li.efeito span:last-child { white-space: normal; font-weight: 600; color: #5A4A3A; font-size: 13.5px; }
+/* a long label never pushes the value off the screen */
+.linhas li > span:first-child { min-width: 0; overflow-wrap: anywhere; }

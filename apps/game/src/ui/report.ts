@@ -79,10 +79,10 @@ function openReportAt(i: number): void {
   const series = (g.s.series ?? []).slice(-8) as SeriesPoint[];
   const stuck = series.length ? K.columns({ parts: [{ name: T('ui.report.stuck'), values: series.map((p) => p.stuck), color: '#C2562B' }, { name: T('ui.report.noBuyer'), values: series.map((p) => p.noBuyer), color: '#9C7A3A' }], labels: series.map((p) => dateOf(p.t + 1).replace(/^.*?(\d+).*$/, '$1')), summary: T('ui.report.stuckTitle') }) : '';
   const decisions = [
-    ...r.decisions.works.map((x) => K.row(T(x.kind === 'built' ? 'ui.report.built' : 'ui.report.upgraded', { n: x.n, building: x.building }), changeText(x.change))),
-    ...r.decisions.demolished.map((x) => K.row(T('ui.report.demolished', { n: x.n, building: x.building }), changeText(x.change))),
-    ...r.decisions.events.map((x) => K.row(T(`event.${x.event}.option.${x.option}`, { colony: g.meta.colony, advisor: g.meta.advisor }), changeText(x.change))),
-    ...r.passed.laws.map((x) => K.row(T(`law.${x.id}`), changeText(x.change))),
+    ...r.decisions.works.map((x) => K.row(T(x.kind === 'built' ? 'ui.report.built' : 'ui.report.upgraded', { n: x.n, building: x.building }), changeText(x.change), 'efeito')),
+    ...r.decisions.demolished.map((x) => K.row(T('ui.report.demolished', { n: x.n, building: x.building }), changeText(x.change), 'efeito')),
+    ...r.decisions.events.map((x) => K.row(T(`event.${x.event}.option.${x.option}`, { colony: g.meta.colony, advisor: g.meta.advisor }), changeText(x.change), 'efeito')),
+    ...r.passed.laws.map((x) => K.row(T(`law.${x.id}`), changeText(x.change), 'efeito')),
     ...r.passed.taxes.map((x) => K.row(T(`ui.tax.${x.id}`), T('ui.perYear', { value: signedMoney(x.revenue) }))),
   ];
   const returns = r.returns.filter((x) => Math.abs(x.net) >= 1).sort((a, b) => b.net - a.net);

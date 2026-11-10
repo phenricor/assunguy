@@ -11,6 +11,13 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] - 2026-11-10
+
+### Fixed
+
+- On phones, the season report no longer runs off the side of the screen: each decision's effects now sit under
+  its name and wrap.
+
 ## [1.0.0-beta.1] - 2026-11-10
 
 The first beta: the whole game, from the first ten families to the railway race.
@@ -41,5 +48,6 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.1...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.2...HEAD
+[1.0.0-beta.2]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.1...v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/phenricor/assunguy/releases/tag/v1.0.0-beta.1
