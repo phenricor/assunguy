@@ -22,7 +22,7 @@ export const ARRIVAL_AID = 5;
 export const SEED_AID = 6;
 const SAVING_SHARE = 0.4;
 const FIELD_UPGRADE_COST = [28, 60];
-const HOME_UPGRADE: Partial<Record<BuildingId, { to: BuildingId; cost: number; rating: number; needs: GoodId[] }>> = {
+export const HOME_UPGRADE: Partial<Record<BuildingId, { to: BuildingId; cost: number; rating: number; needs: GoodId[] }>> = {
   hut: { to: 'house', cost: 36, rating: 45, needs: ['planks'] },
   house: { to: 'whitewashedHouse', cost: 80, rating: 55, needs: ['rooftiles', 'lime'] },
   whitewashedHouse: { to: 'townhouse', cost: 150, rating: 65, needs: ['rooftiles', 'planks', 'lime'] },

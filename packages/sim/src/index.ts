@@ -14,3 +14,4 @@ export * from './placement.js';
 export * from './measure.js';
 export * from './events.js';
 export * from './season.js';
+export * from './advisor.js';

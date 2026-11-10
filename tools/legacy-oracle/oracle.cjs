@@ -239,9 +239,15 @@ const SCENARIOS = {
     const out = {};
     for (const [name, txt] of saves()) {
       out[name] = await page.evaluate(([txt, load]) => {
+        // fotoColonia and faltasDaMeta re-rate the homes on the live state in the middle of the advice (a second pass of calcula,
+        // which drifts when taxes weigh on the ratings); the port's advisor changes nothing, so neither does this
+        fotoColonia = (0, eval)('(' + fotoColonia.toString().replace('sat: calcula(M).media', 'sat: C.media') + ')');
+        faltasDaMeta = (0, eval)('(' + faltasDaMeta.toString().split('calcula(m).media').join('(m === M ? C.media : calcula(m).media)') + ')');
         (0, eval)(load)(txt);
         abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {};
-        const list = () => { C = calcula(M); return conselhos().map((x) => ({ w: x.peso, tit: x.tit, sub: x.sub, ac: x.ac || null })); };
+        // the prototype's caches key on counts, so an event that changes the colony without changing them leaves
+        // them stale; the port has no caches, so they are cleared before each list
+        const list = () => { C = calcula(M); cacheExcesso = null; cacheTroca = null; cacheInvestir = null; cacheDizimo = null; return conselhos().map((x) => ({ w: x.peso, tit: x.tit, sub: x.sub, ac: x.ac || null })); };
         const states = [list()];
         for (let i = 0; i < 12; i++) {
           passaEstacao();
@@ -256,6 +262,42 @@ const SCENARIOS = {
           if (M.fila.length) break;
         }
         return states;
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
+
+  // the advisor on variants of each save, so more of its rules fire: the change is recorded as data and the
+  // port applies the same change before comparing
+  adviceVariants: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        // fotoColonia and faltasDaMeta re-rate the homes on the live state in the middle of the advice (a second pass of calcula,
+        // which drifts when taxes weigh on the ratings); the port's advisor changes nothing, so neither does this
+        fotoColonia = (0, eval)('(' + fotoColonia.toString().replace('sat: calcula(M).media', 'sat: C.media') + ')');
+        faltasDaMeta = (0, eval)('(' + faltasDaMeta.toString().split('calcula(m).media').join('(m === M ? C.media : calcula(m).media)') + ')');
+        const free = (t, linked) => { for (const key of Object.keys(M.ruas)) { const [a, b] = par(key); for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const er = podeConstruir(M, t, a + x, b + y); if (!er) return k(a + x, b + y); } } return null; };
+        const loose = (t) => { for (let a = 0; a < NX; a++) for (let b = 0; b < NY; b++) if (podeConstruir(M, t, a, b) === 'Precisa de rua ao lado') return k(a, b); return null; };
+        const variants = {
+          broke: () => ({ caixa: -200 }),
+          rich: () => ({ caixa: 6000, nivelC: Math.min(11, (M.nivelC || 1) + 3) }),
+          council: () => ({ caixa: 2000, add: { [free('camara')]: 'camara' } }),
+          tithe: () => ({ add: { [free('camara')]: 'camara' }, dizimo: .2 }),
+          loose: () => ({ add: { [loose('poco')]: 'poco' } }),
+        };
+        const res = {};
+        for (const [v, make] of Object.entries(variants)) {
+          (0, eval)(load)(txt);
+          const spec = make();
+          if (spec.caixa !== undefined) M.caixa = spec.caixa;
+          if (spec.nivelC) M.nivelC = spec.nivelC;
+          if (spec.add) Object.assign(M.predios, spec.add);
+          if (spec.dizimo) M.leis.dizimo = { geral: spec.dizimo, por: {} };
+          C = calcula(M); cacheExcesso = null; cacheTroca = null; cacheInvestir = null; cacheDizimo = null;
+          res[v] = { spec, list: conselhos().map((x) => ({ w: x.peso, tit: x.tit, sub: x.sub, ac: x.ac || null })) };
+        }
+        return res;
       }, [txt, LOAD.toString()]);
     }
     return out;

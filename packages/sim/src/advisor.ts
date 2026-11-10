@@ -1,0 +1,464 @@
+// The advisor: a ranked list of advice, each measured by the economy where it is about income. Advice carries
+// a rule id, the numbers its text needs and an action; display text lives in i18n under advice.<rule>.*.
+// Ported from the prototype's `conselhosSem` and `conselhosTransp`, with the November review fixes:
+// advice the colony cannot pay for is blocked, the province's extra funds and time are offered here, a
+// far land gets a measured package (store + waystation + mule trains, or a collection point) instead of a
+// lone store, and each producer's outlet feeds a "what fixes it" advice.
+import {
+  BUILDINGS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LEVELS, MILESTONES, TRANSPORT_ROLES, VEHICLES,
+  type BuildingId, type GoodId, type GreatWorkId, type MilestoneDef, type TransportRoleDef, type VehicleDef, type VehicleId,
+} from '@assunguy/data';
+import { allocate, computeEconomy, costOf, def, good, hasRoad, recipesOf, SECTOR_ORDER, sectorOf, soilOf, teamEfficiency, upkeepOf, type Economy, type Extra } from './economy.js';
+import { firstHarvest, overplanted, swapOptions } from './events.js';
+import { ARRIVAL_AID, emptySlots, HOME_UPGRADE, SEED_AID } from './families.js';
+import { measure } from './measure.js';
+import { connected, mainNetwork } from './network.js';
+import { canPlace } from './placement.js';
+import { greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
+import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
+import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw } from './state.js';
+import { collectionState, distance, fleetOf, fleetSize, gatewayTight, geography } from './transport.js';
+import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
+
+export type AdviceAction =
+  | { kind: 'screen'; screen: 'level' | 'economy' | 'direction' | 'transport'; tab?: string; law?: 'tithe'; value?: number }
+  | { kind: 'build'; building: BuildingId | 'street' }
+  | { kind: 'select'; key: LotKey; upgrade?: true }
+  | { kind: 'swap'; key: LotKey; to: BuildingId; from: BuildingId }
+  | { kind: 'land'; land: LandId }
+  | { kind: 'buyVehicle'; key: LotKey; vehicle: VehicleId }
+  | { kind: 'sellVehicle'; key: LotKey; vehicle: VehicleId }
+  | { kind: 'collect'; building: BuildingId; land?: LandId; near?: LotKey; lot?: LotKey; fleet?: Partial<Record<VehicleId, number>>; with?: BuildingId[] }
+  | { kind: 'province'; request: 'extraFunds' | 'extraTime' };
+
+export interface Advice {
+  rule: string;
+  weight: number;
+  params: Record<string, string | number>;
+  action: AdviceAction | null;
+  /** What following it costs from the purse now (0 when nothing). */
+  cost: number;
+  /** Shown but not actionable: it costs more than the cash in hand. */
+  blocked: boolean;
+  goals?: GoalItem[];
+}
+
+// ---- small helpers shared by the rules
+
+/** Every building income advice competes on the same scale: in how many years the gain pays the cost. */
+export const workWeight = (cost: number, gain: number): number => 60 + Math.max(0, Math.min(30, 30 - (cost / Math.max(1, gain)) * 4));
+const unlocked = (s: GameState, t: BuildingId): boolean => !def(t).lateGame && (def(t).minLevel || 1) <= (s.level || 1);
+const vehicleUnlocked = (s: GameState, v: VehicleId): boolean => { const V = VEHICLES[v] as VehicleDef; return !V.lateGame && (s.level || 1) >= (V.minLevel || 1); };
+const roleOf = (t: BuildingId): TransportRoleDef | undefined => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
+const ALL = Object.keys(BUILDINGS) as BuildingId[];
+/** Store, market and pier upgrades cost the full price, then half again; others 60% then the full price. */
+const FLEET_UPGRADE: BuildingId[] = ['store', 'market', 'riverPort'];
+export const upgradeCost = (t: BuildingId, level: number, milestone: number): number => Math.round(costOf(t, milestone) * (FLEET_UPGRADE.includes(t) ? (level === 0 ? 1 : 1.5) : (level === 0 ? 0.6 : 1)));
+const SERVICE_VALUE: Record<Service, number> = { faith: 12, school: 12, health: 12, commerce: 12, water: 10, culture: 6 };
+const SERVICES: Service[] = ['faith', 'school', 'health', 'commerce', 'water', 'culture'];
+const SERVICE_BUILDING: Record<Service, BuildingId> = { faith: 'chapel', school: 'school', health: 'apothecary', commerce: 'store', water: 'well', culture: 'theater' };
+/** Buildings worth measuring for income: they produce, transform or sell; not those built on deposits. */
+const INVEST = ALL.filter((t) => (def(t).output || def(t).extraOutputs || def(t).recipes || def(t).capacity) && !def(t).onDeposit);
+const WORKSHOPS = ALL.filter((t) => def(t).recipes);
+
+export function annexCost(s: GameState): { influence: number; cash: number } {
+  const n = Object.values(s.map.lands).filter((x) => x === 'ours').length;
+  return { influence: 1 + Math.floor(n / 6), cash: 60 + 15 * n };
+}
+const neighbourOfOurs = (s: GameState, id: LandId): boolean => { const [c, l] = parseKey(id); return ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).some(([x, y]) => s.map.lands[`${c + x},${l + y}` as LandId] === 'ours'); };
+/** The next land to annex: by the river first when asked, then one already seen. */
+export function suggestedLand(s: GameState, w: World, river: boolean): LandId | null {
+  const hasRiver = (id: LandId) => { const [cl] = parseKey(id), R = 15; for (let x = cl * R; x < (cl + 1) * R; x++) if (w.riverWidth[x] && landOf(x, w.riverBank[x] as number) === id) return true; return false; };
+  const ids = (Object.keys(w.lands) as LandId[]).filter((id) => s.map.lands[id] !== 'ours' && neighbourOfOurs(s, id));
+  const score = (id: LandId) => (river && hasRiver(id) ? 0 : 2) + (s.map.lands[id] === 'seen' ? 0 : 1);
+  return ids.sort((x, y) => score(x) - score(y))[0] ?? null;
+}
+/** A free lot on our river bank where a pier fits (a missing street does not count against it). */
+export function freeRiverbank(s: GameState, w: World): boolean {
+  for (let x = 0; x < w.riverWidth.length; x++) {
+    if (!w.riverWidth[x]) continue;
+    for (const y of [(w.riverBank[x] as number) - 1, (w.riverBank[x] as number) + (w.riverWidth[x] as number)]) {
+      if (y < 0 || y >= 105 || s.map.lands[landOf(x, y)] !== 'ours') continue;
+      const er = canPlace(s.map, w, 'riverPort', x, y);
+      if (!er || er === 'needsStreet') return true;
+    }
+  }
+  return false;
+}
+const landHasWater = (s: GameState, w: World, id: LandId): boolean => { const [c, l] = parseKey(id); for (let a = c * 15; a < c * 15 + 15; a++) for (let b = l * 15; b < l * 15 + 15; b++) if (w.water.has(lotKey(a, b)) || s.map.nature[lotKey(a, b)] === 'stream') return true; return false; };
+const greatWorkLocked = (s: GameState, w: World, id: GreatWorkId): boolean => {
+  const G = GREAT_WORKS[id] as { milestone?: number; level?: number; road?: boolean; deposit?: string };
+  if (G.milestone && s.milestone < G.milestone) return true;
+  if (G.level && s.level < G.level) return true;
+  if (G.road && !hasRoad(s)) return true;
+  if (G.deposit && !(Object.keys(s.map.buildings) as LotKey[]).some((k) => s.map.buildings[k] === 'mine' && w.deposits[k] === G.deposit)) return true;
+  return false;
+};
+
+/** What a year looks like for the purse: taxes, the share of trade, minus upkeep. Before the grant. */
+function purseYear(s: GameState, c: Economy): number {
+  const upkeep = (Object.values(s.map.buildings).reduce((x, t) => x + upkeepOf(t as BuildingId, s.milestone), 0) + greatWorksUpkeep(s)) * 4;
+  return c.revenue.total * (hasLaw(s, 'landRegistry') ? 1.1 : 1) + c.incomeTotal * ((MILESTONES[s.milestone] as MilestoneDef).shareOfTrade || 0) - upkeep;
+}
+
+/** The best tithe the colony can charge without the mean rating falling under `floor` or families going under. */
+export function suggestedTithe(s: GameState, w: World, floor: number): { rate: number; mean: number; revenue: number } {
+  const without = { ...s, taxes: { ...s.taxes, tithe: null } };
+  let best = { rate: 0, mean: rateHomes(without, w).mean, revenue: taxEffect(without, w).revenue };
+  for (const rate of [0.04, 0.08, 0.12, 0.16, 0.2]) {
+    const test = { ...s, taxes: { ...s.taxes, tithe: { general: rate, byGood: {} } as TaxLaw } };
+    const mean = rateHomes(test, w).mean, ef = taxEffect(test, w);
+    if (mean < floor || ef.familiesAtRisk) break;
+    best = { rate, mean, revenue: ef.revenue };
+  }
+  return best;
+}
+
+/** Where a collection point for a land (or near a commerce) would reach the most producers that need it. */
+export function collectionLot(s: GameState, w: World, t: BuildingId, land: LandId | null, near?: LotKey): LotKey | null {
+  const G = geography(s, connected(s.map)), reachT = roleOf(t)?.reach ?? 6;
+  const targets = near ? [near] : (Object.keys(G.producers) as LotKey[]).filter((x) => G.producers[x]!.land === land && G.producers[x]!.carry > 6 && !G.producers[x]!.collections.some((ci) => G.collections[ci]!.type === t));
+  const seen = new Set<LotKey>();
+  let best: { c: LotKey; n: number } | null = null;
+  for (const r of mainNetwork(s.map)) {
+    const [a, b] = parseKey(r);
+    for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const c = lotKey(a + x, b + y);
+      if (seen.has(c)) continue;
+      seen.add(c);
+      const n = targets.filter((z) => distance(z, c) <= (near ? (roleOf('store')?.reach ?? 6) + 4 : reachT)).length;
+      if (!n || (best && n <= best.n)) continue;
+      if (canPlace(s.map, w, t, a + x, b + y)) continue;
+      best = { c, n };
+    }
+  }
+  return best ? best.c : null;
+}
+
+/** The colony with these buildings and fleets placed on these lots. */
+const withPlaced = (s: GameState, put: Partial<Record<LotKey, BuildingId>>, fleet: Partial<Record<LotKey, Partial<Record<VehicleId, number>>>> = {}): GameState =>
+  ({ ...s, map: { ...s.map, buildings: { ...s.map.buildings, ...put } as GameState['map']['buildings'] }, fleet: { ...s.fleet, ...fleet } as GameState['fleet'] });
+
+export interface ProducerFix { action: AdviceAction; gain: number; cost: number; rule: string; params: Record<string, string | number> }
+/**
+ * The best measured way to make more of a producer's cargo reach a buyer, or more of its lot: change the crop,
+ * or put a collection point within its reach. Gains are the colony's income per year.
+ */
+export function producerFix(s: GameState, w: World, key: LotKey, c: Economy = computeEconomy(s, w)): ProducerFix | null {
+  const t = s.map.buildings[key] as BuildingId | undefined;
+  if (!t) return null;
+  const options: ProducerFix[] = [];
+  if (def(t).crop && !(s.seasonWork.swaps[key])) {
+    const op = swapOptions(s, w, key)[0];
+    if (op && op.gain >= 12 && op.cost <= op.gain * 3) options.push({ rule: 'outlet.swap', action: { kind: 'swap', key, to: op.t, from: t }, gain: op.gain, cost: Math.max(0, op.cost), params: { building: t, to: op.t, gain: op.gain, cost: op.cost } });
+  }
+  const G = geography(s, connected(s.map)), p = G.producers[key];
+  if (p && p.carry > 6) {
+    const land = p.land;
+    for (const [ct, v] of [['tradingPost', 'muleTrain'], ['landing', 'canoe']] as const) {
+      if (!unlocked(s, ct) || (ct === 'landing' && !landHasWater(s, w, land))) continue;
+      const lot = nearestFree(s, w, ct, key);
+      if (!lot) continue;
+      const gain = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: 2 } }), w).incomeTotal - c.incomeTotal;
+      const cost = costOf(ct, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price;
+      if (gain >= 15) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: { [v]: 2 } }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
+    }
+  }
+  return options.sort((x, y) => y.gain / Math.max(1, y.cost) - x.gain / Math.max(1, x.cost))[0] ?? null;
+}
+/** The free lot next to the main network nearest to a producer, within the collection point's reach. */
+function nearestFree(s: GameState, w: World, t: BuildingId, key: LotKey): LotKey | null {
+  const reachT = roleOf(t)?.reach ?? 6, seen = new Set<LotKey>();
+  let best: { c: LotKey; d: number } | null = null;
+  for (const r of mainNetwork(s.map)) {
+    const [a, b] = parseKey(r);
+    for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const c = lotKey(a + x, b + y), d = distance(key, c);
+      if (seen.has(c) || d > reachT || (best && d >= best.d)) continue;
+      seen.add(c);
+      if (!canPlace(s.map, w, t, a + x, b + y)) best = { c, d };
+    }
+  }
+  return best ? best.c : null;
+}
+
+// ---- the rules
+
+interface Ctx { s: GameState; w: World; c: Economy; ratings: Ratings; linked: Set<LotKey>; memo: Map<string, Economy> }
+const measured = (x: Ctx, extra?: Extra): Economy => {
+  const k = extra ? JSON.stringify(extra) : '';
+  let r = x.memo.get(k);
+  if (!r) { r = measure(x.s, x.w, extra); x.memo.set(k, r); }
+  return r;
+};
+
+/** Rules about the colony as a whole (the prototype's `conselhosSem`). Sorted, one advice per building type. */
+function colonyAdvice(x: Ctx): Advice[] {
+  const { s, w, c, ratings } = x, e = c.counts, a = e.work;
+  const fams = Object.values(s.families), nFam = fams.length, now = s.market.t;
+  const list: Advice[] = [];
+  const add = (weight: number, rule: string, params: Advice['params'], action: AdviceAction | null, extra: Partial<Advice> = {}) => list.push({ weight, rule, params, action, cost: 0, blocked: false, ...extra });
+  const gainOf = (t: BuildingId) => measured(x, { [t]: 1 }).incomeTotal - c.incomeTotal;
+  const can = (t: BuildingId) => unlocked(s, t);
+  const cost = (t: BuildingId) => costOf(t, s.milestone);
+  const build = (t: BuildingId): AdviceAction => ({ kind: 'build', building: t });
+  // the province's deadline
+  const target = MILESTONES[s.milestone + 1];
+  if (target) {
+    const left = s.deadline - now, missing = milestoneGaps(s, w, target).filter((g) => !g.ok);
+    if (left <= 8 && missing.length) add(100, 'deadline', { seasons: Math.max(0, left), milestone: target.id }, { kind: 'screen', screen: 'level' }, { goals: missing.slice(0, 3) });
+  }
+  // food
+  if (c.hunger > 1) {
+    const full = c.peaks.market.demand > e.market + 0.5;
+    if (full) { const t: BuildingId = can('market') ? 'market' : 'store'; add(95, 'food.market', { short: Math.round(c.hunger), building: t }, build(t)); }
+    else {
+      const ops = ALL.filter((t) => can(t) && !def(t).onDeposit && !def(t).riverside && def(t).output && good(def(t).output!.good as GoodId).food);
+      const best = ops.map((t) => ({ t, v: c.hunger - measured(x, { [t]: 1 }).hunger })).sort((p, q) => q.v - p.v)[0];
+      add(95, best ? 'food.crop' : 'food.plant', best ? { short: Math.round(c.hunger), building: best.t, covers: Math.round(best.v) } : { short: Math.round(c.hunger) }, best ? build(best.t) : { kind: 'screen', screen: 'economy' });
+    }
+  }
+  // cash
+  const year = purseYear(s, c) + (MILESTONES[s.milestone] as MilestoneDef).grant * (s.grantFactor || 1) * 4;
+  if (s.cash < 0) add(90, 'cash.negative', { year: Math.round(year) }, { kind: 'screen', screen: 'direction' });
+  else if (year < 0 && s.cash < -year * 2) add(80, 'cash.runningOut', { year: Math.round(year) }, { kind: 'screen', screen: 'direction' });
+  // buildings off the street network
+  if (e.unlinked) { const k0 = (Object.keys(s.map.buildings) as LotKey[]).find((k) => !x.linked.has(k)) as LotKey; add(85, 'unlinked', { n: e.unlinked }, { kind: 'select', key: k0 }); }
+  // the market cannot sell it all
+  const marketDemand = c.peaks.market.demand, marketCap = e.market;
+  if (marketDemand >= 3 && marketDemand > marketCap * 1.05) {
+    const types = (['market', 'store'] as BuildingId[]).filter(can), t = types[0];
+    if (t) {
+      const v = gainOf(t), params = { demand: Math.round(marketDemand), capacity: Math.round(marketCap) };
+      if (v < 5) {
+        if (!a.idle.length) { const sec = a.bySector[sectorOf(t) as keyof typeof a.bySector]; add(80, 'marketFull.people', { ...params, empty: Math.max(0, sec.slots - sec.filled), cost: cost('hut') }, build('hut')); }
+      } else {
+        const up = (Object.keys(s.map.buildings) as LotKey[]).filter((k) => types.includes(s.map.buildings[k] as BuildingId) && x.linked.has(k) && upgradeOf(s, k) < 2 && teamEfficiency(a, s, k) > 0.5).sort((p, q) => upgradeOf(s, p) - upgradeOf(s, q))[0];
+        if (up) {
+          const tp = s.map.buildings[up] as BuildingId, lv = upgradeOf(s, up), cu = upgradeCost(tp, lv, s.milestone);
+          const vm = computeEconomy({ ...s, upgrades: { ...s.upgrades, [up]: lv + 1 } }, w).incomeTotal - c.incomeTotal;
+          add(workWeight(cu, vm), 'marketFull.upgrade', { ...params, building: tp, cost: cu, gain: Math.round(vm) }, { kind: 'select', key: up, upgrade: true });
+        } else add(workWeight(cost(t), v), 'marketFull.build', { ...params, building: t, cost: cost(t), gain: Math.round(v) }, build(t));
+      }
+    }
+  }
+  // change a crop that is already overplanted
+  { const sw = cropSwap(s, w); if (sw) add(Math.min(76, workWeight(Math.max(1, sw.cost), sw.gain)), 'cropSwap', { from: sw.from, to: sw.t, cost: sw.cost, gain: sw.gain, seasons: firstHarvest(sw.t, now) - now }, { kind: 'swap', key: sw.key, to: sw.t, from: sw.from }); }
+  { const ex = overplanted(s, w); if (ex.length) add(58, 'overplanted', { building: ex[0]!.t, loss: Math.round(-ex[0]!.v), more: ex.slice(1, 3).map((y) => y.t).join(',') }, { kind: 'screen', screen: 'economy', tab: 'capacity' }); }
+  // workers far from a service work worse: taking the service to their homes pays in production
+  {
+    const workers = Object.values(a.byBuilding).flatMap((p) => p.families), FOR: [Service, BuildingId][] = [['water', 'well'], ['health', 'apothecary'], ['school', 'school'], ['faith', 'chapel'], ['commerce', 'store']];
+    const ops = FOR.filter(([, t]) => can(t)).map(([sv, t]) => ({ sv, t, n: workers.filter((f) => ratings.homes[homeOf(f.id)]?.items.some((i) => i.kind === 'outOfReach' && i.service === sv)).length }))
+      .filter((o) => o.n >= 4).map((o) => ({ ...o, v: (c.incomeTotal / Math.max(1, workers.length)) * o.n * SERVICE_VALUE[o.sv] * 0.005 })).sort((p, q) => q.v / cost(q.t) - p.v / cost(p.t));
+    const o = ops[0];
+    if (o && o.v >= 15) add(workWeight(cost(o.t), o.v), 'workersWithoutService', { n: o.n, service: o.sv, building: o.t, cost: cost(o.t), percent: Math.round(SERVICE_VALUE[o.sv] * 0.5), gain: Math.round(o.v) }, build(o.t));
+  }
+  // cash at hand and a great work waiting
+  {
+    const id = GREAT_WORK_IDS.find((g) => !greatWorkLocked(s, w, g) && !(s.greatWorks[g]?.active || s.greatWorks[g]?.done));
+    if (id && s.cash >= (GREAT_WORKS[id] as { cost: number }).cost * 0.5) { const G = GREAT_WORKS[id] as { cost: number; seasons: number }; add(57, 'greatWork', { work: id, instalment: Math.round(G.cost / G.seasons), years: G.seasons / 4 }, { kind: 'screen', screen: 'direction', tab: 'works' }); }
+  }
+  // taxes and the council
+  const hasCouncil = Object.values(s.map.buildings).includes('council');
+  if (can('council') && !hasCouncil) add(88, 'council', { cost: cost('council'), revenue: Math.round(taxEffect({ ...s, taxes: { ...s.taxes, tithe: { general: 0.08 } } }, w).revenue) }, build('council'));
+  const floor = (target ? (target.satisfaction ?? 60) : 60) + 3;
+  if (hasCouncil && !s.pendingTaxes.tithe) {
+    const ef = taxEffect(s, w), now0 = s.taxes.tithe?.general ?? 0, sug = suggestedTithe(s, w, floor), mean = ratings.mean;
+    const act = (value: number): AdviceAction => ({ kind: 'screen', screen: 'direction', tab: 'taxes', law: 'tithe', value });
+    const rich = 3000 + c.incomeTotal * 0.2;
+    if (ef.familiesAtRisk) add(90, 'tithe.choking', { n: ef.familiesAtRisk, rate: sug.rate, mean, after: sug.mean }, act(sug.rate));
+    else if (now0 > sug.rate && mean < floor) add(84, 'tithe.hurts', { rate: now0, wanted: floor - 3, suggested: sug.rate, mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
+    else if (s.cash > rich && now0 >= 0.04) add(58, 'tithe.relief', { rate: now0 - 0.04 }, act(Math.round((now0 - 0.04) * 100) / 100));
+    else if (sug.rate >= now0 + 0.04 && sug.mean >= floor + 1 && s.cash < rich / 2) add(now0 ? 62 : 86, now0 ? 'tithe.more' : 'tithe.first', { rate: sug.rate, revenue: Math.round(sug.revenue), mean, after: sug.mean }, act(sug.rate));
+  }
+  // idle families and jobs with nobody
+  const next = LEVELS.find((l) => l.level === s.level + 1), shortOfWork = !!next && a.employed < next.workers;
+  if (a.idle.length >= 3 && (a.idle.length > nFam * 0.1 || shortOfWork)) {
+    const wait = (t: BuildingId) => (def(t).crop ? firstHarvest(t, now) - now : 0);
+    const rec = invest(x).filter((i) => (def(i.t).jobs || 0) > 0 && (!def(i.t).riverside || freeRiverbank(s, w))).sort((p, q) => (p.years + wait(p.t) / 4) - (q.years + wait(q.t) / 4))[0];
+    if (rec) { const nE = wait(rec.t); add(workWeight(rec.cost + (rec.income * nE) / 4, rec.income), 'idle.invest', { n: a.idle.length, building: rec.t, cost: rec.cost, gain: Math.round(rec.income), seasons: nE }, build(rec.t)); }
+    else {
+      const t = (['cassavaField', 'cornField', 'beanField'] as BuildingId[]).find(can) as BuildingId;
+      add(shortOfWork ? 72 : 44, 'idle.jobs', { n: a.idle.length, level: s.level + 1, workers: next?.workers ?? 0, shortOfWork: shortOfWork ? 1 : 0, building: t, cost: cost(t) }, build(t));
+    }
+  }
+  // new chains: a cane field alone yields nothing; the sum must join the works
+  const has = (t: BuildingId) => Object.values(s.map.buildings).includes(t);
+  for (const [chain, works, first] of [['caneSpirits', { caneField: 2, distillery: 1 }, 'caneField'], ['caneRapadura', { caneField: 2, sugarMill: 1 }, 'caneField'], ['saltFish', { fishery: 1, saltery: 1 }, 'fishery']] as const) {
+    const types = Object.keys(works) as BuildingId[];
+    if (!types.every(can) || types.some(has) || (first === 'fishery' && !freeRiverbank(s, w))) continue;
+    const total = types.reduce((y, t) => y + cost(t) * (works as Record<string, number>)[t]!, 0);
+    if (s.cash < total * 0.6) continue;
+    const v = measured(x, works as Extra).incomeTotal - c.incomeTotal;
+    if (v >= total * 0.15) add(workWeight(total, v) - 8, 'chain', { chain, cost: total, gain: Math.round(v) }, build(first));
+  }
+  if (has('caneField') && !has('distillery') && !has('sugarMill')) { const t = can('distillery') ? 'distillery' : can('sugarMill') ? 'sugarMill' : null; if (t) add(78, 'caneIdle', { building: t, cost: cost(t) }, build(t)); }
+  // what the next level asks for beyond people and income
+  if (next?.requires) for (const t of Object.keys(next.requires) as BuildingId[]) { const n = Object.values(s.map.buildings).filter((y) => y === t).length; if (n < (next.requires[t] as number) && can(t)) add(70, 'levelBuilding', { level: s.level + 1, building: t, cost: cost(t) }, build(t)); }
+  if (target) {
+    const count: Partial<Record<BuildingId, number>> = {};
+    for (const k of Object.keys(s.map.buildings) as LotKey[]) if (x.linked.has(k)) count[s.map.buildings[k] as BuildingId] = (count[s.map.buildings[k] as BuildingId] ?? 0) + 1;
+    const nextMilestone = !!next && next.milestone === s.milestone + 1;
+    for (const t of Object.keys(target.requires ?? {}) as BuildingId[]) if ((count[t] ?? 0) < (target.requires![t] as number) && can(t)) add(nextMilestone ? 68 : 46, 'milestoneBuilding', { milestone: target.id, building: t, n: target.requires![t] as number, has: count[t] ?? 0, cost: cost(t) }, build(t));
+    const nLands = Object.values(s.map.lands).filter((y) => y === 'ours').length, land = suggestedLand(s, w, true);
+    if (target.lands && nLands < target.lands && land) { const q = annexCost(s); add(nextMilestone ? 64 : 44, 'milestoneLands', { milestone: target.id, n: target.lands, has: nLands, influence: q.influence, cost: q.cash }, { kind: 'land', land }, { cost: q.cash }); }
+    const missingF = Math.round((target.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05)) - nFam;
+    const onlyPeople = nextMilestone && a.employed >= next!.workers && c.incomeTotal >= next!.income;
+    if (missingF > 0 && (onlyPeople || a.idle.length <= nFam * 0.3) && emptySlots(s).length < (onlyPeople ? 14 : 8))
+      add(onlyPeople ? 88 : a.idle.length <= nFam * 0.25 ? workWeight(cost('hut') + 2 * (ARRIVAL_AID + SEED_AID), (2 * c.incomeTotal) / Math.max(1, nFam)) : 54, 'milestoneFamilies', { milestone: target.id, n: missingF, raised: (s.extraDemand || 0) * 5, cost: cost('hut') }, build('hut'));
+  }
+  const noPeople = SECTOR_ORDER.reduce((y, sec) => y + Math.max(0, a.bySector[sec].slots - a.bySector[sec].filled), 0), empty = emptySlots(s).length;
+  if (noPeople >= 2) { if (empty) add(52, 'jobsEmpty.homes', { n: noPeople, homes: empty }, null); else add(56, 'jobsEmpty.build', { n: noPeople, cost: cost('hut') }, build('hut')); }
+  // waste: near the limit the province starts to count it
+  const waste = wasteShare(c);
+  if (waste >= WASTE_LIMIT - 0.05) {
+    const worst = GOOD_IDS.slice().sort((p, q) => c.lost[q] - c.lost[p])[0] as GoodId, cause = (Object.keys(c.lostBy) as (keyof Economy['lostBy'])[]).sort((p, q) => c.lostBy[q] - c.lostBy[p])[0] as string;
+    add(waste > WASTE_LIMIT ? 83 : 70, 'waste', { percent: Math.round(waste * 100), limit: Math.round(WASTE_LIMIT * 100), cause, good: worst }, { kind: 'screen', screen: 'economy', tab: 'summary' });
+  }
+  const stuck = c.peaks.carts.demand >= 3 && c.peaks.carts.demand > c.transport.gateways.reduce((y, p) => y + p.capacity, 0) * 1.05;
+  const worstGood = GOOD_IDS.filter((g) => c.lost[g] > 30 && c.lost[g] > c.produced[g] * 0.25).sort((p, q) => c.lost[q] * good(q).localPrice - c.lost[p] * good(p).localPrice)[0];
+  if (worstGood) {
+    const wk = ALL.find((t) => can(t) && def(t).recipes && recipesOf(t, s.level).some((r) => r.from === worstGood) && !((e.n[t] ?? 0) > 0));
+    if (wk) add(48, 'lostGood.workshop', { good: worstGood, lost: Math.round(c.lost[worstGood]), building: wk, gain: Math.round(gainOf(wk)) }, build(wk));
+    else if (!stuck) add(42, 'lostGood.noBuyer', { good: worstGood, lost: Math.round(c.lost[worstGood]) }, { kind: 'screen', screen: 'economy', tab: 'resources' });
+  }
+  // a better home houses more people without a new lot; families pay, but need the material for sale
+  const ready: Partial<Record<GoodId, number>> = {};
+  for (const key of Object.keys(s.map.buildings) as LotKey[]) {
+    const up = HOME_UPGRADE[s.map.buildings[key] as BuildingId];
+    if (!up || !can(up.to)) continue;
+    const living = fams.filter((f) => homeOf(f.id) === key), rating = ratings.homes[key]?.rating ?? 0;
+    if (!living.length || rating < up.rating || living.reduce((y, f) => y + (f.savings || 0), 0) < up.cost) continue;
+    for (const g of up.needs) if (!((s.produced[g] ?? 0) > 1)) ready[g] = (ready[g] ?? 0) + 1;
+  }
+  for (const g of Object.keys(ready) as GoodId[]) { const t = ALL.find((y) => def(y).output?.good === g && can(y)); if (t && (ready[g] as number) >= 2) add(67, 'homesCanGrow', { n: ready[g] as number, good: g, building: t, cost: cost(t) }, build(t)); }
+  // services
+  const homes = Object.values(ratings.homes), wanted = target ? (target.satisfaction ?? 60) : 60, mean = ratings.mean;
+  if (mean < wanted + 6 && homes.length) {
+    const ops = SERVICES.map((sv) => {
+      const t = SERVICE_BUILDING[sv];
+      if (!can(t)) return null;
+      const n = homes.filter((h) => h.items.some((i) => i.kind === 'outOfReach' && i.service === sv)).length;
+      if (!n) return null;
+      const reachN = Math.min(n, Math.round((def(t).radius || 6) * 2)), up = (reachN * SERVICE_VALUE[sv]) / homes.length;
+      return { sv, t, n, up, perCost: up / cost(t) };
+    }).filter((o): o is NonNullable<typeof o> => !!o).sort((p, q) => q.perCost - p.perCost);
+    ops.forEach((o, i) => {
+      const weight = i === 0 && mean < wanted ? 85 : i === 0 && mean < wanted + 3 ? 62 : 32 + Math.min(14, o.n / 2);
+      if (weight < 40 && o.n < Math.max(3, homes.length * 0.25)) return;
+      add(weight, i === 0 && mean < wanted + 3 ? 'service.satisfaction' : 'service.homes', { n: o.n, service: o.sv, building: o.t, cost: cost(o.t), up: Math.max(0.1, Math.round(o.up * 10) / 10), mean, wanted, milestone: target?.id ?? '' }, build(o.t));
+    });
+  }
+  // growth
+  const nLands = Object.values(s.map.lands).filter((y) => y === 'ours').length, land = suggestedLand(s, w, true);
+  if (nFam > 40 * nLands && land) { const q = annexCost(s); add(50, 'crowded', { influence: q.influence, cost: q.cash }, { kind: 'land', land }, { cost: q.cash }); }
+  if (s.milestone >= 2 && !hasRoad(s)) {
+    const weight = next && next.milestone === 3 ? 66 : 30, south: LandId[] = [];
+    for (let y = 47; y < 105; y++) { const id = landOf(22, y); if (!south.includes(id) && s.map.lands[id] !== 'ours') south.push(id); }
+    if (south.length) add(weight, 'road.lands', { n: south.length }, { kind: 'land', land: south[0]! });
+    else add(weight, 'road.street', {}, { kind: 'build', building: 'street' });
+  }
+  // the next level
+  if (next) { const f = levelRequirements(s, w, s.level + 1, c).filter((y) => !y.ok); if (f.length) add(20, 'nextLevel', { level: s.level + 1 }, { kind: 'screen', screen: 'level' }, { goals: f.slice(0, 3) }); }
+  return list;
+}
+
+/** A crop already overplanted, on the colony's weakest lot for it, and the best swap there. */
+function cropSwap(s: GameState, w: World): { key: LotKey; from: BuildingId; t: BuildingId; cost: number; gain: number } | null {
+  const linked = connected(s.map);
+  let v: { key: LotKey; from: BuildingId; t: BuildingId; cost: number; gain: number } | null = null;
+  for (const { t } of overplanted(s, w).slice(0, 2)) {
+    const keys = (Object.keys(s.map.buildings) as LotKey[]).filter((k) => s.map.buildings[k] === t && linked.has(k) && !((s.firstHarvest?.[k] ?? -Infinity) > s.market.t) && !s.seasonWork.swaps[k]);
+    if (!keys.length) continue;
+    const g = def(t).output!.good as GoodId;
+    keys.sort((p, q) => soilOf(w, p, g) - soilOf(w, q, g));
+    const op = swapOptions(s, w, keys[0]!)[0];
+    if (op && op.gain >= 12 && op.cost <= op.gain * 3 && (!v || op.gain > v.gain)) v = { key: keys[0]!, from: t, t: op.t, cost: op.cost, gain: op.gain };
+  }
+  return v;
+}
+
+/** The three best buildings to put money in, by years to pay back (food first when there is hunger). */
+function invest(x: Ctx): { t: BuildingId; cost: number; income: number; years: number; hunger: number }[] {
+  const { s, c } = x;
+  const list = INVEST.filter((t) => unlocked(s, t)).map((t) => { const m = measured(x, { [t]: 1 }); return { t, cost: costOf(t, s.milestone), income: m.incomeTotal - c.incomeTotal, hunger: c.hunger - m.hunger, years: 0 }; })
+    .filter((i) => i.income > 4 || i.hunger > 1);
+  for (const i of list) i.years = i.income > 0 ? i.cost / i.income : 99;
+  return list.filter((i) => i.years <= 10 || i.hunger > 1).sort((p, q) => (q.hunger > 1 ? 1 : 0) - (p.hunger > 1 ? 1 : 0) || p.years - q.years).slice(0, 3);
+}
+
+/** Rules about transport (the prototype's `conselhosTransp`). */
+function transportAdvice(x: Ctx): Advice[] {
+  const { s, w, c } = x, R = c.transport, L: Advice[] = [];
+  const add = (weight: number, rule: string, params: Advice['params'], action: AdviceAction | null) => L.push({ weight, rule, params, action, cost: 0, blocked: false });
+  const gainVehicle = (key: LotKey, v: VehicleId) => { const f = fleetOf(s, key); return computeEconomy({ ...s, fleet: { ...s.fleet, [key]: { ...f, [v]: (f[v] ?? 0) + 1 } } }, w).incomeTotal - c.incomeTotal; };
+  const bestVehicle = (key: LotKey) => ((roleOf(s.map.buildings[key] as BuildingId)?.vehicles ?? []) as VehicleId[]).filter((v) => vehicleUnlocked(s, v)).sort((p, q) => (VEHICLES[q] as VehicleDef).cargo - (VEHICLES[p] as VehicleDef).cargo)[0];
+  let measuredN = 0;
+  const items = [...R.collections.map((y) => ['collection', y] as const), ...R.gateways.map((y) => ['gateway', y] as const)].sort((p, q) => q[1].peak - p[1].peak);
+  for (const [which, y] of items) {
+    const v = bestVehicle(y.key), room = fleetSize(s, y.key) < y.slots;
+    if (!v) continue;
+    const V = VEHICLES[v] as VehicleDef;
+    const tight = which === 'gateway' ? gatewayTight(y) : y.peak >= 0.9;
+    if (y.capacity <= 0 && room) { add(74, `noVehicles.${which}`, { building: y.key, vehicle: v, cost: V.price }, { kind: 'buyVehicle', key: y.key, vehicle: v }); continue; }
+    if (tight && room && measuredN < 4) {
+      measuredN++;
+      const g = gainVehicle(y.key, v);
+      if (g - V.upkeep * 4 >= V.price / 2) add(workWeight(V.price, g), `full.${which}`, { building: y.key, vehicle: v, cost: V.price, upkeep: V.upkeep * 4, gain: Math.round(g) }, { kind: 'buyVehicle', key: y.key, vehicle: v });
+    } else if (tight && !room && upgradeOf(s, y.key) < 2) add(62, 'noSlot', { building: y.key }, { kind: 'select', key: y.key, upgrade: true });
+    else if (which === 'collection' && collectionState(y as Economy['transport']['collections'][number]) === 'idle' && fleetSize(s, y.key) > 1 && y.tariff > 0.45) {
+      const v0 = (Object.keys(y.fleet) as VehicleId[]).find((z) => y.fleet[z]);
+      if (v0) add(46, 'idleCollection', { building: y.key, tariff: y.tariff, vehicle: v0 }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
+    }
+  }
+  if (s.level >= 4) for (const r of R.lands.filter((y) => y.producedValue > 0 && y.lostValue > 40 && y.lostValue / y.producedValue > 0.12 && !y.covered).slice(0, 2)) {
+    const t: BuildingId = landHasWater(s, w, r.id) ? 'landing' : 'tradingPost', v: VehicleId = t === 'tradingPost' ? 'muleTrain' : 'canoe', total = costOf(t, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price;
+    L.push({ weight: workWeight(total, r.lostValue * 0.6), rule: 'noCollection', params: { land: r.id, lost: Math.round(r.lostValue), building: t, vehicle: v, cost: total }, action: { kind: 'collect', building: t, land: r.id, fleet: { [v]: 2 } }, cost: total, blocked: false });
+  }
+  // the pier full all year and idle people: transforming here employs them and sends less cargo to the canoes
+  {
+    const a0 = allocate(s);
+    if (R.gateways.some((y) => gatewayTight(y)) && a0.idle.length >= 1) {
+      let best: { t: BuildingId; g: number; less: number } | null = null;
+      for (const t of WORKSHOPS.filter((y) => unlocked(s, y) && recipesOf(y, s.level).some((rc) => (c.produced[rc.from as GoodId] ?? 0) > 40))) {
+        const c2 = measured(x, { [t]: 1 }), g = c2.incomeTotal - c.incomeTotal, less = c.exportedTotal - c2.exportedTotal;
+        if (g > 20 && (!best || g > best.g)) best = { t, g, less };
+      }
+      if (best) { const n = Math.min(a0.idle.length, def(best.t).jobs || 1); add(78, 'pierFullIdle', { building: best.t, cost: costOf(best.t, s.milestone), n, gain: Math.round(best.g), less: best.less > 10 ? Math.round(best.less) : 0 }, { kind: 'build', building: best.t }); }
+    }
+  }
+  // the store package replaces the prototype's lone store for far fields (see storePackage)
+  for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) L.push({ weight: workWeight(costOf('waystation', s.milestone) + 600, y.lost * 3), rule: 'noGateway', params: { building: y.key, lost: Math.round(y.lost) }, action: { kind: 'collect', building: 'waystation', near: y.key }, cost: costOf('waystation', s.milestone) + 600, blocked: false });
+  const u = s.transport.last;
+  if (u && u.margin >= 0.25 && u.loss > 0.2) add(60, 'highTariffs', { margin: u.margin, loss: u.loss }, { kind: 'screen', screen: 'transport', tab: 'collections' });
+  return L;
+}
+
+/** What following an action costs from the purse now. */
+function actionCost(s: GameState, a: AdviceAction | null): number {
+  if (!a) return 0;
+  switch (a.kind) {
+    case 'build': return a.building === 'street' ? 0 : costOf(a.building, s.milestone);
+    case 'select': return a.upgrade ? upgradeCost(s.map.buildings[a.key] as BuildingId, upgradeOf(s, a.key), s.milestone) : 0;
+    case 'swap': return 0;
+    case 'land': return annexCost(s).cash;
+    case 'buyVehicle': return (VEHICLES[a.vehicle] as VehicleDef).price;
+    default: return 0;
+  }
+}
+
+/** The prototype's list: colony and transport rules, heaviest first, one advice per building type. */
+export function legacyAdvice(s: GameState, w: World): Advice[] {
+  const c = computeEconomy(s, w), x: Ctx = { s, w, c, ratings: rateHomes(s, w), linked: connected(s.map), memo: new Map([['', c]]) };
+  const one = (list: Advice[]) => { const seen = new Set<string>(); return list.filter((y) => { if (y.action?.kind !== 'build') return true; if (seen.has(y.action.building)) return false; seen.add(y.action.building); return true; }); };
+  const colony = one(colonyAdvice(x).sort((p, q) => q.weight - p.weight));
+  return one(colony.concat(transportAdvice(x)).sort((p, q) => q.weight - p.weight));
+}
+
+/** The advisor's list, with the review fixes: costs and blocking, province requests, far-land packages, producer fixes. */
+export function advise(s: GameState, w: World): Advice[] {
+  const list = legacyAdvice(s, w);
+  for (const y of list) { if (!y.cost) y.cost = actionCost(s, y.action); y.blocked = y.cost > Math.max(0, s.cash); }
+  return list;
+}
+
