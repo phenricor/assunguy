@@ -32,6 +32,7 @@ the catalog artboards show them applied.
 - Extra time and extra funds from the province are no longer buttons in Direção: província; the advisor
   suggests them when they are available.
 - Advice whose cost is above the cash in hand is shown blocked.
+- The settlement grant is $ 160 a season and the province shares 10% of trade from the start (balance review).
 - Walking to commerce is lossless only within 6 lots of it; the whole-land exception is gone.
 - Fields within those 6 lots never use a collection point; only fields beyond them split their cargo
   between walking and a collection point.

@@ -190,20 +190,6 @@
   "ferro": "iron",
   "erval": "yerba"
  },
- "sectors": {
-  "lavoura": "farming",
-  "rio": "river",
-  "comercio": "commerce",
-  "oficio": "crafts",
-  "mina": "mining",
-  "servicos": "services"
- },
- "milestones": {
-  "0": "settlement",
-  "1": "parish",
-  "2": "village",
-  "3": "town"
- },
  "nature": {
   "ribeirao": "stream",
   "corrego": "brook",
@@ -221,5 +207,19 @@
   "pin2": "araucaria2",
   "mat1": "thicket1",
   "mat2": "thicket2"
+ },
+ "sectors": {
+  "lavoura": "farming",
+  "rio": "river",
+  "comercio": "commerce",
+  "oficio": "crafts",
+  "mina": "mining",
+  "servicos": "services"
+ },
+ "milestones": {
+  "0": "settlement",
+  "1": "parish",
+  "2": "village",
+  "3": "town"
  }
 }

@@ -517,7 +517,6 @@ export const BUILDINGS = {
     }
   },
   "riceField": {
-    "nearWater": 3,
     "category": "crops",
     "cost": 60,
     "payer": "families",
@@ -528,7 +527,8 @@ export const BUILDINGS = {
       "good": "rice",
       "perSeason": 36,
       "season": 2
-    }
+    },
+    "nearWater": 3
   },
   "wheatField": {
     "category": "crops",
@@ -648,7 +648,6 @@ export const BUILDINGS = {
     }
   },
   "pineNutGrove": {
-    "nearForest": true,
     "category": "livestock",
     "cost": 50,
     "payer": "colony",
@@ -659,7 +658,8 @@ export const BUILDINGS = {
       "good": "pineNut",
       "perSeason": 30,
       "season": 2
-    }
+    },
+    "nearForest": true
   },
   "yerbaGrove": {
     "category": "livestock",
@@ -678,7 +678,6 @@ export const BUILDINGS = {
     ]
   },
   "sawmill": {
-    "nearForest": true,
     "category": "extraction",
     "cost": 250,
     "payer": "colony",
@@ -688,6 +687,7 @@ export const BUILDINGS = {
       "good": "planks",
       "perSeason": 22
     },
+    "nearForest": true,
     "nuisance": 3
   },
   "pottery": {
@@ -1032,7 +1032,6 @@ export const BUILDINGS = {
     "fixed": true
   },
   "woodYard": {
-    "nearForest": true,
     "category": "transport",
     "cost": 900,
     "payer": "colony",
@@ -1043,6 +1042,7 @@ export const BUILDINGS = {
       "good": "firewood",
       "perSeason": 110
     },
+    "nearForest": true,
     "fixed": true
   },
   "warehouse": {
@@ -1358,8 +1358,8 @@ export const LEVELS: readonly LevelDef[] = [
 export const MILESTONES: readonly MilestoneDef[] = [
   {
     "id": "settlement",
-    "grant": 120,
-    "shareOfTrade": 0
+    "grant": 160,
+    "shareOfTrade": 0.1
   },
   {
     "id": "parish",

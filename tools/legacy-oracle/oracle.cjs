@@ -442,6 +442,8 @@ const SCENARIOS = {
     prestaContas = patch(prestaContas, "if (parte < .2) { nota += 1; razoes.push('parcelas em dia'); } else if (parte > .4) { nota -= 1; razoes.push('muitas parcelas atrasadas'); }", '');
     pedidoDeTroca = patch(pedidoDeTroca, '(f.parcelas || 0) >= 5', 'M.mercadoSim.t - f.chegou >= 24');
     prepGeo = patch(prepGeo, 'if (dL > LOMBO_LIVRE) {', 'if (false) {');
+    // balance review: the settlement grant and the share of trade from the start
+    MARCOS[0].verba = 160; MARCOS[0].repasse = .1;
     prepGeo = patch(prepGeo, 'cap.forEach((c, i) => { if (distK(key, c.key) <= c.al) caps.push(i); });', 'if (dL > LOMBO_LIVRE) cap.forEach((c, i) => { if (distK(key, c.key) <= c.al) caps.push(i); });');
   });
   const out = await SCENARIOS[name](page, process.argv[3]);

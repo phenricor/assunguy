@@ -11,7 +11,7 @@ describe('robot player', () => {
     expect(a.seasons.at(-1)!.level).toBeGreaterThanOrEqual(2);
   });
   it('the patient policy saves for heavy advice instead of spending on lighter ones', () => {
-    const r = play(1869, { seasons: 12, policy: 'patient' });
+    const r = play(1869, { seasons: 12, policy: 'patient', reserve: 2000 });
     expect(r.policy).toBe('patient');
     expect(r.seasons.some((x) => x.actions.some((y) => y.startsWith('saving for')))).toBe(true);
   });

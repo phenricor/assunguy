@@ -1,8 +1,8 @@
 // One robot run with a balance variant applied to the data, as a JSON line: for measuring a change.
 //   npx tsx src/experiment.ts <variant> <seed> [greedy|patient]
-// Variants: base; share10 (10% of trade from the start); grant160 / grant200 (settlement grant);
-// share10grant (both 10% of trade and a $ 160 grant from the start); instalments (lot instalments back);
-// instalmentsGrant160 (instalments and a $ 160 grant).
+// Variants change the settlement milestone over the game's balance ($ 160 grant, 10% of trade): base;
+// share10; grant160 / grant200; share10grant; instalments (lot instalments back); instalmentsGrant160.
+// They were measured against the old balance ($ 120, no share); see docs/PORTING.md.
 import { MILESTONES } from '@assunguy/data';
 import { RULES } from '@assunguy/sim';
 import { play } from './bot.js';

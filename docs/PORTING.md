@@ -72,6 +72,8 @@ families), with the same rules, 60 seasons, greedy (`src/experiment.ts`):
 
 The parish is due at 44, 48 with the extra time the province grants.
 
+The last of these is now the game's balance: with it, `base` gives parish at 47, 47 and 51.
+
 ## The advisor
 
 `legacyAdvice` is the prototype's list, number for number. `advise` adds the review rules on top: every
@@ -137,6 +139,9 @@ same rules off in the prototype before recording (see the patches at the top of 
   point: walking there loses nothing, so paying a tariff for it made no sense. The prototype's soft route
   choice sent 5% to 26% of such a field's cargo to any collection point in reach. The oracle guards the
   prototype's collection list the same way. Neither save has such a field, so their numbers are unchanged.
+- The settlement grant is $ 160 a season (was $ 120) and the province shares 10% of trade from the start
+  (was only from the parish), after the robot player showed the settlement purse starved without lot
+  instalments (see below). The oracle sets the same in the prototype.
 - Relief works are always on.
 - Extra funds and extra time from the province are offered by the advisor when available, not as
   buttons on the province tab. Advice the colony cannot pay for is listed but blocked.

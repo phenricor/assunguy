@@ -239,6 +239,9 @@ def main():
     milestones = []
     for n, m in enumerate(d['MARCOS']):
         out = {'id': milestone_ids[n], 'grant': m['verba'], 'shareOfTrade': m['repasse']}
+        # balance review (November 2026): the settlement purse starved without lot instalments; the robot player
+        # reached the parish in time only with a $ 160 grant and 10% of trade from the start
+        if n == 0: out.update({'grant': 160, 'shareOfTrade': 0.1})
         for a, b in [('fam', 'families'), ('sat', 'satisfaction'), ('terras', 'lands'), ('prazo', 'deadline')]:
             if a in m: out[b] = m[a]
         if m.get('estrada'): out['road'] = True
