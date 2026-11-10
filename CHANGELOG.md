@@ -11,6 +11,17 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-11-10
+
+### Added
+
+- The goods screen (Economia, Recursos) is back as in the prototype: raw materials and processed goods in
+  separate chips, food and other goods apart, and a switch that shows, dimmed, what the colony does not
+  make yet. Each card shows when the good is harvested or where it is made, whether it is exported, its
+  price and trend, and a bar with where the year's arrobas went.
+- Tapping a good opens its price over the last seasons and where its arrobas went; for a good not made yet,
+  it shows how to start making it, with a button to build the workshop or the level it opens at.
+
 ## [1.0.0-beta.2] - 2026-11-10
 
 ### Fixed
@@ -48,6 +59,7 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.2...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.3...HEAD
+[1.0.0-beta.3]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.2...v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.1...v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/phenricor/assunguy/releases/tag/v1.0.0-beta.1

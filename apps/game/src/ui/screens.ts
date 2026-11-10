@@ -1,15 +1,15 @@
 // The panels behind the bottom bar and the header: Colônia, Governo (with its detail tabs), Transporte,
 // Nível, Economia and a district's numbers. Same markup and pieces as the prototype's dashboards.
-import { GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type GoodId, type GreatWorkId } from '@assunguy/data';
+import { BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
-  AGENT_COST, allocate, arrivalChance, cityRisks, currentPrice, def, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
+  AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
   proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
   type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T, goodName, num, pct } from '../i18n';
 import { api, hooks, PT } from '../view';
-import { K, esc, fmt, confirm, hint, signedMoney, ico, sheetWith } from './kit';
+import { K, esc, fmt, confirm, hint, signedMoney, ico, sheetWith, popup, closePopup } from './kit';
 import { refresh } from './app';
 import { screen, closeScreen, hooks2 } from './report';
 
@@ -61,22 +61,113 @@ const districtName = (n: { key: string; land?: string; n?: number; custom?: stri
 
 // ---- Economia: goods, prices and results
 
+// goods split as in the prototype: raw materials come from fields, herds, the river, the forest or the mine;
+// processed goods went through a workshop. Each card shows where the year's arrobas went.
+type GoodClass = 'raw' | 'processed';
+let goodsClass: GoodClass = 'raw', showMissing = false;
+const RECIPE_OF: Partial<Record<GoodId, { t: BuildingId; from: GoodId; level: number }>> = {};
+for (const t of BUILDING_IDS) for (const r of def(t).recipes ?? []) if (!RECIPE_OF[r.to as GoodId]) RECIPE_OF[r.to as GoodId] = { t, from: r.from as GoodId, level: Math.max(def(t).minLevel ?? 1, r.minLevel ?? 1) };
+const classOf = (g: GoodId): GoodClass => (RECIPE_OF[g] ? 'processed' : 'raw');
+/** The first building that makes a good, and the level it opens at. */
+function producerOf(s: GameState, g: GoodId): { t: BuildingId; level: number } | null {
+  const out: { t: BuildingId; level: number }[] = [];
+  for (const t of BUILDING_IDS) {
+    const D = def(t);
+    if (D.lateGame && !s.race) continue;
+    if (D.category === 'retired') continue;
+    if (D.output?.good === g || D.extraOutputs?.some((o) => o.good === g)) out.push({ t, level: D.minLevel ?? 1 });
+    const r = (D.recipes ?? []).find((x) => x.to === g);
+    if (r) out.push({ t, level: Math.max(D.minLevel ?? 1, r.minLevel ?? 1) });
+  }
+  if (!out.length && good(g).group === 'mining') out.push({ t: 'mine' as BuildingId, level: def('mine' as BuildingId).minLevel ?? 1 });
+  return out.sort((x, y) => x.level - y.level)[0] ?? null;
+}
+const FLOW: [string, string][] = [['ownTable', '#14875A'], ['market', '#2F5AA8'], ['processed', '#5F5144'], ['exported', '#8A5BB5'], ['stock', '#A67C12'], ['lost', '#C2562B']];
+function flowOf(c: ReturnType<typeof store.economy>, g: GoodId): Record<string, number> {
+  const p = c.produced[g] ?? 0, f: Record<string, number> = { ownTable: c.ownTable[g] ?? 0, market: c.market[g] ?? 0, processed: c.processed[g] ?? 0, exported: c.exported[g] ?? 0, lost: c.lost[g] ?? 0 };
+  f.stock = Math.max(0, p - Object.values(f).reduce((x, y) => x + y, 0));
+  return f;
+}
+const flowBar = (f: Record<string, number>, total: number) => `<span class="fluxo" role="img" aria-label="${esc(FLOW.filter(([k]) => (f[k] ?? 0) > 0.5).map(([k]) => `${T(`ui.econ.flow.${k}`)} ${fmt(f[k] ?? 0)}`).join(', '))}">${FLOW.map(([k, col]) => ((f[k] ?? 0) > 0.5 ? `<i style="flex:${((f[k] ?? 0) / Math.max(1, total)).toFixed(4)};background:${col}"></i>` : '')).join('')}</span>`;
+const TAG_ICONS: Record<string, string> = {
+  0: '<path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 9V4M12 20v-5M9 12H4M20 12h-5M9.9 9.9L6.3 6.3M17.7 17.7l-3.6-3.6M9.9 14.1l-3.6 3.6M17.7 6.3l-3.6 3.6"/>',
+  1: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
+  2: '<path d="M5 19c9 1 15-5 15-15C10 4 4 9 5 19zM5 19l8-8"/>',
+  3: '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M12 6l-2-2M12 6l2-2M12 18l-2 2M12 18l2 2"/>',
+  year: '<path d="M20 12a8 8 0 1 1-2.4-5.7M20 3v4h-4"/>',
+  workshop: '<path d="M14 6l4 4M12 8l-8 8 3 3 8-8M13 5l3-2 5 5-2 3"/>',
+  here: '<path d="M4 11l8-7 8 7M6 10v10h12V10"/>',
+  exports: '<path d="M3 15h18l-3 5H6zM12 15V4l6 8"/>',
+};
+const tag = (ic: string, txt: string) => `<span class="tag">${ico(TAG_ICONS[ic] ?? '')}${esc(txt)}</span>`;
+function tagsOf(s: GameState, g: GoodId): string {
+  const L: string[] = [], r = RECIPE_OF[g], exports = good(g).exportPrice > 0;
+  if (r) L.push(tag('workshop', T('ui.econ.tagMade', { item: goodName(r.from).toLowerCase(), place: T(`building.${r.t}`).toLowerCase() })));
+  else {
+    const pr = producerOf(s, g), season = pr ? def(pr.t).output?.season : undefined;
+    L.push(typeof season === 'number' ? tag(String(season), T('ui.econ.tagHarvest', { season: T(`season.${season}`).toLowerCase() })) : tag('year', T('ui.econ.tagYear')));
+  }
+  L.push(exports ? tag('exports', T('ui.econ.tagExports')) : tag('here', T('ui.econ.tagLocal')));
+  return `<span class="tags">${L.join('')}</span>`;
+}
+const priceSub = (s: GameState, g: GoodId) => `${T(good(g).exportPrice > 0 ? 'ui.econ.priceExport' : 'ui.econ.priceHere')} ${trend(s, g)}`.trim();
+
 export function openEconomy(tab = 'goods'): void {
   const { s } = store.session(), c = store.economy();
   const tabs: [string, string][] = [['goods', T('ui.econ.goods')], ['income', T('ui.econ.income')]];
   let body = '';
   if (tab === 'goods') {
-    const gs = GOOD_IDS.filter((g) => c.produced[g] > 0.5 || (c.lost[g] ?? 0) > 0.5);
-    body = gs.length ? K.cards(gs.map((g) => {
-      const lost = c.lost[g] ?? 0, share = c.produced[g] ? lost / c.produced[g] : 0;
-      return K.card({ ic: icon(g), title: goodName(g), sub: T('ui.econ.goodLine', { n: fmt(c.produced[g]), lost: fmt(lost), pct: Math.round(share * 100) }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: trend(s, g), tone: share > 0.2 ? 'ruim' : '' });
-    })) : K.empty(T('ui.econ.none'));
+    const made = GOOD_IDS.filter((g) => (c.produced[g] ?? 0) > 0.5);
+    const missing = GOOD_IDS.filter((g) => (c.produced[g] ?? 0) <= 0.5 && producerOf(s, g));
+    const ofClass = made.filter((g) => classOf(g) === goodsClass).sort((x, y) => (c.produced[y] ?? 0) - (c.produced[x] ?? 0));
+    const missingOfClass = missing.filter((g) => classOf(g) === goodsClass).sort((x, y) => (producerOf(s, x)!.level - producerOf(s, y)!.level) || currentPrice(s.market, y) - currentPrice(s.market, x));
+    const card = (g: GoodId) => { const f = flowOf(c, g), lost = f.lost ?? 0; return K.card({ ic: icon(g), title: goodName(g), sub: T('ui.arrobasYear', { n: fmt(c.produced[g] ?? 0) }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: priceSub(s, g), tone: lost > (c.produced[g] ?? 0) * 0.2 ? 'ruim' : '', attrs: `data-good="${g}"`, body: tagsOf(s, g) + flowBar(f, c.produced[g] ?? 1) }); };
+    const missingCard = (g: GoodId) => { const pr = producerOf(s, g)!; return K.card({ ic: icon(g), title: goodName(g), dim: true, sub: pr.level <= s.level ? T('ui.econ.buildFor', { building: T(`building.${pr.t}`), cost: fmt(costOf(pr.t, s.milestone)) }) : T('ui.econ.atLevel', { building: T(`building.${pr.t}`), n: pr.level }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: priceSub(s, g), attrs: `data-good="${g}"`, body: tagsOf(s, g) }); };
+    const section = (name: string, f: (g: GoodId) => boolean) => { const a = ofClass.filter(f).map(card), b = showMissing ? missingOfClass.filter(f).map(missingCard) : []; return a.length || b.length ? K.section(name) + K.cards([...a, ...b]) : ''; };
+    const ser = (s.series ?? []) as SeriesPoint[], before = ser.length >= 5 ? ser[ser.length - 5] : undefined;
+    const arrow = before && before.sales ? (() => { const v = Math.round((c.salesTotal / before.sales - 1) * 100); return ` ${v > 0 ? '▲' : v < 0 ? '▼' : '='} ${Math.abs(v)}%`; })() : '';
+    body = K.tiles([{ v: `$ ${fmt(c.salesTotal)}`, r: T('ui.econ.salesYear') + arrow }, { v: fmt(c.producedTotal), r: T('ui.econ.producedYear') }, { v: fmt(c.marketTotal + c.exportedTotal), r: T('ui.econ.soldYear') }])
+      + K.section(T('ui.econ.goods'), 'resources')
+      + K.chips([['raw', T('ui.econ.raw')], ['processed', T('ui.econ.processed')]], goodsClass, 'classe')
+      + K.toggle('verFut', T('ui.econ.showMissing', { n: missingOfClass.length }), showMissing)
+      + section(T('ui.econ.food'), (g) => !!good(g).food) + section(T('ui.econ.other'), (g) => !good(g).food)
+      + (ofClass.length || (showMissing && missingOfClass.length) ? '' : K.empty(T(showMissing ? 'ui.econ.nothing' : 'ui.econ.noneHere')))
+      + K.legend(FLOW.map(([k, col]) => [col, T(`ui.econ.flow.${k}`)] as [string, string]));
   } else {
     const ser = (s.series ?? []).slice(-12) as SeriesPoint[];
     body = K.tiles([{ v: `$ ${fmt(c.incomeTotal)}`, r: T('ui.econ.incomeYear') }, { v: `$ ${fmt(c.salesTotal)}`, r: T('ui.econ.sales') }, { v: `${Math.round(wasteShare(c) * 100)}%`, r: T('ui.econ.waste'), bad: wasteShare(c) > 0.2 }])
-      + (ser.length >= 2 ? K.section(T('ui.econ.evolution'), 'evolution') + K.chart({ labels: ser.map((p) => short(p.t)), series: [{ name: T('ui.econ.sales'), color: COLORS[0]!, values: ser.map((p) => p.sales) }, { name: T('ui.econ.produced'), color: COLORS[1]!, values: ser.map((p) => p.produced) }] }) : '');
+      + (ser.length >= 2 ? K.section(T('ui.econ.evolution'), 'evolution') + K.chart({ labels: ser.map((p) => short(p.t)), series: [{ name: T('ui.econ.sales'), color: COLORS[0]!, values: ser.map((p) => p.sales) }, { name: T('ui.econ.produced'), color: COLORS[1]!, values: ser.map((p) => p.produced) }], unit: '' }) : '');
   }
-  screen({ id: 'economy', title: T('ui.econ.title'), tabs, tab, body, onTab: openEconomy });
+  const p = screen({ id: 'economy', title: T('ui.econ.title'), tabs, tab, body, onTab: openEconomy });
+  p.querySelectorAll<HTMLElement>('[data-classe]').forEach((b) => { b.onclick = () => { goodsClass = b.dataset.classe as GoodClass; openEconomy('goods'); }; });
+  const vf = p.querySelector<HTMLElement>('#verFut');
+  if (vf) vf.onclick = () => { showMissing = !showMissing; openEconomy('goods'); };
+  p.querySelectorAll<HTMLElement>('[data-good]').forEach((b) => { b.onclick = () => openGood(b.dataset.good as GoodId); });
+}
+/** One good: its price over the last seasons, where the year's arrobas went, or how to start making it. */
+function openGood(g: GoodId): void {
+  const { s } = store.session(), c = store.economy(), h = ((s.market.history as Partial<Record<GoodId, number[]>>)[g] ?? []).slice(-12);
+  const r = RECIPE_OF[g], exports = good(g).exportPrice > 0;
+  let chart = '';
+  if (h.length >= 2) {
+    const now = h.at(-1) as number, ago = (h.length >= 5 ? h[h.length - 5] : h[0]) as number, lo = Math.min(...h), hi = Math.max(...h);
+    const labels = h.map((_, i) => short(s.market.t - (h.length - 1 - i)));
+    chart = K.chart({ labels, series: [{ name: T(exports ? 'ui.econ.priceExportLine' : 'ui.econ.priceHereLine'), color: COLORS[0]!, values: h.map((x) => Math.round(x * 10) / 10) }], digits: 1, base: Math.max(0, Math.floor(lo * 0.8 * 2) / 2) })
+      + K.rows([K.row(T('ui.econ.today'), `$ ${num(now, 1)}`), K.row(T('ui.econ.yearAgo'), `$ ${num(ago, 1)}`), K.row(T('ui.econ.range'), T('ui.econ.rangeValue', { lo: `$ ${num(lo, 1)}`, hi: `$ ${num(hi, 1)}` }))]);
+  }
+  const origin = r ? T('ui.econ.madeFrom', { item: goodName(r.from).toLowerCase(), place: T(`building.${r.t}`).toLowerCase() }) : '';
+  const text = [origin, exports ? '' : T('ui.econ.localOnly')].filter(Boolean).join(' ');
+  if ((c.produced[g] ?? 0) <= 0.5) {
+    const pr = producerOf(s, g);
+    const how = !pr ? '' : pr.level <= s.level
+      ? K.section(T('ui.econ.howTo')) + K.actions([{ kind: 'pri', text: T('ui.econ.build', { place: T(`building.${pr.t}`).toLowerCase() }), attrs: `data-acao='${JSON.stringify({ kind: 'build', building: pr.t })}'` }])
+      : K.section(T('ui.econ.howTo')) + K.note(esc(T('ui.econ.unlocks', { item: goodName(g), n: pr.level, place: T(`building.${pr.t}`).toLowerCase(), level: s.level })), 'neutra');
+    popup(esc(goodName(g)), esc(text), chart + how);
+    return;
+  }
+  const f = flowOf(c, g);
+  popup(esc(goodName(g)), esc(text), chart + K.section(T('ui.econ.where')) + K.rows([K.row(T('ui.econ.supply'), fmt(c.produced[g] ?? 0)), ...FLOW.filter(([k]) => (f[k] ?? 0) > 0.5).map(([k]) => K.row(T(`ui.econ.flow.${k}`), fmt(f[k] ?? 0)))]) + K.actions([{ text: T('ui.close'), attrs: 'data-fecha-pop' }]));
+  document.querySelector<HTMLElement>('#infoPop [data-fecha-pop]')?.addEventListener('click', () => closePopup());
 }
 hooks2.openEconomy = () => openEconomy();
 
