@@ -1,6 +1,7 @@
 # Publishes a GitHub Release with the game's single HTML file and the version's section of CHANGELOG.md, then
 # puts the same file on GitHub Pages. It runs:
-# - on a push to main whose package.json version has no release yet (a version bump releases it);
+# - on a push to main whose package.json version has no release yet (a version bump releases it); when the
+#   version is already released, the push only refreshes that release's notes from the changelog;
 # - on a pushed tag vX.Y.Z or vX.Y.Z-beta.N matching package.json;
 # - by hand from the Actions tab.
 # Versions with a suffix are pre-releases. Pages has to be turned on once in the repository settings
@@ -34,7 +35,11 @@ jobs:
           fi
           publish=true
           if [ "$GITHUB_REF_TYPE" = branch ] && [ "$GITHUB_EVENT_NAME" = push ] && gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "$tag is already released; nothing to do."; publish=false
+            # already released: only bring its notes up to date with the changelog
+            publish=false
+            node scripts/release-notes.mjs "${tag#v}" > notes.md
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json body --jq .body > current.md
+            if ! diff -qBw notes.md current.md >/dev/null; then gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file notes.md; echo "Updated the notes of $tag."; else echo "$tag is already released; nothing to do."; fi
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
