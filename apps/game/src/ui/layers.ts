@@ -81,8 +81,9 @@ hooks.drawOutlet = (ctx: CanvasRenderingContext2D) => {
   ctx.save();
   ctx.fillStyle = 'rgba(246,240,226,.5)'; ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   const G = geography(s, connected(s.map));
-  const line = (p: [number, number], q: [number, number], color: string, w: number, dash = false) => { ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash ? [6 * z, 5 * z] : []); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); };
-  ctx.lineCap = 'round'; ctx.globalAlpha = 0.85;
+  // each line with a light outline and arrows the way the cargo goes (the renderer's linhaFluxo)
+  const line = (p: [number, number], q: [number, number], color: string, w: number, dash = false) => api.linhaFluxo(p, q, color, w, dash);
+  ctx.globalAlpha = 0.92;
   for (const [key, pr] of Object.entries(G.producers) as [LotKey, (typeof G.producers)[LotKey]][]) {
     const o = c.outlet[key]; if (!o || o.sent < 1) continue;
     const w = Math.max(1.5, Math.min(5, Math.sqrt(o.sent) / 6)) * Math.max(0.7, z);
@@ -102,10 +103,11 @@ hooks.drawOutlet = (ctx: CanvasRenderingContext2D) => {
   ctx.font = '700 11px "Libre Franklin",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const [key, o] of Object.entries(c.outlet) as [LotKey, (typeof c.outlet)[LotKey]][]) {
     if (o.sent < 1) continue;
-    const [x, y0] = at(key), y = y0 - 30 * z, r = 13;
-    ctx.fillStyle = sealColor(o.share); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    // a pill wide enough for "100%"
+    const txt = `${Math.round(o.share * 100)}%`, [x, y0] = at(key), y = y0 - 30 * z, r = 13, w = Math.max(2 * r, ctx.measureText(txt).width + 10);
+    ctx.fillStyle = sealColor(o.share); ctx.beginPath(); ctx.roundRect(x - w / 2, y - r, w, 2 * r, r); ctx.fill();
     ctx.lineWidth = 1.5; ctx.strokeStyle = '#FBF4E4'; ctx.stroke();
-    ctx.fillStyle = '#FBF4E4'; ctx.fillText(`${Math.round(o.share * 100)}%`, x, y + 0.5);
+    ctx.fillStyle = '#FBF4E4'; ctx.fillText(txt, x, y + 0.5);
   }
   ctx.restore();
 };

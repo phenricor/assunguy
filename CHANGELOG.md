@@ -13,7 +13,17 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [1.0.0-beta.5] - 2026-11-10
 
+### Added
+
+- Placing a trading post, landing, rail stop, store, pier, port or waystation shows on the map what would send its
+  cargo there: a line from each one, with the arrobas it sends a year, blue when it gains a way out and grey when
+  it already had one. The sheet counts them and the arrobas they would bring; a gateway with no commerce in reach
+  says so.
+
 ### Fixed
+
+- The outlets layer's lines have a light outline, so crossing lines stay apart, and arrows the way the cargo
+  goes; the share badges fit "100%".
 
 - A text never shows an empty placeholder such as "{n}" again: a missing count or amount shows 0 and a
   missing name an ellipsis, and the game notes it in the console.
