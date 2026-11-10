@@ -1,9 +1,9 @@
 // Building: the list by category, the preview on a lot (what changes if it is built there), streets and
 // moving. Previews run the command on a copy of the state, so what they show is what the game will do.
-import { BUILDINGS, TRANSPORT_ROLES, type BuildingId, type TransportRoleDef } from '@assunguy/data';
+import { BALANCE, BUILDINGS, TRANSPORT_ROLES, type BuildingId, type TransportRoleDef } from '@assunguy/data';
 import {
   build, move, streets, measure, rails, undoStreet, demolishStreet, canPlace, computeEconomy, rateHomes, reach, serviceRadius, connected,
-  costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST, forestFactor, distance,
+  costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST, forestFactor, distance, geography,
   type CommandResult, type GameState, type LotKey, type Ratings, type World,
 } from '@assunguy/sim';
 import * as store from '../store';
@@ -70,15 +70,56 @@ const errorText = (r: CommandResult) => (r.ok ? '' : T(`error.${r.error}`));
 
 /** What the renderer highlights for a building at a lot: its reach, its nuisance, its catchment. */
 // notas: every home's rating after the change, which the map shows over the homes while the player chooses the lot
-function highlight(t: BuildingId, key: LotKey, s2: GameState, r1: Ratings): Record<string, unknown> {
+function highlight(t: BuildingId, key: LotKey, s2: GameState, r1: Ratings, flow: Flow | null): Record<string, unknown> {
   const tp = api.TIPOS[PT.building[t] as string] ?? {}, tr = api.TRANSP[PT.building[t] as string];
-  return { key, dist: tp.serv ? reach(s2.map, key, serviceRadius(s2, key)) : new Map(), cor: tp.serv ? tp.cor : '#9C3A20', ruim: tp.ruim, serv: tp.serv, alcT: tr && tr.alcance, tipoT: PT.building[t], notas: protoCalc(s2, r1).notas };
+  return { key, dist: tp.serv ? reach(s2.map, key, serviceRadius(s2, key)) : new Map(), cor: tp.serv ? tp.cor : '#9C3A20', ruim: tp.ruim, serv: tp.serv, alcT: tr && tr.alcance, tipoT: PT.building[t],
+    // the homes' expected ratings; a transport building shows its cargo instead, so the two sets of badges do not pile up
+    notas: flow ? undefined : protoCalc(s2, r1).notas,
+    // what would send its cargo here: a line and the arrobas a year over each one
+    fontes: flow?.list.map((x) => ({ key: x.key, tipo: PT.building[s2.map.buildings[x.key] as BuildingId], novo: x.fresh, n: x.n })) };
+}
+
+/** What would send its cargo through a new transport building, and whether it already had a way out. */
+interface Flow { list: { key: LotKey; fresh: boolean; n: number }[]; role: 'collection' | 'commerce' | 'gateway' }
+function flowInto(t: BuildingId, key: LotKey, s: GameState, s2: GameState): Flow | null {
+  const R = roleOf(t);
+  if (!R) return null;
+  const G0 = geography(s, connected(s.map)), G1 = geography(s2, connected(s2.map)), c0 = store.economy(), list: Flow['list'] = [];
+  const sent = (k: LotKey) => Math.round(c0.outlet[k]?.sent ?? 0);
+  if (R.role === 'collection') {
+    // the fields and herds beyond the free walk that the new point reaches; those another point already reached keep it
+    const j = G1.collections.findIndex((c) => c.key === key);
+    if (j >= 0) for (const [k, p] of Object.entries(G1.producers) as [LotKey, (typeof G1.producers)[LotKey]][]) if (p.collections.includes(j)) list.push({ key: k, fresh: !G0.producers[k]?.collections.length, n: sent(k) });
+  } else if (R.role === 'commerce') {
+    // the producers for whom this becomes the nearest commerce; it helps the ones that walked beyond the free distance
+    const j = G1.commerce.findIndex((c) => c.key === key);
+    if (j >= 0) for (const [k, p] of Object.entries(G1.producers) as [LotKey, (typeof G1.producers)[LotKey]][]) {
+      if (p.carryTo !== j) continue;
+      const before = G0.producers[k]?.carry ?? Infinity;
+      list.push({ key: k, fresh: before > BALANCE.freeCarryDistance && p.carry < before, n: sent(k) });
+    }
+  } else {
+    // the commerces whose surplus would go out here; those already linked to another gateway keep theirs
+    for (const c of G1.commerce) if (c.key && !c.virtual && c.type && distance(c.key, key) <= c.reach + 4) {
+      const was = G0.commerce.find((x) => x.key === c.key);
+      list.push({ key: c.key, fresh: !was?.linked, n: Math.round(c0.transport.commerce.find((x) => x.key === c.key)?.in ?? 0) });
+    }
+  }
+  return { list: list.sort((a, b) => Number(b.fresh) - Number(a.fresh) || b.n - a.n), role: R.role as Flow['role'] };
 }
 const roleOf = (t: BuildingId) => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
 const makesGoods = (t: BuildingId) => { const D = def(t); return !!(D.output || D.extraOutputs || D.recipes); };
 const SIDES = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+/** The rows that go with the lines on the map: how many would start sending here, their arrobas, and the rest. */
+function flowRows(flow: Flow | null, L: string[]): void {
+  if (!flow) return;
+  const fresh = flow.list.filter((x) => x.fresh), kept = flow.list.length - fresh.length, arrobas = fresh.reduce((a, x) => a + x.n, 0);
+  L.push(K.row(T(`ui.build.flow.${flow.role}.new`), fresh.length, fresh.length ? 'mais' : 'menos'));
+  if (fresh.length) L.push(K.row(T('ui.build.flow.arrobas'), T('ui.perYear', { value: fmt(arrobas) })));
+  if (kept) L.push(K.row(T(`ui.build.flow.${flow.role}.kept`), kept));
+}
 /** What a transport building would do on this lot, as the prototype showed it. Returns a note when the place is poor. */
-function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[]): string {
+function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[], flow: Flow | null): string {
   const R = roleOf(t);
   if (!R) return '';
   const lig = connected(s2.map);
@@ -87,16 +128,19 @@ function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[]): 
     const same = (Object.keys(s2.map.buildings) as LotKey[]).filter((x) => x !== key && s2.map.buildings[x] === t);
     const covered = prods.filter((x) => same.some((c) => distance(x, c) <= reachN)).length;
     L.push(K.row(T('ui.build.reach'), T('ui.lotsN', { n: reachN })));
-    L.push(K.row(T('ui.build.producersInReach'), prods.length, prods.length ? '' : 'menos'));
+    flowRows(flow, L);
     if (prods.length && same.length) L.push(K.row(T('ui.build.alreadyNear', { place: building(t).toLowerCase() }), T('ui.nOfM', { n: covered, m: prods.length }), covered > prods.length / 2 ? 'menos' : ''));
     if (!prods.length) return K.note(T('ui.build.noProducers'), 'ruim');
     if (covered > prods.length / 2) return K.note(T('ui.build.mostCovered'), 'ruim');
   } else if (R.role === 'commerce') {
     const gw = (Object.keys(s2.map.buildings) as LotKey[]).some((x) => roleOf(s2.map.buildings[x] as BuildingId)?.role === 'gateway' && distance(x, key) <= (R.reach ?? 0) + 4);
     L.push(K.row(T('ui.build.receivesUpTo'), T('ui.lotsN', { n: R.reach ?? 0 })));
+    flowRows(flow, L);
     L.push(K.row(T('ui.build.gatewayInReach'), gw ? T('ui.yes') : T('ui.build.noGatewayInReach'), gw ? 'mais' : 'menos'));
   } else {
     L.push(K.row(T('ui.build.carriesTo'), T(R.mode === 'road' ? 'ui.build.toCuritiba' : R.mode === 'rail' ? 'ui.build.toRailEdge' : 'ui.build.toIguape')));
+    flowRows(flow, L);
+    if (flow && !flow.list.length) return K.note(T('ui.build.flow.gateway.none'), 'ruim');
   }
   return '';
 }
@@ -112,7 +156,8 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     h += `<p class="erro">${esc(r.error === 'noCash' ? T('ui.build.noCash', { cost: fmt(cost) }) : errorText(r))}</p>`;
   } else {
     const r0 = store.ratings(), r1 = rateHomes(s2, w), m0 = Math.round(r0.mean), m1 = Math.round(r1.mean);
-    setPreview(highlight(t, key, s2, r1));
+    const flow = flowInto(t, key, s, s2);
+    setPreview(highlight(t, key, s2, r1, flow));
     if (!from) L.push(K.row(T('ui.build.cost'), `$ ${fmt(cost)}`));
     const up = upkeepOf(t, s.milestone);
     if (!from && up) L.push(K.row(T('ui.build.upkeep'), `$ ${fmt(up)}`));
@@ -128,7 +173,7 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     if (T0.housing) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.housing)));
     else if (T0.jobs) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.jobs)));
     if (T0.nearForest) L.push(K.row(T('ui.build.forestAround'), `${Math.round(forestFactor(s2, a, b) * 100)}%`));
-    const trNote = transportRows(t, key, s2, L);
+    const trNote = transportRows(t, key, s2, L, flow);
     if (T0.service) {
       let better = 0;
       for (const k of Object.keys(r1.homes)) { const x = r0.homes[k as LotKey]; if (x && (r1.homes[k as LotKey]?.rating ?? 0) > x.rating) better++; }

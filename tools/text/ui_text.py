@@ -327,6 +327,11 @@ U = {
   'build.mostCovered': ('Mais da metade já é atendida por outra do mesmo tipo. Um veículo a mais nela rende mais que um prédio novo.', 'More than half are already served by another of the same kind. One more vehicle there pays better than a new building.'),
   'build.receivesUpTo': ('Recebe a produção a até', 'Takes in goods from up to'),
   'build.gatewayInReach': ('Porta ao alcance', 'Gateway in reach'), 'build.noGatewayInReach': ('Não: só venderia para dentro', 'No: it would only sell inside'),
+  'build.flow.collection.new': ('Passam a escoar por aqui', 'Would send their cargo here'), 'build.flow.collection.kept': ('Já escoavam por outra captação', 'Already sent through another collection point'),
+  'build.flow.commerce.new': ('Deixam de andar longe', 'Would stop walking far'), 'build.flow.commerce.kept': ('Mudam de comércio, sem ganho', 'Would switch commerce, with no gain'),
+  'build.flow.gateway.new': ('Comércios que ganham saída', 'Commerces that gain a way out'), 'build.flow.gateway.kept': ('Comércios que já tinham porta', 'Commerces that already had a gateway'),
+  'build.flow.gateway.none': ('Nenhum comércio ao alcance: a carga não chegaria até aqui.', 'No commerce within reach: no cargo would get here.'),
+  'build.flow.arrobas': ('Arrobas que trariam', 'Arrobas they would bring'),
   'build.carriesTo': ('Leva para', 'Carries to'), 'build.toIguape': ('Iguape', 'Iguape'), 'build.toCuritiba': ('Curitiba', 'Curitiba'),
   'build.toRailEdge': ('A borda onde o trilho chega', 'The edge where the rails arrive'),
   # info boxes

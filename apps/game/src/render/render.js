@@ -3117,6 +3117,26 @@ function desenha(agora) {
     ctx.beginPath(); ctx.moveTo(px - 5, y + 9); ctx.lineTo(px + 5, y + 9); ctx.lineTo(px, y + 15); ctx.fill();
     ctx.fillStyle = '#FBF4E4'; ctx.fillText(txt, px, y + .5);
   });
+  // obra de escoamento: de onde a carga viria, com uma linha até o lote e as arrobas por ano em cima de cada um
+  if (realce && realce.fontes && realce.fontes.length) {
+    const ponto = (k, t) => { const c = t ? centroDe(k, t) : par(k).map((x) => x + .5); return projT(...paraVista(c[0], c[1])); };
+    const [ax, ay] = ponto(realce.key, realce.tipoT);
+    const pts = realce.fontes.map((f) => [f, ...ponto(f.key, f.tipo)]);
+    ctx.lineCap = 'round'; ctx.setLineDash([6, 5]);
+    pts.forEach(([f, fx, fy]) => {
+      ctx.strokeStyle = f.novo ? 'rgba(42,120,214,.95)' : 'rgba(96,86,72,.5)'; ctx.lineWidth = f.novo ? Math.max(1.6, 2.2 * z) : Math.max(1, 1.4 * z);
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(ax, ay); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.font = '700 11px "Libre Franklin",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    pts.forEach(([f, fx, fy]) => {
+      if (fx < -40 || fx > W + 40 || fy < -40 || fy > H + 60) return;
+      const txt = fmt(f.n), w = Math.max(22, ctx.measureText(txt).width + 12), y = fy - 30 * z;
+      ctx.fillStyle = f.novo ? '#2A78D6' : '#8A8170'; ctx.beginPath(); ctx.roundRect(fx - w / 2, y - 9, w, 18, 9); ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = '#FBF4E4'; ctx.stroke();
+      ctx.fillStyle = '#FBF4E4'; ctx.fillText(txt, fx, y + .5);
+    });
+  }
   const mostra = verNotas || (realce && realce.notas);
   if (mostra) {
     const referencia = realce && realce.notas ? realce.notas : C.notas;
