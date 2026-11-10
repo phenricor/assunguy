@@ -19,3 +19,4 @@ export * from './commands.js';
 export * from './settle.js';
 export * from './game.js';
 export * from './districts.js';
+export * from './report.js';

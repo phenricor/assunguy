@@ -27,10 +27,11 @@ function freeLots(s: GameState, w: World, t: BuildingId): [number, number][] {
   }
   return out;
 }
-/** The lot the bot builds on: the best soil for a field, else the free lot closest to the streets' centre. */
-function lotFor(s: GameState, w: World, t: BuildingId): [number, number] | null {
+/** The lot the bot builds on: next to where the advice points, the best soil for a field, else the free lot closest to the streets' centre. */
+function lotFor(s: GameState, w: World, t: BuildingId, near?: LotKey): [number, number] | null {
   const lots = freeLots(s, w, t);
   if (!lots.length) return null;
+  if (near) { const [nx, ny] = parse(near); return lots.slice().sort((p, q) => Math.abs(p[0] - nx) + Math.abs(p[1] - ny) - (Math.abs(q[0] - nx) + Math.abs(q[1] - ny)))[0]!; }
   const g = def(t).output?.good;
   if (def(t).crop && g) return lots.slice().sort((p, q) => soilOf(w, `${q[0]},${q[1]}`, g as never) - soilOf(w, `${p[0]},${p[1]}`, g as never))[0]!;
   const ks = Object.keys(s.map.streets).map(parse), cx = ks.reduce((x, k) => x + k[0], 0) / ks.length, cy = ks.reduce((x, k) => x + k[1], 0) / ks.length;
@@ -67,8 +68,8 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
   switch (a.kind) {
     case 'build': {
       if (a.building === 'street') return false;
-      let at = lotFor(s, w, a.building);
-      if (!at && extendStreets(s, w)) at = lotFor(s, w, a.building);
+      let at = lotFor(s, w, a.building, a.near);
+      if (!at && extendStreets(s, w)) at = lotFor(s, w, a.building, a.near);
       return !!at && okd(build(s, w, a.building, ...at));
     }
     case 'select': return a.upgrade ? okd(upgrade(s, w, a.key)) : false;

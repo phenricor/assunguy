@@ -5,6 +5,7 @@ import { BUILDINGS, GOODS, GOOD_IDS, LEVELS, WEATHER_ODDS, type BuildingId, type
 import { allocate, costOf, def, hasRoad, sectorOf, soilOf, type Economy } from './economy.js';
 import { arrivalChance, arrivalSize, emptySlots, loseFamilies, receiveFamilies, syncFamilies } from './families.js';
 import { measure } from './measure.js';
+import { change, snapshot } from './report.js';
 import { lcgNext } from './rng.js';
 import { canPlace } from './placement.js';
 import { rateHomes, updateRatings, type Ratings } from './ratings.js';
@@ -168,8 +169,8 @@ export function resolveEvent(s: GameState, w: World, option: number): void {
   chronicle(s, `event.${d.id}.option.${option}.chronicle`, d.params);
   if (d.changesGame) { op.apply(s, w); if (ev.kind !== 'intro') { syncFamilies(s); updateRatings(s, w); } return; }
   // the prototype measured the colony before and after (re-rating it both times), then re-rated once more
-  updateRatings(s, w); op.apply(s, w); syncFamilies(s); updateRatings(s, w);
-  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option });
+  updateRatings(s, w); const before = snapshot(s, w); op.apply(s, w); syncFamilies(s); updateRatings(s, w);
+  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option, change: change(before, snapshot(s, w)) });
   updateRatings(s, w);
 }
 

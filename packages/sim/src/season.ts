@@ -10,6 +10,7 @@ import { advanceGreatWorks, advanceTransport, applyRelief, grantFactor, levelReq
 import { taxEffect, updateRatings } from './ratings.js';
 import { settle, storedMean } from './settle.js';
 import { nameId, rememberDistricts } from './districts.js';
+import { change, goodReturns, seasonDecisions, seriesPoint, snapshot, type Change, type Decisions, type GoodReturn } from './report.js';
 import { hasChoice, hasLaw, type GameState } from './state.js';
 import { landOf, parseKey, type LotKey, type World } from './world.js';
 
@@ -51,10 +52,15 @@ export interface SeasonReport {
   summary: { income: number; lost: number; exported: number; employed: number; families: number };
   invested: { homes: Partial<Record<BuildingId, number>>; fields: number; spent: number };
   familiesAtRisk: number; businessesAtRisk: number;
+  /** Each good's year, the season's decisions with what they changed, and the taxes and laws that came into force. */
+  returns: GoodReturn[];
+  decisions: Decisions;
+  passed: { taxes: { id: string; revenue: number }[]; laws: { id: string; change: Change }[] };
 }
 
 export function passSeason(s: GameState, w: World): SeasonReport {
-  const cashBefore = s.cash, worksBefore = s.buildCosts, arrivalsBefore = s.arrivalCosts;
+  const cashBefore = s.cash, worksBefore = s.buildCosts, arrivalsBefore = s.arrivalCosts, tBefore = s.market.t;
+  const decisions = seasonDecisions(s, tBefore), passed: SeasonReport['passed'] = { taxes: [], laws: [] };
   const satBefore = storedMean(s);
   s.vacated = {};
   const c0 = computeEconomy(s, w);
@@ -66,7 +72,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   const upkeep = upkeepPerSeason(s);
   s.cash += taxes + grant + share - upkeep - wages;
   // taxes passed last season come into force
-  for (const id of Object.keys(s.pendingTaxes) as (keyof GameState['taxes'])[]) { s.taxes[id] = s.pendingTaxes[id] ?? null; s.taxHistory.push({ id, t: s.market.t + 1 }); }
+  for (const id of Object.keys(s.pendingTaxes) as (keyof GameState['taxes'])[]) { const base = taxEffect(s, w).revenue; s.taxes[id] = s.pendingTaxes[id] ?? null; s.taxHistory.push({ id, t: s.market.t + 1 }); passed.taxes.push({ id, revenue: Math.round(taxEffect(s, w).revenue - base) }); }
   s.pendingTaxes = {};
   advanceMarket(s.market, { shockOdds: hasChoice(s, 'polyculture') ? 0.45 : hasChoice(s, 'monoculture') ? 1.6 : 1 });
   const relief = applyRelief(s);
@@ -88,7 +94,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   if (ef.familiesAtRisk) for (const f of Object.values(s.families).sort((a, b) => a.skill - b.skill).slice(0, ef.familiesAtRisk)) f.idle += 1;
   // town laws passed last season come into force
   // the prototype measured each law before and after it passed, re-rating the homes both times (fotoColonia)
-  for (const id of Object.keys(s.pendingLaws)) { updateRatings(s, w); s.laws[id] = true; updateRatings(s, w); chronicle(s, 'chronicle.lawPassed', { law: id }); }
+  for (const id of Object.keys(s.pendingLaws)) { updateRatings(s, w); const before = snapshot(s, w); s.laws[id] = true; updateRatings(s, w); passed.laws.push({ id, change: change(before, snapshot(s, w)) }); chronicle(s, 'chronicle.lawPassed', { law: id }); }
   s.pendingLaws = {};
   news.push(...rollEvents(s, w, c, ratings));
   const workNews: GreatWorkNews[] = [];
@@ -129,6 +135,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   if (goal?.levelUp === 12) s.queue.push({ kind: 'victory' });
   if (province) { if (province.factor > 1 && s.market.t % 4 === 0) s.influence = Math.max(0, Math.min(15, s.influence + 1)); else if (province.factor < 1) s.influence = Math.max(0, Math.min(15, s.influence - 1)); }
   { const n = s.level + 1, lv = LEVELS.find((l) => l.level === n); s.progress = lv ? Math.min(1, Math.min(allocate(s).employed / lv.workers, c.incomeTotal / lv.income)) : 1; }
+  s.series = [...(s.series ?? []), seriesPoint(s, c)].slice(-60);
   ratings = updateRatings(s, w);
   settle(s, w); // the prototype re-rated once more in `mudou`
   const report: SeasonReport = {
@@ -137,6 +144,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
     satisfaction: { before: satBefore, after: ratings.mean },
     summary: { income: Math.round(c.incomeTotal), lost: Math.round(c.lostTotal), exported: Math.round(c.exportedTotal), employed: c.counts.work.employed, families: c.counts.families },
     invested, familiesAtRisk: ef.familiesAtRisk, businessesAtRisk: ef.businessesAtRisk,
+    returns: goodReturns(s, c), decisions, passed,
   };
   s.reports = [...s.reports, report].slice(-12);
   s.log = []; s.buildCosts = 0; s.arrivalCosts = 0;

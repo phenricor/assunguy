@@ -13,6 +13,7 @@ import { cellsOf } from './map.js';
 import { canPlace, canPlaceStreet, type PlacementError } from './placement.js';
 import { updateRatings } from './ratings.js';
 import { measuredChange, settle } from './settle.js';
+import { change, snapshot } from './report.js';
 import { AGENT_COST } from './season.js';
 import { upgradeOf, type FamilyId, type GameState, type TaxId, type TaxLaw } from './state.js';
 import { fleetOf, fleetSize, fleetSlots } from './transport.js';
@@ -45,9 +46,9 @@ export function build(s: GameState, w: World, type: BuildingId, a: number, b: nu
   const cost = costOf(type, s.milestone);
   if (s.cash < cost) return fail('noCash');
   const key = lotKey(a, b);
-  measuredChange(s, w, () => { s.map.buildings[key] = type; for (const [x, y] of cellsOf(a, b, type)) delete s.map.trees[lotKey(x, y)]; });
+  const ch = measuredChange(s, w, () => { s.map.buildings[key] = type; for (const [x, y] of cellsOf(a, b, type)) delete s.map.trees[lotKey(x, y)]; });
   s.cash -= cost; s.buildCosts += cost; s.seasonWork.buildings[key] = cost;
-  log(s, 'built', { building: type, key, cost });
+  log(s, 'built', { building: type, key, cost, change: ch });
   settle(s, w);
   return ok();
 }
@@ -60,7 +61,7 @@ export function move(s: GameState, w: World, from: LotKey, a: number, b: number)
   if (key === from) return fail('sameLot');
   const er = canPlace(s.map, w, type, a, b, from);
   if (er) return fail(er);
-  measuredChange(s, w, () => {
+  const ch = measuredChange(s, w, () => {
   if (def(type).housing) for (const id of Object.keys(s.families) as FamilyId[]) {
     if (!id.startsWith(`${from}#`)) continue;
     const f = s.families[id]!, to = `${key}#${id.split('#')[1]}` as FamilyId;
@@ -79,7 +80,7 @@ export function move(s: GameState, w: World, from: LotKey, a: number, b: number)
   if (s.fleet[from]) { s.fleet[key] = s.fleet[from]!; delete s.fleet[from]; }
   if (s.tariffMargin[from] !== undefined) { s.tariffMargin[key] = s.tariffMargin[from]!; delete s.tariffMargin[from]; }
   if (s.firstHarvest && s.firstHarvest[from] !== undefined) { s.firstHarvest[key] = s.firstHarvest[from]!; delete s.firstHarvest[from]; }
-  log(s, 'moved', { building: type, from, key });
+  log(s, 'moved', { building: type, from, key, change: ch });
   settle(s, w);
   return ok();
 }
@@ -90,11 +91,11 @@ export function demolish(s: GameState, w: World, key: LotKey): CommandResult {
   if (!type) return fail('notHere');
   if (type === 'council' && Object.values(s.map.buildings).filter((x) => x === 'council').length === 1 && (Object.keys(s.laws).length || Object.values(s.taxes).some((l) => l && (l.general || Object.keys(l.byGood ?? {}).length)))) return fail('councilHasLaws');
   const refund = (s.seasonWork.buildings[key] ?? 0) + (s.seasonWork.upgrades[key]?.cost ?? 0) + (s.seasonWork.swaps[key]?.cost ?? 0);
-  measuredChange(s, w, () => { delete s.map.buildings[key]; delete s.upgrades[key]; });
+  const ch = measuredChange(s, w, () => { delete s.map.buildings[key]; delete s.upgrades[key]; });
   if (refund) { s.cash += refund; s.buildCosts = Math.max(0, s.buildCosts - refund); }
   delete s.seasonWork.buildings[key]; delete s.seasonWork.upgrades[key]; delete s.seasonWork.swaps[key];
   delete s.fleet[key]; delete s.tariffMargin[key];
-  log(s, refund ? 'cancelled' : 'demolished', { building: type, key });
+  log(s, refund ? 'cancelled' : 'demolished', { building: type, key, change: ch });
   settle(s, w);
   return ok(refund);
 }
@@ -111,8 +112,8 @@ export function upgrade(s: GameState, w: World, key: LotKey): CommandResult {
   s.cash -= cost; s.buildCosts += cost;
   const p = s.seasonWork.upgrades[key];
   s.seasonWork.upgrades[key] = { cost: (p?.cost ?? 0) + cost, from: p ? p.from : lv };
-  measuredChange(s, w, () => { s.upgrades[key] = lv + 1; });
-  log(s, 'upgraded', { building: type, key, cost });
+  const ch = measuredChange(s, w, () => { s.upgrades[key] = lv + 1; });
+  log(s, 'upgraded', { building: type, key, cost, change: ch });
   settle(s, w);
   return ok();
 }
@@ -135,6 +136,7 @@ export function streets(s: GameState, w: World, from: [number, number], to: [num
   for (let i = 0; i <= steps; i++) cells.push([x0 + Math.sign(x1 - x0) * i, y0 + Math.sign(y1 - y0) * i]);
   let opened = 0, error: CommandError | null = null;
   updateRatings(s, w);
+  const before = snapshot(s, w);
   for (const [p, q] of cells) {
     const key = lotKey(p, q);
     if (s.map.streets[key]) continue;
@@ -146,7 +148,7 @@ export function streets(s: GameState, w: World, from: [number, number], to: [num
     s.cash -= STREET_COST; s.buildCosts += STREET_COST; s.seasonWork.streets[key] = STREET_COST;
     opened++;
   }
-  if (opened) { updateRatings(s, w); log(s, 'built', { building: 'street', n: opened }); settle(s, w); }
+  if (opened) { updateRatings(s, w); log(s, 'built', { building: 'street', n: opened, cost: opened * STREET_COST, change: change(before, snapshot(s, w)) }); settle(s, w); }
   return error && !opened ? { ...fail(error), opened } : { ok: true, opened };
 }
 
@@ -249,8 +251,8 @@ export function swapCrop(s: GameState, w: World, key: LotKey, to: BuildingId): C
   if (built !== undefined) s.seasonWork.buildings[key] = costOf(to, s.milestone);
   else if (back) delete s.seasonWork.swaps[key];
   else { const p = pt ?? { from, cost: 0, firstHarvest: s.firstHarvest[key] ?? 0 }; p.cost += cost; s.seasonWork.swaps[key] = p; }
-  measuredChange(s, w, () => { s.map.buildings[key] = to; s.firstHarvest![key] = back ? pt!.firstHarvest : firstHarvest(to, s.market.t); });
-  log(s, back ? 'unswapped' : 'swapped', { building: to, from, cost });
+  const ch = measuredChange(s, w, () => { s.map.buildings[key] = to; s.firstHarvest![key] = back ? pt!.firstHarvest : firstHarvest(to, s.market.t); });
+  log(s, back ? 'unswapped' : 'swapped', { building: to, from, cost, change: ch });
   settle(s, w);
   return ok(cost < 0 ? -cost : undefined);
 }

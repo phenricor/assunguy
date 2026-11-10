@@ -5,7 +5,7 @@ import { passSeason } from '../src/season.js';
 import type { GameState } from '../src/state.js';
 import { generateWorld, parseKey, type LandId, type LotKey } from '../src/world.js';
 import fixture from './fixtures/commands.json' with { type: 'json' };
-import { LEGACY, legacyState } from './legacy.js';
+import { LEGACY, goodFromLegacy, legacyState } from './legacy.js';
 
 type Snap = Record<string, any>;
 const B = LEGACY.buildings as Record<string, string>, V = LEGACY.vehicles as Record<string, string>, LAW = LEGACY.laws as Record<string, string>, TAX = LEGACY.taxes as Record<string, string>;
@@ -69,7 +69,10 @@ describe('player commands (golden, against the prototype)', () => {
         compare(s, c.snaps[i]!, `${name} after ${cmd[0]}`);
       });
       for (let i = c.script.length; i < c.snaps.length; i++) {
-        passSeason(s, w);
+        const r = passSeason(s, w);
+        const want = (c.snaps[i]!.rel?.retorno ?? []) as any[];
+        expect(r.returns.map((x) => [x.good, x.net, x.sales, x.upkeep, x.lost, x.paidByWorkshops, x.materials, x.bySeason, x.freight]), `${name} season ${i - c.script.length + 1} returns`)
+          .toEqual(want.map((x) => [goodFromLegacy(x[0]), x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8] ?? 0]));
         while (s.queue.length && !['end', 'victory'].includes(s.queue[0]!.kind)) { const d = defineEvent(s, s.queue[0]!); resolveEvent(s, w, d.options.findIndex((o) => !o.can || o.can(s))); }
         compare(s, c.snaps[i]!, `${name} season ${i - c.script.length + 1}`);
       }

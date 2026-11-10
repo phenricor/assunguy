@@ -4,6 +4,7 @@ import { def } from './economy.js';
 import { firstHarvest } from './events.js';
 import { syncFamilies } from './families.js';
 import { updateRatings } from './ratings.js';
+import { change, snapshot, type Change } from './report.js';
 import type { BuildingId } from '@assunguy/data';
 import type { GameState } from './state.js';
 import type { LotKey, World } from './world.js';
@@ -27,10 +28,12 @@ export function storedMean(s: GameState): number {
   return n ? Math.round(sum / n) : 0;
 }
 
-/** A change measured the way the prototype's `medindo` did: rated before, changed, families synced, rated after. */
-export function measuredChange(s: GameState, w: World, change: () => void): void {
+/** A change measured the way the prototype's `medindo` did: rated before, changed, families synced, rated after. Returns what it changed. */
+export function measuredChange(s: GameState, w: World, fn: () => void): Change {
   updateRatings(s, w);
-  change();
+  const before = snapshot(s, w);
+  fn();
   syncFamilies(s);
   updateRatings(s, w);
+  return change(before, snapshot(s, w));
 }
