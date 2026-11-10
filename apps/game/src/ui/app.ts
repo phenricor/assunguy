@@ -6,6 +6,7 @@ import { computeEconomy, allocate, seasonOf, yearOf, type GameState, type LotKey
 import * as store from '../store';
 import { T, has, num } from '../i18n';
 import { api, vars, hooks, show, PT, EN } from '../view';
+import { syncBirds } from '../birds';
 import { $, K, X_SVG, esc, fmt, hint, popup, closePopup, sheet, sheetWith, setSheetClose } from './kit';
 
 // ---- what the player is doing on the map
@@ -33,6 +34,7 @@ export function refresh(): void {
   show(g.s, g.w, store.ratings());
   vars.cacheCaminho = {}; vars.chaoSujo = true; vars.cacheEstrada = null;
   api.refazPescadores();
+  syncBirds(g.s, g.w);
   top();
 }
 

@@ -127,6 +127,10 @@
   [
    "'l\u00e9guas'",
    "(hooks.word ? hooks.word('leagues', 'l\u00e9guas') : 'l\u00e9guas')"
+  ],
+  [
+   "  [...baldes.keys()].sort((p, q) => p - q).forEach((s) => baldes.get(s).forEach((f) => f()));\n  desenhaEfx();",
+   "  if (hooks.birds) hooks.birds(add, paraVista, projT, cam);\n  [...baldes.keys()].sort((p, q) => p - q).forEach((s) => baldes.get(s).forEach((f) => f()));\n  desenhaEfx();"
   ]
  ],
  "declare": {

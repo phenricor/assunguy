@@ -3022,6 +3022,7 @@ function desenha(agora) {
       add(Math.floor(u) + Math.floor(v) + 200, () => anim(n ? 'p' + n : 'tropeiro', dir, Math.floor(ex.fase + n) % 2, px, py));
     });
   });
+  if (hooks.birds) hooks.birds(add, paraVista, projT, cam);
   [...baldes.keys()].sort((p, q) => p - q).forEach((s) => baldes.get(s).forEach((f) => f()));
   desenhaEfx();
   // luz única para chão, prédios, árvores e gente: tom da estação por cima de tudo e cantos um pouco mais escuros
