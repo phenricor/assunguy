@@ -101,6 +101,8 @@
  "advice.service.satisfaction.title": "Satisfação {mean}: a meta pede {wanted}",
  "advice.service.whereAll": "Todas em {district}.",
  "advice.service.whereSome": "{inDistrict} delas em {district}.",
+ "advice.streets.room.body": "Restam {lots} lotes junto às ruas. Abrir {n} trechos de rua custa $ {cost} e abre lugar para em torno de {gain} lotes.",
+ "advice.streets.room.title": "Pouco lugar para construir",
  "advice.tithe.choking.body": "Quem fica sem renda vai embora. Dízimo de {rate}% evita isso; satisfação de {mean} para {after}.",
  "advice.tithe.choking.title": "{n} famílias sufocadas pelos impostos",
  "advice.tithe.first.body": "Dízimo de {rate}%: arrecada $ {revenue} por ano; satisfação de {mean} para {after}.",

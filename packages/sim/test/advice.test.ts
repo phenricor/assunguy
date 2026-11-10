@@ -118,3 +118,29 @@ describe('advisor texts', () => {
     }
   });
 });
+
+describe('advisor: priorities from the balance review', () => {
+  const load = (name: string) => { const s = legacyState((seasons as unknown as Record<string, { state: Record<string, unknown> }>)[name]!.state); return { s, w: generateWorld(s.seed, s.mapVersion) }; };
+  it('asks for streets before the lots along them run out, with a line the command can open', async () => {
+    const { newGame } = await import('../src/game.js'), { streets } = await import('../src/commands.js'), { roomByStreets } = await import('../src/advisor.js');
+    const { s, w } = newGame(1869);
+    const { canPlace } = await import('../src/placement.js');
+    // fill the lots by the streets
+    for (let a = 0; a < 90 && roomByStreets(s, w) >= 6; a++) for (let b = 0; b < 105; b++) if (!canPlace(s.map, w, 'hut', a, b)) { s.map.buildings[`${a},${b}` as LotKey] = 'hut'; if (roomByStreets(s, w) < 6) break; }
+    const a = advise(s, w).find((x) => x.rule === 'streets.room');
+    expect(a?.action?.kind).toBe('streets');
+    const act = a!.action as { kind: 'streets'; from: [number, number]; to: [number, number] };
+    expect(streets(s, w, act.from, act.to).opened).toBe(4);
+    expect(roomByStreets(s, w)).toBeGreaterThanOrEqual(6);
+  });
+  it('near the deadline, what the milestone asks for comes first; behind on families, homes come even with idle hands', () => {
+    const { s, w } = load('speedrun');
+    const before = advise(s, w).filter((x) => x.rule === 'milestoneBuilding').map((x) => x.weight);
+    expect(Math.max(...before)).toBeLessThan(84);
+    s.deadline = s.market.t + 10;
+    const near = advise(s, w);
+    expect(near.filter((x) => x.rule === 'milestoneBuilding').every((x) => x.weight >= 84)).toBe(true);
+    expect(near.some((x) => x.rule === 'milestoneFamilies')).toBe(true);
+    expect(legacyAdvice(s, w).some((x) => x.rule === 'milestoneFamilies')).toBe(false);
+  });
+});

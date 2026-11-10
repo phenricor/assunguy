@@ -101,6 +101,8 @@
  "advice.service.satisfaction.title": "Satisfaction {mean}: the goal asks for {wanted}",
  "advice.service.whereAll": "All of them in {district}.",
  "advice.service.whereSome": "{inDistrict} of them in {district}.",
+ "advice.streets.room.body": "{lots} lots left along the streets. Opening {n} street lots costs $ {cost} and makes room for around {gain} lots.",
+ "advice.streets.room.title": "Little room to build",
  "advice.tithe.choking.body": "Those left without income move away. A {rate}% tithe avoids it; satisfaction from {mean} to {after}.",
  "advice.tithe.choking.title": "{n} families choked by taxes",
  "advice.tithe.first.body": "A {rate}% tithe: raises $ {revenue} a year; satisfaction from {mean} to {after}.",

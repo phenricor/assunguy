@@ -18,8 +18,8 @@ import { computeDistricts, districtsUnlocked, nameId } from './districts.js';
 import { ARRIVAL_AID, emptySlots, HOME_UPGRADE, SEED_AID } from './families.js';
 import { measure } from './measure.js';
 import { connected, mainNetwork } from './network.js';
-import { canPlace } from './placement.js';
-import { greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
+import { canPlace, canPlaceStreet } from './placement.js';
+import { goalPace, greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
 import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
 import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw } from './state.js';
 import { collectionState, distance, fleetOf, fleetSize, gatewayTight, geography } from './transport.js';
@@ -27,7 +27,7 @@ import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from '
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -39,7 +39,8 @@ export type AdviceAction =
   | { kind: 'buyVehicle'; key: LotKey; vehicle: VehicleId }
   | { kind: 'sellVehicle'; key: LotKey; vehicle: VehicleId }
   | { kind: 'collect'; building: BuildingId; land?: LandId; near?: LotKey; lot?: LotKey; fleet?: Partial<Record<VehicleId, number>>; with?: BuildingId[] }
-  | { kind: 'province'; request: 'extraFunds' | 'extraTime' };
+  | { kind: 'province'; request: 'extraFunds' | 'extraTime' }
+  | { kind: 'streets'; from: [number, number]; to: [number, number] };
 
 export interface Advice {
   rule: string;
@@ -452,6 +453,32 @@ function transportAdvice(x: Ctx): Advice[] {
   return L;
 }
 
+/** Free lots on our lands where a home fits: next to a street of the network. */
+export function roomByStreets(s: GameState, w: World): number {
+  let n = 0;
+  for (const id of Object.keys(s.map.lands) as LandId[]) {
+    if (s.map.lands[id] !== 'ours') continue;
+    const [c, l] = parseKey(id);
+    for (let a = c * 15; a < c * 15 + 15; a++) for (let b = l * 15; b < l * 15 + 15; b++) if (!canPlace(s.map, w, 'hut', a, b)) n++;
+  }
+  return n;
+}
+/** The straight line of four street lots out of the network with the most free lots along it. */
+export function streetLine(s: GameState, w: World): { from: [number, number]; to: [number, number]; lots: number } | null {
+  let best: { from: [number, number]; to: [number, number]; lots: number } | null = null;
+  for (const key of Object.keys(s.map.streets) as LotKey[]) {
+    const [a, b] = parseKey(key);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const cells = [1, 2, 3, 4].map((i) => [a + dx * i, b + dy * i] as [number, number]);
+      if (!cells.every(([x, y]) => !canPlaceStreet(s.map, w, x, y))) continue;
+      let lots = 0;
+      for (const [x, y] of cells) for (const [sx, sy] of dx ? [[0, 1], [0, -1]] as const : [[1, 0], [-1, 0]] as const) { const e = canPlace(s.map, w, 'hut', x + sx, y + sy); if (!e || e === 'needsStreet') lots += 1; }
+      if (!best || lots > best.lots) best = { from: cells[0]!, to: cells[3]!, lots };
+    }
+  }
+  return best && best.lots >= 3 ? best : null;
+}
+
 /** What following an action costs from the purse now. */
 function actionCost(s: GameState, a: AdviceAction | null): number {
   if (!a) return 0;
@@ -461,6 +488,7 @@ function actionCost(s: GameState, a: AdviceAction | null): number {
     case 'swap': return Math.max(0, swapCost(s, a.key, a.to));
     case 'land': return annexCost(s).cash;
     case 'buyVehicle': return (VEHICLES[a.vehicle] as VehicleDef).price;
+    case 'streets': return 4 * 5;
     default: return 0;
   }
 }
@@ -548,6 +576,19 @@ export function advise(s: GameState, w: World): Advice[] {
     const dup = list.some(same);
     if (!dup) add({ rule: fix.rule, weight: Math.min(76, workWeight(fix.cost, fix.gain)), params: { ...fix.params, key: o.key, share: Math.round(o.share * 100), lost: Math.round(o.lost) }, action: fix.action, cost: fix.cost });
     break;
+  }
+  // room to build: the advisor asks for streets before the lots along them run out (the prototype never did)
+  { const room = roomByStreets(s, w), line = room < 6 ? streetLine(s, w) : null;
+    if (line) add({ rule: 'streets.room', weight: 74, params: { lots: room, n: 4, cost: 20, gain: line.lots }, action: { kind: 'streets', from: line.from, to: line.to }, cost: 20 }); }
+  // with the deadline near or the colony behind its pace, what the milestone asks for comes first: worth saving for
+  if (MILESTONES[s.milestone + 1]) {
+    const pace = goalPace(s, w), left = s.deadline - s.market.t;
+    if (left <= 16 || (pace && pace.behind > 0.15)) for (const y of list) if (y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands') y.weight = Math.max(y.weight, 84);
+    // families weigh most in the milestone and only come to empty homes: behind on them, homes come even with idle
+    // hands (the prototype held huts back above 30% idle, so an advisor-led colony fell far short of its families)
+    const tg = MILESTONES[s.milestone + 1] as MilestoneDef, missing = Math.round((tg.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05)) - Object.keys(s.families).length;
+    if (missing > 0 && ((pace && pace.behind > 0) || left <= 16) && emptySlots(s).length < 8 && !list.some((y) => y.rule === 'milestoneFamilies'))
+      add({ rule: 'milestoneFamilies', weight: 80, params: { milestone: tg.id, n: missing, raised: (s.extraDemand || 0) * 5, cost: costOf('hut', s.milestone) }, action: { kind: 'build', building: 'hut' }, cost: costOf('hut', s.milestone) });
   }
   // the province: more time when the deadline is close and goals are missing; extra funds when cash runs out
   const target = MILESTONES[s.milestone + 1];

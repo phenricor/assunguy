@@ -61,6 +61,7 @@ PT = {
   'outlet.swap': ('{at}: só {share}% chega ao comprador', 'Trocar {building} por {to} custa $ {cost}: +$ {gain} de renda por ano.'),
   'outlet.collect': ('{at}: só {share}% chega ao comprador', '{building} perto, com 2 veículos, custa $ {cost}: +$ {gain} de renda por ano.'),
   'province.extraTime': ('Pedir mais prazo à província', 'Mais {seasons} estações para {milestone}, por {influence} de influência. Só uma vez por meta.'),
+  'streets.room': ('Pouco lugar para construir', 'Restam {lots} lotes junto às ruas. Abrir {n} trechos de rua custa $ {cost} e abre lugar para em torno de {gain} lotes.'),
   'province.extraFunds': ('Pedir verba extra à província', '+$ {cash} no caixa, por {influence} de influência. A meta passa a pedir {demand}% a mais de famílias.'),
 }
 EN = {
@@ -119,6 +120,7 @@ EN = {
   'outlet.swap': ('{at}: only {share}% reaches a buyer', 'Swapping {building} for {to} costs $ {cost}: +$ {gain} income a year.'),
   'outlet.collect': ('{at}: only {share}% reaches a buyer', '{building} nearby, with 2 vehicles, costs $ {cost}: +$ {gain} income a year.'),
   'province.extraTime': ('Ask the province for more time', '{seasons} more seasons for {milestone}, for {influence} influence. Once per goal.'),
+  'streets.room': ('Little room to build', '{lots} lots left along the streets. Opening {n} street lots costs $ {cost} and makes room for around {gain} lots.'),
   'province.extraFunds': ('Ask the province for extra funds', '+$ {cash} cash, for {influence} influence. The goal then asks for {demand}% more families.'),
 }
 EXTRA_PT = {

@@ -4,7 +4,7 @@
 // income, satisfaction, how full the gateways are and how much is wasted.
 import { MILESTONES, type BuildingId } from '@assunguy/data';
 import {
-  advise, allocate, annex, canPlace, canPlaceStreet, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
+  advise, allocate, annex, canPlace, streetLine, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
   passSeason, proposeTax, resolveEvent, sellVehicle, soilOf, swapCrop, upgrade, wasteShare,
   type Advice, type AdviceAction, type CommandResult, type GameState, type LandId, type LotKey, type SeasonReport, type World,
 } from '@assunguy/sim';
@@ -12,6 +12,8 @@ import {
 export interface SeasonLog {
   t: number; level: number; milestone: number; deadlineLeft: number | null; cash: number; families: number; idle: number; income: number;
   satisfaction: number; gatewayFull: number; waste: number; actions: string[]; news: string[];
+  /** Where the purse's money came from and went this season. */
+  purse: SeasonReport['cash'];
 }
 export interface Run { policy: string; seed: number; seasons: SeasonLog[]; milestones: { milestone: number; t: number; deadline: number }[]; ended: 'victory' | 'end' | 'limit'; missed: number }
 
@@ -37,29 +39,11 @@ function lotFor(s: GameState, w: World, t: BuildingId, near?: LotKey): [number, 
   const ks = Object.keys(s.map.streets).map(parse), cx = ks.reduce((x, k) => x + k[0], 0) / ks.length, cy = ks.reduce((x, k) => x + k[1], 0) / ks.length;
   return lots.slice().sort((p, q) => Math.abs(p[0] - cx) + Math.abs(p[1] - cy) - (Math.abs(q[0] - cx) + Math.abs(q[1] - cy)))[0]!;
 }
-/** Free lots next to the streets, where houses and services can go. */
-const roomByStreets = (s: GameState, w: World) => freeLots(s, w, 'hut').length;
 
-/**
- * Out of lots, a player opens streets: the straight line of four street lots out of the network that has the
- * most free lots along it. The advisor never suggests this (only the road to Curitiba), so the bot does it.
- */
+/** Out of lots: opens the advisor's best street line. */
 export function extendStreets(s: GameState, w: World): boolean {
-  let best: { from: [number, number]; to: [number, number]; score: number } | null = null;
-  for (const key of Object.keys(s.map.streets)) {
-    const [a, b] = parse(key);
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      const cells = [1, 2, 3, 4].map((i) => [a + dx * i, b + dy * i] as [number, number]);
-      if (!cells.every(([x, y]) => !canPlaceStreet(s.map, w, x, y))) continue;
-      let score = 0;
-      for (const [x, y] of cells) for (const [sx, sy] of dx ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]]) {
-        const e = canPlace(s.map, w, 'hut', x + sx!, y + sy!);
-        if (!e || e === 'needsStreet') score += 1;
-      }
-      if (!best || score > best.score) best = { from: cells[0]!, to: cells[3]!, score };
-    }
-  }
-  return !!best && best.score >= 3 && streets(s, w, best.from, best.to).opened > 0;
+  const line = streetLine(s, w);
+  return !!line && streets(s, w, line.from, line.to).opened > 0;
 }
 
 /** Carries out one advice; false when there is nothing the bot can do with it. */
@@ -94,6 +78,7 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
     }
     case 'screen': return a.law === 'tithe' && a.value !== undefined ? okd(proposeTax(s, 'tithe', a.value ? { general: a.value } : null)) : false;
     case 'province': return okd(askProvince(s, a.request));
+    case 'streets': return streets(s, w, a.from, a.to).opened > 0;
   }
 }
 
@@ -123,8 +108,6 @@ export function play(seed: number, o: BotOptions = {}): Run {
   let ended = events(s, w);
   for (let i = 0; i < limit && !ended; i++) {
     const actions: string[] = [], tried = new Set<string>();
-    // a player keeps streets ahead of the houses: open more before the lots along them run out
-    if (roomByStreets(s, w) < 8 && extendStreets(s, w)) actions.push('streets');
     for (let n = 0; n < per; n++) {
       const list = advise(s, w).filter((x: Advice) => x.action && !tried.has(JSON.stringify(x.action)) && x.action.kind !== 'screen' || (x.action?.kind === 'screen' && x.action.law));
       const top = list[0];
@@ -143,7 +126,7 @@ export function play(seed: number, o: BotOptions = {}): Run {
     run.seasons.push({
       t: s.market.t, level: s.level, milestone: s.milestone, deadlineLeft: target ? s.deadline - s.market.t : null, cash: Math.round(s.cash),
       families: Object.keys(s.families).length, idle: allocate(s).idle.length, income: Math.round(c.incomeTotal), satisfaction: r.satisfaction.after,
-      gatewayFull: Math.max(0, ...c.transport.gateways.map((g) => g.occupancy)), waste: wasteShare(c), actions, news: r.news.map((x) => x.key),
+      gatewayFull: Math.max(0, ...c.transport.gateways.map((g) => g.occupancy)), waste: wasteShare(c), actions, news: r.news.map((x) => x.key), purse: r.cash,
     });
   }
   run.ended = ended ?? 'limit';
