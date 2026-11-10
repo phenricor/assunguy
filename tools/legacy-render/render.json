@@ -73,7 +73,8 @@
   "plantaVerde",
   "temEstradaEm",
   "folha",
-  "dica"
+  "dica",
+  "miniatura"
  ],
  "exclude": [
   "CHAVE",
@@ -87,9 +88,31 @@
   "blocoBairros",
   "mostraFaixaRec",
   "bairrosAtuais",
-  "cacheBairros"
+  "cacheBairros",
+  "toque"
  ],
- "replace": [],
+ "replace": [
+  [
+   "background-image:url(g0.png)",
+   "background-image:url(${SHEET('g0.png')})"
+  ],
+  [
+   "background-image:url(v0.png)",
+   "background-image:url(${SHEET('v0.png')})"
+  ],
+  [
+   "if (camada === 'bairros') { desenhaBairros(); return; }",
+   "if (camada === 'bairros') { desenhaBairros(); return; }\n  if (camada === 'escoamento') { hook('drawOutlet')(ctx, visiveis); return; }"
+  ],
+  [
+   "if (!camada || camada === 'notas' || camada === 'recursos' || camada === 'bairros') return;",
+   "if (!camada || camada === 'notas' || camada === 'recursos' || camada === 'bairros' || camada === 'escoamento') return;"
+  ],
+  [
+   "letreiro(px, py + 22, `${BENS[bem].nome}: ${Math.round(f * 100)}%`, 17);",
+   "letreiro(px, py + 22, `${hook('goodName')(bem)}: ${Math.round(f * 100)}%`, 17);"
+  ]
+ ],
  "declare": {
   "M": "null",
   "volta": "null",

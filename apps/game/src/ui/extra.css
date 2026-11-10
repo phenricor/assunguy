@@ -1,0 +1,25 @@
+/* Additions to the prototype's stylesheet for the new pieces (single music note, quantity steppers,
+   medal on the level screen, arrows in the report). Same tokens as the prototype. */
+#menuIni .mi-nota { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
+#menuIni .mi-nota svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#menuIni .mi-nota[aria-pressed="false"] { opacity: .6; }
+#menuIni .mi-lang { min-width: 44px; height: 44px; font-weight: 700; }
+.qtd { display: flex; align-items: center; gap: 8px; }
+.qtd button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--regra); background: var(--papel); font: 700 18px/1 inherit; color: var(--anil); }
+.qtd button:disabled { opacity: .35; }
+.qtd b { min-width: 18px; text-align: center; }
+.medalha { width: 76px; height: 76px; margin: 6px auto 4px; border-radius: 50%; background: var(--anil); color: #FBF4E4; display: grid; place-content: center; text-align: center; box-shadow: 0 0 0 4px #FBF4E4, 0 0 0 5px var(--anil); }
+.medalha b { font: 700 30px/1 Besley, Georgia, serif; }
+.medalha small { font-size: 11px; letter-spacing: .04em; }
+.meta-t { text-align: center; color: var(--anil); font: 700 22px/1.2 Besley, Georgia, serif; margin: 18px 0 2px; }
+.meta-s { text-align: center; color: var(--mudo); margin: 0 0 10px; }
+.seta { font-size: .7em; vertical-align: middle; margin-left: 2px; }
+.seta.mais { color: #2E6B3E; } .seta.menos { color: #9C3A20; }
+#bData .clima { display: block; font-size: 11px; color: var(--mudo); }
+svg.lin { fill: none !important; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.cartao-ic svg.lin { width: 22px; height: 22px; }
+.k-camw { position: relative; display: flex; }
+.k-camw .k-cam { flex: 1; }
+.k-camw .k-info { position: absolute; top: 6px; right: 6px; }
+.k-cam svg { width: 22px; height: 22px; display: block; margin-bottom: 4px; color: var(--anil); }
+.k-cam svg:not(.lin) path { fill: currentColor; }

@@ -7,7 +7,7 @@ const listeners: (() => void)[] = [];
 
 function pickLocale(): Locale {
   try { const saved = localStorage.getItem('assunguy.locale'); if (saved === 'en' || saved === 'pt-BR') return saved; } catch { /* storage may be blocked */ }
-  return (navigator.language || 'pt-BR').toLowerCase().startsWith('pt') ? 'pt-BR' : 'en';
+  return 'pt-BR';
 }
 export const locale = (): Locale => tr.locale;
 export function setLocale(l: Locale): void {

@@ -1,0 +1,171 @@
+// Building: the list by category, the preview on a lot (what changes if it is built there), streets and
+// moving. Previews run the command on a copy of the state, so what they show is what the game will do.
+import { BUILDINGS, type BuildingId } from '@assunguy/data';
+import {
+  build, move, streets, measure, undoStreet, demolishStreet, canPlace, computeEconomy, rateHomes, reach, serviceRadius, connected,
+  costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST,
+  type CommandResult, type GameState, type LotKey, type World,
+} from '@assunguy/sim';
+import * as store from '../store';
+import { T, building, goodName, plural } from '../i18n';
+import { api, hooks, PT } from '../view';
+import { $, K, esc, fmt, hint, confirm, sheet, sheetWith, signedMoney } from './kit';
+import { ui, setMode, setPreview, select, cancel, refresh, keepOpen, focus } from './app';
+
+// ---- the list
+
+const ALL = Object.keys(BUILDINGS) as BuildingId[];
+const byCat = (c: string) => ALL.filter((t) => (BUILDINGS[t] as { category: string }).category === c);
+export const TABS: [string, (BuildingId | 'street')[]][] = [
+  ['streets', ['street']],
+  ['housing', byCat('housing')],
+  ['services', byCat('services')],
+  ['commerce', ['store', 'market']],
+  ['transport', ['tradingPost', 'landing', 'riverPort', 'waystation', 'steamPier', 'woodYard', 'railStop', 'trainStation']],
+  ['crops', byCat('crops')],
+  ['livestock', byCat('livestock')],
+  ['extraction', byCat('extraction')],
+  ['workshops', byCat('workshops')],
+];
+const level = (t: BuildingId) => def(t).minLevel ?? 1;
+const late = (t: BuildingId) => !!def(t).lateGame;
+const raceOn = (s: GameState) => !!s.race;
+
+let stripScroll = 0;
+export function openBuildList(): void {
+  const { s } = store.session();
+  select(null); setMode({}); setPreview(null); keepOpen(null);
+  const tabs = TABS.map(([id]) => [id, id === 'streets' ? T('ui.build.streets') : T(`category.${id}`)] as [string, string]);
+  const list = (TABS.find(([id]) => id === ui.category) ?? TABS[1]!)[1].filter((t) => t === 'street' || !late(t) || raceOn(s));
+  const cards = list.map((t) => {
+    if (t === 'street') return `<button type="button" data-t="street"><i style="background:#C9A26E;clip-path:polygon(50% 26%,100% 60%,50% 94%,0 60%)"></i>${esc(T('ui.build.street'))}<small>${esc(T('ui.build.streetDesc'))}</small></button>`;
+    const locked = level(t) > s.level;
+    const mini = api.miniatura(PT.building[t]) as string;
+    return `<button type="button" data-t="${t}" ${locked ? 'disabled class="trava"' : ''}><i style="${mini}"></i>${esc(building(t))}<small>${locked ? `<b>${esc(T('ui.build.level', { n: level(t) }))}</b>` : ''}${esc(T(`building.${t}.description`))}</small></button>`;
+  });
+  sheetWith(T('ui.build.title'), '', `${K.tabs(tabs, ui.category, 'cat')}<div class="grade">${cards.join('')}</div>`);
+  const strip = sheet().querySelector('.abas') as HTMLElement;
+  strip.scrollLeft = stripScroll;
+  sheet().querySelectorAll<HTMLElement>('[data-cat]').forEach((b) => { b.onclick = () => { stripScroll = strip.scrollLeft; ui.category = b.dataset.cat as string; openBuildList(); }; });
+  sheet().querySelectorAll<HTMLElement>('[data-t]').forEach((b) => { b.onclick = () => chooseBuild(b.dataset.t as BuildingId | 'street'); });
+}
+
+export function chooseBuild(t: BuildingId | 'street'): void {
+  select(null); setPreview(null);
+  setMode({ build: t });
+  if (t === 'street') { streetSheet(); return; }
+  sheetWith(building(t), T('ui.build.pickLot'), '');
+}
+
+// ---- preview: run the command on a copy
+
+const clone = (s: GameState): GameState => structuredClone(s);
+function trial(fn: (s: GameState, w: World) => CommandResult): { r: CommandResult; s2: GameState } {
+  const { s, w } = store.session(), s2 = clone(s);
+  return { r: fn(s2, w), s2 };
+}
+const errorText = (r: CommandResult) => (r.ok ? '' : T(`error.${r.error}`));
+
+/** What the renderer highlights for a building at a lot: its reach, its nuisance, its catchment. */
+function highlight(t: BuildingId, key: LotKey, s2: GameState): Record<string, unknown> {
+  const tp = api.TIPOS[PT.building[t] as string] ?? {}, tr = api.TRANSP[PT.building[t] as string];
+  return { key, dist: tp.serv ? reach(s2.map, key, serviceRadius(s2, key)) : new Map(), cor: tp.serv ? tp.cor : '#9C3A20', ruim: tp.ruim, serv: tp.serv, alcT: tr && tr.alcance, tipoT: PT.building[t] };
+}
+
+export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): void {
+  const { s, w } = store.session(), key = `${a},${b}` as LotKey;
+  const { r, s2 } = trial((x, y) => (from ? move(x, y, from, a, b) : build(x, y, t, a, b)));
+  setMode({ ...ui.mode, target: [a, b], ...(r.ok ? {} : { error: errorText(r) }) });
+  const T0 = def(t), cost = costOf(t, s.milestone), L: string[] = [];
+  let h = '';
+  if (!r.ok) {
+    setPreview(null);
+    h += `<p class="erro">${esc(r.error === 'noCash' ? T('ui.build.noCash', { cost: fmt(cost) }) : errorText(r))}</p>`;
+  } else {
+    setPreview(highlight(t, key, s2));
+    const r0 = store.ratings(), r1 = rateHomes(s2, w), m0 = Math.round(r0.mean), m1 = Math.round(r1.mean);
+    if (!from) L.push(K.row(T('ui.build.cost'), `$ ${fmt(cost)}`));
+    const up = upkeepOf(t, s.milestone);
+    if (!from && up) L.push(K.row(T('ui.build.upkeep'), `$ ${fmt(up)}`));
+    if (m1 !== m0) L.push(K.row(T('ui.satisfaction'), `${m0} → ${m1}`, m1 > m0 ? 'mais' : 'menos'));
+    if (T0.crop && T0.output) L.push(K.row(T('ui.build.soil'), `${Math.round(soilOf(w, key, T0.output.good as never) * 100)}%`));
+    if (!T0.housing && !from) {
+      const d = from ? 0 : measure(s, w, { [t]: 1 }).incomeTotal - measure(s, w).incomeTotal;
+      if (Math.abs(d) >= 1 && !api.TRANSP[PT.building[t] as string]) L.push(K.row(T0.crop ? T('ui.build.incomeAfterHarvest') : T('ui.build.income'), T('ui.perYear', { value: signedMoney(d) }), d >= 0 ? 'mais' : 'menos'));
+      if (T0.crop) { const n = firstHarvest(t, s.market.t) - s.market.t; L.push(K.row(T('ui.build.firstHarvest'), T('ui.inSeasons', { n }), n >= 3 ? 'menos' : '')); }
+    }
+    if (T0.housing) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.housing)));
+    else if (T0.jobs) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.jobs)));
+    if (T0.service) {
+      let better = 0;
+      for (const k of Object.keys(r1.homes)) { const x = r0.homes[k as LotKey]; if (x && (r1.homes[k as LotKey]?.rating ?? 0) > x.rating) better++; }
+      L.push(K.row(T('ui.build.homesBetter'), better));
+    }
+    if (T0.nuisance) { let worse = 0; for (const k of Object.keys(r1.homes)) { const x = r0.homes[k as LotKey]; if (x && (r1.homes[k as LotKey]?.rating ?? 0) < x.rating) worse++; } if (worse) L.push(K.row(T('ui.build.homesBothered'), worse, 'menos')); }
+    h += K.rows(L);
+    if (!connected(s2.map).has(key)) h += K.note(T('ui.build.unlinked'), 'ruim');
+  }
+  if (!from && T0.jobs && !allocate(s).idle.length) h += K.note(T('ui.build.nobodyIdle'), 'neutra');
+  h += K.actions([{ id: 'confirmar', kind: 'pri', text: from ? T('ui.build.moveHere') : T('ui.build.build'), disabled: !r.ok }]);
+  sheetWith(from ? T('ui.build.moveTitle', { building: t }) : building(t), T(`building.${t}.description`), h);
+  $('confirmar').onclick = () => {
+    const go = () => {
+      const ok = store.run((x, y) => (from ? move(x, y, from, a, b) : build(x, y, t, a, b)));
+      if (!ok) return;
+      api.efx('obra', key, { txt: from ? '' : `−$ ${fmt(cost)}` });
+      api.Sons.toca('obra');
+      setMode({}); setPreview(null);
+      refresh();
+      hooks.openBuilding(key, undefined, from ? '' : T('ui.build.undoNote'));
+    };
+    // moving a field restarts the wait for its first harvest: ask first
+    if (from && T0.crop) confirm(T('ui.build.moveTitle', { building: t }), [K.row(T('ui.build.firstHarvest'), T('ui.inSeasons', { n: firstHarvest(t, s.market.t) - s.market.t }), 'menos')], T('ui.build.move'), go);
+    else go();
+  };
+  focus(a, b);
+}
+export const previewMove = (from: LotKey, a: number, b: number): void => previewAt(store.session().s.map.buildings[from] as BuildingId, a, b, from);
+
+// ---- streets: two taps on aligned lots
+
+let first: [number, number] | null = null;
+function streetSheet(): void {
+  const { s } = store.session(), left = Math.max(0, streetLimit(s) - streetsThisSeason(s));
+  sheetWith(T('ui.street.title'), T('ui.street.howTo'), `<p class="sub" id="restaRuas">${esc(T('ui.street.left', { n: left, of: streetLimit(s), cost: STREET_COST }))}</p><div class="seg" id="modoRua"><button type="button" class="${ui.mode.undo ? '' : 'on'}" data-m="open">${esc(T('ui.street.open'))}</button><button type="button" class="${ui.mode.undo ? 'on' : ''}" data-m="undo">${esc(T('ui.street.undo'))}</button></div><p class="sub">${esc(T('ui.street.dashed'))}</p>${K.actions([{ id: 'fimR', kind: 'pri', text: T('ui.street.done') }])}`);
+  $('fimR').onclick = () => { first = null; cancel(); };
+  document.querySelectorAll<HTMLElement>('#modoRua button').forEach((b) => { b.onclick = (e) => { e.stopPropagation(); first = null; setMode({ build: 'street', undo: b.dataset.m === 'undo' }); streetSheet(); }; });
+}
+export function streetTap(a: number, b: number): void {
+  const { s } = store.session(), key = `${a},${b}` as LotKey;
+  if (ui.mode.undo) {
+    if (s.seasonWork.streets[key] === undefined) { hint(T('ui.street.notNew'), 2200); return; }
+    store.run((x, y) => undoStreet(x, y, key)); refresh(); streetSheet(); return;
+  }
+  if (!first) { first = [a, b]; setMode({ build: 'street', target: [a, b] }); hint(T('ui.street.second'), 2600); return; }
+  const from = first; first = null;
+  if (from[0] !== a && from[1] !== b) { hint(T('ui.street.aligned'), 2600); return; }
+  const g = store.session(), r = streets(g.s, g.w, from, [a, b]);
+  if (!r.ok) hint(T(`error.${r.error}`), 2600);
+  else { store.changed(); api.Sons.toca('obra'); hint(T('ui.street.opened', { n: r.opened, cost: fmt(r.opened * STREET_COST) }), 2600); }
+  setMode({ build: 'street' });
+  refresh(); streetSheet();
+}
+
+/** A street lot: undo it (money back) if opened this season, or demolish it. */
+export function openStreet(key: LotKey): void {
+  const { s, w } = store.session();
+  const without = clone(s); delete without.map.streets[key];
+  const lost = connected(s.map).size - connected(without.map).size;
+  const bridge = w.water.has(key), title = bridge ? T('ui.street.bridge') : T('ui.street.street');
+  const lostTxt = lost > 0 ? T('ui.street.lose', { n: lost }) : T('ui.street.loseNone');
+  if (s.seasonWork.streets[key] !== undefined) {
+    sheetWith(title, `${T('ui.street.newThisSeason', { money: fmt(s.seasonWork.streets[key] as number) })} ${lost > 0 ? lostTxt : ''}`, K.actions([{ id: 'desfazR', kind: 'pri', text: T('ui.street.undoOne') }]));
+    $('desfazR').onclick = () => { store.run((x, y) => undoStreet(x, y, key)); refresh(); cancel(); };
+    return;
+  }
+  sheetWith(title, lostTxt, K.actions([{ id: 'demolir', kind: 'per' as never, text: T('ui.demolish') }]));
+  $('demolir').onclick = () => { store.run((x, y) => demolishStreet(x, y, key)); refresh(); cancel(); };
+}
+
+export const _canPlace = canPlace;
+export const _good = goodName;

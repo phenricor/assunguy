@@ -1,13 +1,15 @@
 // The game in play: the simulation's state and world, the player's names for it, what is derived from them
-// (economy, ratings, advice), and the saves. One save per colony, kept in the browser; a yearly autosave.
+// (economy, ratings, advice, districts), and the saves. Each colony keeps its current game and its last five
+// yearly autosaves, in the browser's IndexedDB; a save can also be exported to a file and imported back.
 import {
   advise, computeDistricts, computeEconomy, generateWorld, newGame, passSeason, rateHomes, resolveEvent,
   type Advice, type CommandResult, type Districts, type Economy, type GameState, type Ratings, type SeasonReport, type World,
 } from '@assunguy/sim';
 import { setContext, T } from './i18n';
 
-export interface Meta { id: string; colony: string; advisor: string; seed: number; created: number; saved: number; t: number; milestone: number }
+export interface Meta { id: string; colony: string; advisor: string; seed: number; created: number; saved: number; t: number; milestone: number; families: number }
 export interface Session { s: GameState; w: World; meta: Meta }
+export interface Autosave { k: string; col: string; t: number; saved: number; meta: Meta; save: string }
 
 type Listener = (why: string) => void;
 const listeners = new Set<Listener>();
@@ -35,6 +37,7 @@ export function run(fn: (s: GameState, w: World) => CommandResult, why = 'comman
   const g = session(), r = fn(g.s, g.w);
   if (!r.ok) { onError(T(`error.${r.error}`)); return false; }
   changed(why);
+  void save();
   return true;
 }
 
@@ -44,71 +47,90 @@ export function nextSeason(): SeasonReport {
   const g = session();
   const r = passSeason(g.s, g.w);
   changed('season');
-  if (g.s.market.t % 4 === 0) save();
+  void save(g.s.market.t % 4 === 0);
   return r;
 }
 export function choose(option: number): void {
   const g = session();
   resolveEvent(g.s, g.w, option);
   changed('event');
+  void save();
 }
 
-// ---- saves: an index of colonies, each with its own state
+// ---- IndexedDB
 
-const INDEX = 'assunguy.saves', PREFIX = 'assunguy.save.';
-const read = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
-const write = (k: string, v: string): boolean => { try { localStorage.setItem(k, v); return true; } catch { return false; } };
-export function listSaves(): Meta[] {
-  try { const x = JSON.parse(read(INDEX) ?? '[]') as Meta[]; return Array.isArray(x) ? x.sort((a, b) => b.saved - a.saved) : []; } catch { return []; }
+const AUTOSAVES = 5;
+let dbp: Promise<IDBDatabase | null> | null = null;
+function db(): Promise<IDBDatabase | null> {
+  return (dbp ??= new Promise((ok) => {
+    try {
+      const r = indexedDB.open('assunguy-game', 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore('colonies', { keyPath: 'id' }); r.result.createObjectStore('autos', { keyPath: 'k' }); };
+      r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); r.onblocked = () => ok(null);
+    } catch { ok(null); }
+  }));
 }
-const putIndex = (m: Meta) => write(INDEX, JSON.stringify([m, ...listSaves().filter((x) => x.id !== m.id)]));
+async function tx<T>(store: string, mode: IDBTransactionMode, f: (o: IDBObjectStore) => IDBRequest<T>): Promise<T | null> {
+  const d = await db(); if (!d) return null;
+  return new Promise((ok) => { try { const q = f(d.transaction(store, mode).objectStore(store)); q.onsuccess = () => ok(q.result); q.onerror = () => ok(null); } catch { ok(null); } });
+}
+export const listSaves = async (): Promise<(Meta & { save?: string })[]> => ((await tx<{ id: string; meta: Meta }[]>('colonies', 'readonly', (o) => o.getAll())) ?? []).map((x) => x.meta).sort((a, b) => b.saved - a.saved);
+export const listAutosaves = async (col: string): Promise<Autosave[]> => ((await tx<Autosave[]>('autos', 'readonly', (o) => o.getAll())) ?? []).filter((x) => x.col === col).sort((a, b) => b.t - a.t);
 
-export function start(o: { colony: string; advisor: string; seed?: number }): Session {
-  const seed = o.seed ?? Math.floor(Math.random() * 1e6) + 1;
-  const { s, w } = newGame(seed);
-  const now = Date.now();
-  game = { s, w, meta: { id: `c${now.toString(36)}`, colony: o.colony, advisor: o.advisor, seed, created: now, saved: now, t: s.market.t, milestone: 0 } };
-  setContext(game);
-  save();
-  changed('load');
-  return game;
-}
-export function save(): boolean {
+const text = () => JSON.stringify({ v: 1, meta: session().meta, s: session().s });
+export async function save(yearly = false): Promise<boolean> {
   if (!game) return false;
   const m = game.meta;
-  m.saved = Date.now(); m.t = game.s.market.t; m.milestone = game.s.milestone;
-  const ok = write(PREFIX + m.id, JSON.stringify({ v: 1, meta: m, s: game.s }));
-  if (ok) putIndex(m);
+  m.saved = Date.now(); m.t = game.s.market.t; m.milestone = game.s.milestone; m.families = Object.keys(game.s.families).length;
+  const save = text();
+  const ok = (await tx('colonies', 'readwrite', (o) => o.put({ id: m.id, meta: { ...m }, save }))) !== null;
+  if (yearly) {
+    await tx('autos', 'readwrite', (o) => o.put({ k: `${m.id}|${m.t}`, col: m.id, t: m.t, saved: m.saved, meta: { ...m }, save }));
+    const old = (await listAutosaves(m.id)).slice(AUTOSAVES);
+    for (const x of old) await tx('autos', 'readwrite', (o) => o.delete(x.k));
+  }
   return ok;
 }
+
 function revive(data: { meta: Meta; s: GameState }): Session {
   const w = generateWorld(data.s.seed, data.s.mapVersion);
-  return { s: data.s, w, meta: data.meta };
+  return { s: data.s, w, meta: { ...data.meta, families: data.meta.families ?? Object.keys(data.s.families).length } };
 }
-export function load(id: string): boolean {
-  const raw = read(PREFIX + id);
-  if (!raw) return false;
-  try { game = revive(JSON.parse(raw)); } catch { return false; }
-  setContext(game);
-  changed('load');
-  return true;
+function enter(g: Session): Session { game = g; setContext(g); changed('load'); return g; }
+
+export function start(o: { colony: string; advisor: string; seed?: number }): Session {
+  const seed = o.seed ?? Math.floor(Math.random() * 2147483000) + 1;
+  const { s, w } = newGame(seed);
+  const now = Date.now();
+  enter({ s, w, meta: { id: `c${now.toString(36)}`, colony: o.colony, advisor: o.advisor, seed, created: now, saved: now, t: s.market.t, milestone: 0, families: Object.keys(s.families).length } });
+  void save();
+  return game!;
 }
-export function remove(id: string): void {
-  try { localStorage.removeItem(PREFIX + id); } catch { /* ignore */ }
-  write(INDEX, JSON.stringify(listSaves().filter((x) => x.id !== id)));
+export async function load(id: string): Promise<boolean> {
+  const r = await tx<{ save: string }>('colonies', 'readonly', (o) => o.get(id));
+  if (!r) return false;
+  try { enter(revive(JSON.parse(r.save))); return true; } catch { return false; }
+}
+export async function loadAutosave(k: string): Promise<boolean> {
+  const r = await tx<Autosave>('autos', 'readonly', (o) => o.get(k));
+  if (!r) return false;
+  try { enter(revive(JSON.parse(r.save))); await save(); return true; } catch { return false; }
+}
+export async function remove(id: string): Promise<void> {
+  await tx('colonies', 'readwrite', (o) => o.delete(id));
+  for (const x of await listAutosaves(id)) await tx('autos', 'readwrite', (o) => o.delete(x.k));
 }
 /** The save as a file's text, to keep or carry to another device. */
-export const exportSave = (): string => JSON.stringify({ v: 1, meta: session().meta, s: session().s });
-export function importSave(text: string): boolean {
+export const exportSave = (): string => text();
+export async function importSave(txt: string): Promise<boolean> {
   try {
-    const data = JSON.parse(text) as { meta: Meta; s: GameState };
+    const data = JSON.parse(txt) as { meta: Meta; s: GameState };
     if (!data?.s?.map || !data.meta?.colony) return false;
-    game = revive(data);
-    game.meta.id = listSaves().some((x) => x.id === game!.meta.id) ? `${game.meta.id}i${Date.now().toString(36)}` : game.meta.id;
-    setContext(game);
-    save();
-    changed('load');
+    const g = revive(data);
+    if ((await listSaves()).some((x) => x.id === g.meta.id)) g.meta.id = `${g.meta.id}i${Date.now().toString(36)}`;
+    enter(g);
+    await save();
     return true;
   } catch { return false; }
 }
-export const quit = (): void => { save(); game = null; setContext(null); };
+export const quit = async (): Promise<void> => { await save(); };
