@@ -1,4 +1,4 @@
-// What the prototype's renderer reads, built from the new simulation. The renderer (src/legacy/render.js)
+// What the prototype's renderer reads, built from the new simulation. The renderer (src/render/render.js)
 // was written against the prototype's state `M` (Portuguese ids) and its calculation `C`; this module
 // translates the GameState into that shape after every change, and runs the prototype's world generation
 // so the static map (river, lands, relief, deposits) is the one the simulation also generated.
@@ -7,8 +7,8 @@ import {
   computeEconomy, connected, reach, serviceOf, serviceRadius, railExits, railPath,
   type GameState, type LotKey, type Ratings, type World,
 } from '@assunguy/sim';
-import idMap from '../../../legacy/id-map.json';
-import { api, vars, hooks } from './legacy/render.js';
+import idMap from './render/ids.json';
+import { api, vars, hooks } from './render/render.js';
 import { T } from './i18n';
 
 type Table = Record<string, string>;

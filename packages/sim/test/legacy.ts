@@ -1,7 +1,7 @@
-// Helpers for golden tests against the frozen prototype (see tools/legacy-oracle).
+// Helpers for the golden tests: their fixtures were recorded from the prototype, with its Portuguese ids.
 import type { MapState } from '../src/map.js';
 import type { Family, FamilyId, GameState, TaxId } from '../src/state.js';
-import idMap from '../../../legacy/id-map.json' with { type: 'json' };
+import idMap from './fixtures/ids.json' with { type: 'json' };
 
 export const LEGACY = idMap as unknown as Record<string, Record<string, string>>;
 

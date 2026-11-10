@@ -1,6 +1,6 @@
 # Text fixes from the interface review that change imported texts: building descriptions without the
 # family count (the Capacidade line shows it) and the store without the whole-land rule (removed in the
-# review). Run after tools/legacy-import/import.py.
+# review).
 import json, pathlib
 
 LOC = pathlib.Path(__file__).resolve().parents[2] / 'packages' / 'i18n' / 'locales'

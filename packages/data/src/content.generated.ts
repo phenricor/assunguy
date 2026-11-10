@@ -1,4 +1,4 @@
-// Generated once from the prototype by tools/legacy-import/import.py.
+// Content tables, first imported from the prototype; edited here from now on.
 // From here on these tables are the source of truth: edit them by hand.
 import type { GoodDef, BuildingDef, VehicleDef, TransportRoleDef, LevelDef, MilestoneDef, LawDef, BiomeDef, BalanceDef, WorldDef } from './types.js';
 

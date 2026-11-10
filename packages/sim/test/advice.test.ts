@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ADVICE_RULES, advise, legacyAdvice, producerFix, type AdviceAction } from '../src/advisor.js';
+import { ADVICE_RULES, advise, ruleAdvice, producerFix, type AdviceAction } from '../src/advisor.js';
 import { createTranslator, LOCALES } from '@assunguy/i18n';
 import { defineEvent, resolveEvent } from '../src/events.js';
 import { passSeason } from '../src/season.js';
@@ -44,7 +44,7 @@ describe('advisor (golden, against the prototype)', () => {
         if (i > 0) { passSeason(s, w); for (const _ of run.seasons[i - 1]!.picks) { const d = defineEvent(s, s.queue[0]!); resolveEvent(s, w, d.options.findIndex((o) => !o.can || o.can(s))); } }
         // the lone store for far fields is replaced by a measured package (see the review)
         const expected = want.filter((x) => !x.tit.endsWith('roças sem comércio')).map((x) => key(x.w, action(x.ac)));
-        const mine = legacyAdvice(s, w).map((x) => key(x.weight, x.action));
+        const mine = ruleAdvice(s, w).map((x) => key(x.weight, x.action));
         expect(mine, `${name} state ${i}: ${want.map((x) => x.tit).join(' | ')}`).toEqual(expected);
       });
     });
@@ -63,7 +63,7 @@ describe('advisor on variants of the saves (golden)', () => {
         if (spec.dizimo) s.taxes.tithe = { general: spec.dizimo, byGood: {} };
         updateRatings(s, w); // the prototype's calcula re-rates the homes
         const expected = list.filter((x) => !x.tit.endsWith('roças sem comércio')).map((x) => key(x.w, action(x.ac)));
-        expect(legacyAdvice(s, w).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
+        expect(ruleAdvice(s, w).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
       });
     }
   }
@@ -143,6 +143,6 @@ describe('advisor: priorities from the balance review', () => {
     const near = advise(s, w);
     expect(near.filter((x) => x.rule === 'milestoneBuilding').every((x) => x.weight >= 84)).toBe(true);
     expect(near.some((x) => x.rule === 'milestoneFamilies')).toBe(true);
-    expect(legacyAdvice(s, w).some((x) => x.rule === 'milestoneFamilies')).toBe(false);
+    expect(ruleAdvice(s, w).some((x) => x.rule === 'milestoneFamilies')).toBe(false);
   });
 });

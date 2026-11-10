@@ -1,5 +1,5 @@
 // Starts the game: the prototype's stylesheet and renderer, the interface, the start menu.
-import './legacy/prototype.css';
+import './render/render.css';
 import './ui/extra.css';
 import * as sim from '@assunguy/sim';
 import { defineEvent, type QueuedEvent } from '@assunguy/sim';

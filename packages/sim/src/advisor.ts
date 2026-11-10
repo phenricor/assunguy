@@ -496,8 +496,8 @@ function actionCost(s: GameState, a: AdviceAction | null): number {
   }
 }
 
-/** The prototype's list: colony and transport rules, heaviest first, one advice per building type. */
-export function legacyAdvice(s: GameState, w: World): Advice[] {
+/** The rules' list: colony and transport rules, heaviest first, one advice per building type. */
+export function ruleAdvice(s: GameState, w: World): Advice[] {
   const c = computeEconomy(s, w), x: Ctx = { s, w, c, ratings: rateHomes(s, w), linked: connected(s.map), memo: new Map([['', c]]) };
   const one = (list: Advice[]) => { const seen = new Set<string>(); return list.filter((y) => { if (y.action?.kind !== 'build') return true; if (seen.has(y.action.building)) return false; seen.add(y.action.building); return true; }); };
   const colony = one(colonyAdvice(x).sort((p, q) => q.weight - p.weight));
@@ -562,7 +562,7 @@ export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(
 /** The advisor's list, with the review fixes: costs and blocking, province requests, far-land packages, producer fixes. */
 export function advise(s: GameState, w: World): Advice[] {
   const c = computeEconomy(s, w);
-  let list = legacyAdvice(s, w);
+  let list = ruleAdvice(s, w);
   const add = (a: Omit<Advice, 'blocked'>) => list.push({ ...a, blocked: false });
   // far fields: a measured collection point or store package replaces the prototype's lone store
   const far = farLandPlan(s, w, c);
