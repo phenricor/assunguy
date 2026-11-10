@@ -67,6 +67,8 @@ families), with the same rules, 60 seasons, greedy (`src/experiment.ts`):
 | grant $ 200 at the start | 57, 58, never | 72 to 83 | $ 184 to $ 237 |
 | 10% of trade from the start | 52, never, never | 64 to 84 | $ 246 to $ 553 |
 | 10% of trade and grant $ 160 | 47, 47, 51 | 88 to 92 | $ 262 to $ 315 |
+| lot instalments back (`RULES.installments`) | never (3 of 3) | 71 to 82 | $ 104 to $ 201 |
+| lot instalments and grant $ 160 | 49, 53, never | 69 to 88 | $ 210 to $ 349 |
 
 The parish is due at 44, 48 with the extra time the province grants.
 

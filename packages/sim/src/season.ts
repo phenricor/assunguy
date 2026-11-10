@@ -10,6 +10,7 @@ import { advanceGreatWorks, advanceTransport, applyRelief, grantFactor, levelReq
 import { taxEffect, updateRatings } from './ratings.js';
 import { settle, storedMean } from './settle.js';
 import { nameId, rememberDistricts } from './districts.js';
+import { collectInstalments } from './installments.js';
 import { change, goodReturns, seasonDecisions, seriesPoint, snapshot, type Change, type Decisions, type GoodReturn } from './report.js';
 import { hasChoice, hasLaw, type GameState } from './state.js';
 import { landOf, parseKey, type LotKey, type World } from './world.js';
@@ -56,6 +57,8 @@ export interface SeasonReport {
   returns: GoodReturn[];
   decisions: Decisions;
   passed: { taxes: { id: string; revenue: number }[]; laws: { id: string; change: Change }[] };
+  /** Lot instalments received (0 unless the instalments switch is on). */
+  instalments: number;
 }
 
 export function passSeason(s: GameState, w: World): SeasonReport {
@@ -79,6 +82,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   const news: News[] = [];
   if (relief.staffed) news.push({ key: 'news.relief', params: { n: relief.staffed } });
   passFamilies(s);
+  const instalments = collectInstalments(s, w);
   const c1 = computeEconomy(s, w);
   updateSupply(s, c1);
   const invested = familiesInvest(s, w, c1);
@@ -144,7 +148,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
     satisfaction: { before: satBefore, after: ratings.mean },
     summary: { income: Math.round(c.incomeTotal), lost: Math.round(c.lostTotal), exported: Math.round(c.exportedTotal), employed: c.counts.work.employed, families: c.counts.families },
     invested, familiesAtRisk: ef.familiesAtRisk, businessesAtRisk: ef.businessesAtRisk,
-    returns: goodReturns(s, c), decisions, passed,
+    returns: goodReturns(s, c), decisions, passed, instalments: instalments.received,
   };
   s.reports = [...s.reports, report].slice(-12);
   s.log = []; s.buildCosts = 0; s.arrivalCosts = 0;
