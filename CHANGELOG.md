@@ -11,6 +11,11 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Fixed
+
+- The transport preview also shows collection points: a store shows the trading posts and landings that would
+  unload there, and a gateway shows those behind each commerce, with their line to it.
+
 ## [1.0.0-beta.5] - 2026-11-10
 
 ### Added

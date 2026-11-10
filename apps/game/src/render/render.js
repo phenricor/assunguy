@@ -3144,9 +3144,10 @@ function desenha(agora) {
   if (realce && realce.fontes && realce.fontes.length) {
     const ponto = (k, t) => { const c = t ? centroDe(k, t) : par(k).map((x) => x + .5); return projT(...paraVista(c[0], c[1])); };
     const [ax, ay] = ponto(realce.key, realce.tipoT);
-    const pts = realce.fontes.map((f) => [f, ...ponto(f.key, f.tipo)]);
+    // uma captação atrás de um comércio leva a carga até ele, e dele sai pela porta nova
+    const pts = realce.fontes.map((f) => [f, ...ponto(f.key, f.tipo), ...(f.ate ? ponto(f.ate, f.tipoAte) : [ax, ay])]);
     // os cinza primeiro: os azuis, que mudam com a obra, ficam por cima
-    pts.slice().sort((x, y) => Number(x[0].novo) - Number(y[0].novo)).forEach(([f, fx, fy]) => linhaFluxo([fx, fy], [ax, ay], f.novo ? '#2A78D6' : '#8A8170', f.novo ? Math.max(1.6, 2.2 * z) : Math.max(1.2, 1.5 * z), true));
+    pts.slice().sort((x, y) => Number(x[0].novo) - Number(y[0].novo)).forEach(([f, fx, fy, tx, ty]) => linhaFluxo([fx, fy], [tx, ty], f.novo ? '#2A78D6' : '#8A8170', f.novo ? Math.max(1.6, 2.2 * z) : Math.max(1.2, 1.5 * z), true));
     ctx.font = '700 11px "Libre Franklin",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     pts.forEach(([f, fx, fy]) => {
       if (fx < -40 || fx > W + 40 || fy < -40 || fy > H + 60) return;

@@ -76,16 +76,19 @@ function highlight(t: BuildingId, key: LotKey, s2: GameState, r1: Ratings, flow:
     // the homes' expected ratings; a transport building shows its cargo instead, so the two sets of badges do not pile up
     notas: flow ? undefined : protoCalc(s2, r1).notas,
     // what would send its cargo here: a line and the arrobas a year over each one
-    fontes: flow?.list.map((x) => ({ key: x.key, tipo: PT.building[s2.map.buildings[x.key] as BuildingId], novo: x.fresh, n: x.n })) };
+    fontes: flow?.list.map((x) => ({ key: x.key, tipo: PT.building[s2.map.buildings[x.key] as BuildingId], novo: x.fresh, n: x.n, ...(x.via ? { ate: x.via, tipoAte: PT.building[s2.map.buildings[x.via] as BuildingId] } : {}) })) };
 }
 
 /** What would send its cargo through a new transport building, and whether it already had a way out. */
-interface Flow { list: { key: LotKey; fresh: boolean; n: number }[]; role: 'collection' | 'commerce' | 'gateway' }
+interface Flow { list: { key: LotKey; fresh: boolean; n: number; /** the commerce its cargo passes through first (a collection point behind a gateway) */ via?: LotKey }[]; role: 'collection' | 'commerce' | 'gateway' }
 function flowInto(t: BuildingId, key: LotKey, s: GameState, s2: GameState): Flow | null {
   const R = roleOf(t);
   if (!R) return null;
   const G0 = geography(s, connected(s.map)), G1 = geography(s2, connected(s2.map)), c0 = store.economy(), list: Flow['list'] = [];
   const sent = (k: LotKey) => Math.round(c0.outlet[k]?.sent ?? 0);
+  const carried = (k: LotKey) => Math.round(c0.transport.collections.find((x) => x.key === k)?.carried ?? 0);
+  // the commerce a collection point sends most of its load to
+  const mainCommerce = (G: typeof G1, i: number) => { const to = G.collections[i]!.to.slice().sort((a, b) => b.share - a.share)[0]; return to ? G.commerce[to.j] : undefined; };
   if (R.role === 'collection') {
     // the fields and herds beyond the free walk that the new point reaches; those another point already reached keep it
     const j = G1.collections.findIndex((c) => c.key === key);
@@ -98,12 +101,21 @@ function flowInto(t: BuildingId, key: LotKey, s: GameState, s2: GameState): Flow
       const before = G0.producers[k]?.carry ?? Infinity;
       list.push({ key: k, fresh: before > BALANCE.freeCarryDistance && p.carry < before, n: sent(k) });
     }
+    // the collection points that would unload here: they gain when their trip to a commerce gets shorter
+    G1.collections.forEach((c, i) => {
+      if (mainCommerce(G1, i)?.key !== key) return;
+      const i0 = G0.collections.findIndex((x) => x.key === c.key), before = i0 >= 0 ? G0.collections[i0]!.toCommerce : Infinity;
+      list.push({ key: c.key, fresh: c.toCommerce < before, n: carried(c.key) });
+    });
   } else {
     // the commerces whose surplus would go out here; those already linked to another gateway keep theirs
     for (const c of G1.commerce) if (c.key && !c.virtual && c.type && distance(c.key, key) <= c.reach + 4) {
       const was = G0.commerce.find((x) => x.key === c.key);
       list.push({ key: c.key, fresh: !was?.linked, n: Math.round(c0.transport.commerce.find((x) => x.key === c.key)?.in ?? 0) });
     }
+    // and the collection points behind those commerces: their cargo reaches the gateway through the commerce
+    const reached = new Set(list.map((x) => x.key));
+    G1.collections.forEach((c, i) => { const m = mainCommerce(G1, i); if (m && reached.has(m.key)) list.push({ key: c.key, fresh: !!list.find((x) => x.key === m.key)?.fresh, n: carried(c.key), via: m.key }); });
   }
   return { list: list.sort((a, b) => Number(b.fresh) - Number(a.fresh) || b.n - a.n), role: R.role as Flow['role'] };
 }
@@ -113,10 +125,13 @@ const SIDES = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 /** The rows that go with the lines on the map: how many would start sending here, their arrobas, and the rest. */
 function flowRows(flow: Flow | null, L: string[]): void {
   if (!flow) return;
-  const fresh = flow.list.filter((x) => x.fresh), kept = flow.list.length - fresh.length, arrobas = fresh.reduce((a, x) => a + x.n, 0);
+  // a collection point behind a commerce is listed for the map; its cargo is already counted in the commerce's
+  const direct = flow.list.filter((x) => !x.via), fresh = direct.filter((x) => x.fresh), kept = direct.length - fresh.length, arrobas = fresh.reduce((a, x) => a + x.n, 0);
+  const behind = flow.list.filter((x) => x.via && x.fresh).length;
   L.push(K.row(T(`ui.build.flow.${flow.role}.new`), fresh.length, fresh.length ? 'mais' : 'menos'));
   if (fresh.length) L.push(K.row(T('ui.build.flow.arrobas'), T('ui.perYear', { value: fmt(arrobas) })));
   if (kept) L.push(K.row(T(`ui.build.flow.${flow.role}.kept`), kept));
+  if (behind) L.push(K.row(T('ui.build.flow.behind'), behind));
 }
 /** What a transport building would do on this lot, as the prototype showed it. Returns a note when the place is poor. */
 function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[], flow: Flow | null): string {
