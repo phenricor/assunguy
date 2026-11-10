@@ -36,12 +36,21 @@ the catalog artboards show them applied.
 - Fields within those 6 lots never use a collection point; only fields beyond them split their cargo
   between walking and a collection point.
 
-## Routes (approved)
+## Escoamento layer (approved)
 
-Tapping a commerce, collection point or gateway shows the whole network it belongs to, from the fields to
-the gateway: its reach as an area, lines from fields (on foot or to a collection point), from collection
-points to commerce (thickness by share), from commerce to gateway, and the gateway's destination and how
-full it is. A line from a field is drawn only when it sends a real share of its cargo that way. A "Rotas" map layer shows the whole network at once.
+One map layer, "Escoamento", joins the routes and the losses:
+
+- Every producing building (field, corral, mine) carries a seal, like the satisfaction seals, with the
+  share of its year's surplus that reaches a buyer: blue at 90 or more, brown from 75 to 89, red below 75.
+- Under the seals, the routes: lines from fields to the commerce on foot or to a collection point (drawn
+  only when the field sends a real share that way, thickness by share), collection point to commerce,
+  commerce to gateway, and the gateway's destination and how full it is.
+- Tapping a commerce, collection point or gateway shows the network it belongs to, with its reach as an
+  area and a "Rede" section in its panel.
+- Tapping a producer shows its share and where the rest is lost: on foot, in the collection point, at a
+  commerce with no gateway, cargo stuck because the gateways are full, or no buyer. Each cause has its own
+  fix, so the panel names it; "no buyer" is per good and is shared among all producers of that good in
+  proportion to what each delivers (`outletOf` in the economy).
 
 ## Screen by screen
 
