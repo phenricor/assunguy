@@ -17,15 +17,33 @@ playtester's saves in `legacy/saves`.
 | Transport flows | `sim/transport` | `prepGeo`, `transpInicio`, `escoaEstacao`, `exportaPortas`, `transpFim` | both saves |
 | Home ratings, mood, taxes | `sim/ratings` | `calcula`, `satGlobal`, `satCidade`, `satTransp`, `efeitoImpostos`, `quedaPorFamilia` | both saves, plus taxes in force |
 | Families | `sim/families` | `novaFamilia`, `sincronizaFamilias`, `passaFamilias`, `atualizaAbast`, `familiasInvestem`, `receberLeva`, `filhosQueCasam` | new game, speedrun |
+| Province, purse, relief works, great works, goals | `sim/province` | `aplicaFrente`, `manutencaoDe`, `prestaContas`, `avancaGrandesObras`, `faltasDaMeta`, `requisitosDoNivel`, `ritmoDaMeta` | both saves |
+| Placement | `sim/placement` | `podeConstruir` | sampled lots, both saves |
+| Measuring hypothetical buildings | `sim/measure` | `comObras`, `economia(m, extra)` | both saves |
+| Events, crises, city problems | `sim/events` | `rolaAcontecimentos`, `defEvento`, `resolveEvento`, `avancaProblemas`, crises | through the season runs |
+| The season | `sim/season` | `passaEstacao`, `confereMeta` | 12 seasons from each save, events resolved by a fixed policy |
+| Outlet per producer | `sim/economy` (`outletOf`) | none: new, from the transport run | totals add up to the colony's losses |
+| The advisor | `sim/advisor` | `conselhosSem`, `conselhosTransp`, `ondeInvestir`, `sugestaoTroca`, `dizimoSugerido` | 13 states of each save's run, plus 5 variants of each save |
 
-## Next: the season step
+## Next
 
-Still to port, in this order: relief works (`aplicaFrente`), the purse (`passaEstacao` accounts,
-`manutencaoDe`, `prestaContas`), `avancaTransporte`, goals (`confereMeta`, `ritmoDaMeta`), great works,
-city problems, crises (`avancaAcontecimentos`), the event queue (`rolaAcontecimentos`, dilemmas, crises,
-groups of immigrants, crop swaps, path choices, decrees) as declarative events with i18n text, then
-`passaEstacao` as one command with a multi-season golden run that auto-resolves events by a fixed policy.
-The district names (`calculaBairros`) and the late-game race stay for later.
+1. Player commands: build, demolish, move, upgrade, annex, buy and sell vehicles, swap crops, taxes and
+   laws, province requests. Golden against the prototype's command functions.
+2. `tools/bot`: a robot player that follows the advisor (top advice it can pay for) through these
+   commands, with balance checks: milestones against their deadlines, cash, gateway occupancy.
+3. Districts (`calculaBairros`), series and graphs, report decision diffs; the late-game race stays for later.
+
+## The advisor
+
+`legacyAdvice` is the prototype's list, number for number. `advise` adds the review rules on top: every
+advice carries its cost and is blocked above the cash in hand; a far land gets the better of a collection
+point and a store with waystation and mule trains, measured, or nothing (it replaces the prototype's lone
+store); the producer losing the most on the way gets its best measured fix (`producerFix`, also used by the
+field panel); the province's extra time and extra funds are offered when they apply.
+
+Two prototype quirks are kept out of the comparison by the oracle: its caches (keyed on counts) go stale
+when an event changes the colony without changing them, and `fotoColonia` and `faltasDaMeta` re-rate the
+live colony in the middle of the advice, so later rules saw different ratings than earlier ones.
 
 ## How the season economy was ported
 
@@ -86,7 +104,7 @@ same rules off in the prototype before recording (see the patches at the top of 
 
 ## Advisor fixes to make when porting it
 
-- "Roças sem comércio" suggests a store in a far land without checking that the store reaches a gateway
+- Done (`farLandPlan`). "Roças sem comércio" suggested a store in a far land without checking that the store reaches a gateway
   (store reach + 4 lots). Far from the pier, the store is isolated: producers carry to it for free, but it
   only sells to the families around it and the rest spoils. In the speedrun save (Campos do Mate) the store
   alone costs $ 2.498 a year; the follow-up rule then asks for a waystation. The port must offer store +
