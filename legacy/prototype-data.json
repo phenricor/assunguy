@@ -1,0 +1,3414 @@
+{
+ "BENS": {
+  "milho": {
+   "nome": "Milho",
+   "comida": true,
+   "base": 2,
+   "fora": 3.2,
+   "fundo": 240,
+   "grupo": "lavoura"
+  },
+  "feijao": {
+   "nome": "Feijão",
+   "comida": true,
+   "base": 4,
+   "fora": 5.5,
+   "fundo": 130,
+   "grupo": "lavoura"
+  },
+  "mandioca": {
+   "nome": "Mandioca",
+   "comida": true,
+   "base": 1.5,
+   "fora": 0,
+   "grupo": "lavoura"
+  },
+  "arroz": {
+   "nome": "Arroz",
+   "comida": true,
+   "base": 3,
+   "fora": 4.5,
+   "fundo": 180,
+   "grupo": "lavoura"
+  },
+  "trigo": {
+   "nome": "Trigo",
+   "comida": true,
+   "base": 4,
+   "fora": 5.5,
+   "fundo": 130,
+   "grupo": "lavoura"
+  },
+  "pinhao": {
+   "nome": "Pinhão",
+   "comida": true,
+   "base": 2,
+   "fora": 3,
+   "fundo": 70,
+   "grupo": "lavoura"
+  },
+  "peixe": {
+   "nome": "Peixe fresco",
+   "comida": true,
+   "estraga": true,
+   "base": 2,
+   "fora": 0,
+   "grupo": "rio"
+  },
+  "salgado": {
+   "nome": "Peixe salgado",
+   "comida": true,
+   "base": 3,
+   "fora": 5,
+   "fundo": 90,
+   "grupo": "rio"
+  },
+  "arrozP": {
+   "nome": "Arroz pilado",
+   "comida": true,
+   "base": 4.4,
+   "fora": 6.4,
+   "fundo": 150,
+   "grupo": "oficio"
+  },
+  "charque": {
+   "nome": "Charque",
+   "comida": true,
+   "base": 7.5,
+   "fora": 10.5,
+   "fundo": 140,
+   "grupo": "oficio"
+  },
+  "fuba": {
+   "nome": "Fubá",
+   "comida": true,
+   "base": 3.2,
+   "fora": 4.8,
+   "fundo": 140,
+   "grupo": "oficio"
+  },
+  "farinha": {
+   "nome": "Farinha de mandioca",
+   "comida": true,
+   "base": 2.6,
+   "fora": 4.2,
+   "fundo": 140,
+   "grupo": "oficio"
+  },
+  "farinhaT": {
+   "nome": "Farinha de trigo",
+   "comida": true,
+   "base": 6.5,
+   "fora": 8.5,
+   "fundo": 90,
+   "grupo": "oficio"
+  },
+  "toucinho": {
+   "nome": "Toucinho",
+   "comida": true,
+   "base": 6,
+   "fora": 8.5,
+   "fundo": 120,
+   "grupo": "lavoura"
+  },
+  "carne": {
+   "nome": "Carne",
+   "comida": true,
+   "base": 5,
+   "fora": 7,
+   "fundo": 90,
+   "grupo": "lavoura"
+  },
+  "cana": {
+   "nome": "Cana",
+   "base": 1,
+   "fora": 0,
+   "grupo": "lavoura"
+  },
+  "rapadura": {
+   "nome": "Rapadura",
+   "base": 5,
+   "fora": 7,
+   "fundo": 160,
+   "consumo": 0.1,
+   "grupo": "oficio"
+  },
+  "aguardente": {
+   "nome": "Aguardente",
+   "base": 6,
+   "fora": 9,
+   "fundo": 130,
+   "consumo": 0.06,
+   "grupo": "oficio"
+  },
+  "acucar": {
+   "nome": "Açúcar",
+   "base": 9,
+   "fora": 14,
+   "fundo": 220,
+   "consumo": 0.03,
+   "grupo": "oficio"
+  },
+  "erva": {
+   "nome": "Erva-mate",
+   "base": 2.5,
+   "fora": 3.5,
+   "fundo": 90,
+   "consumo": 0.04,
+   "grupo": "lavoura"
+  },
+  "mate": {
+   "nome": "Mate",
+   "base": 7,
+   "fora": 11,
+   "fundo": 420,
+   "consumo": 0.05,
+   "grupo": "oficio"
+  },
+  "fumo": {
+   "nome": "Fumo em folha",
+   "base": 5,
+   "fora": 7,
+   "fundo": 90,
+   "grupo": "lavoura"
+  },
+  "fumoC": {
+   "nome": "Fumo de corda",
+   "base": 9,
+   "fora": 12,
+   "fundo": 120,
+   "consumo": 0.03,
+   "grupo": "oficio"
+  },
+  "algodao": {
+   "nome": "Algodão",
+   "base": 4,
+   "fora": 6,
+   "fundo": 150,
+   "grupo": "lavoura"
+  },
+  "pano": {
+   "nome": "Pano",
+   "base": 11,
+   "fora": 14,
+   "fundo": 90,
+   "consumo": 0.08,
+   "grupo": "oficio"
+  },
+  "cafe": {
+   "nome": "Café em coco",
+   "base": 6,
+   "fora": 9,
+   "fundo": 90,
+   "grupo": "lavoura"
+  },
+  "cafeS": {
+   "nome": "Café",
+   "base": 9,
+   "fora": 14,
+   "fundo": 220,
+   "consumo": 0.02,
+   "grupo": "oficio"
+  },
+  "couro": {
+   "nome": "Couro",
+   "base": 3,
+   "fora": 5,
+   "fundo": 80,
+   "grupo": "lavoura"
+  },
+  "sola": {
+   "nome": "Sola",
+   "base": 7,
+   "fora": 9,
+   "fundo": 60,
+   "grupo": "oficio"
+  },
+  "calcados": {
+   "nome": "Calçados",
+   "base": 14,
+   "fora": 16,
+   "fundo": 40,
+   "consumo": 0.04,
+   "grupo": "oficio"
+  },
+  "tabuas": {
+   "nome": "Tábuas",
+   "base": 3,
+   "fora": 4.5,
+   "fundo": 120,
+   "consumo": 0.12,
+   "grupo": "oficio"
+  },
+  "telhas": {
+   "nome": "Telhas",
+   "base": 3,
+   "fora": 3.8,
+   "fundo": 80,
+   "consumo": 0.08,
+   "grupo": "oficio"
+  },
+  "moveis": {
+   "nome": "Móveis",
+   "base": 16,
+   "fora": 18,
+   "fundo": 30,
+   "consumo": 0.03,
+   "grupo": "oficio"
+  },
+  "barricas": {
+   "nome": "Barricas",
+   "base": 6,
+   "fora": 7,
+   "fundo": 40,
+   "consumo": 0.02,
+   "grupo": "oficio"
+  },
+  "cal": {
+   "nome": "Cal",
+   "base": 2,
+   "fora": 3.5,
+   "fundo": 150,
+   "consumo": 0.03,
+   "grupo": "mina"
+  },
+  "ferro": {
+   "nome": "Ferro",
+   "base": 4,
+   "fora": 6,
+   "fundo": 100,
+   "grupo": "mina"
+  },
+  "ferramentas": {
+   "nome": "Ferramentas",
+   "base": 14,
+   "fora": 16,
+   "fundo": 50,
+   "consumo": 0.05,
+   "grupo": "oficio"
+  },
+  "chumbo": {
+   "nome": "Chumbo",
+   "base": 3,
+   "fora": 7,
+   "fundo": 100,
+   "grupo": "mina"
+  },
+  "ouro": {
+   "nome": "Ouro",
+   "base": 30,
+   "fora": 40,
+   "fundo": 30,
+   "grupo": "mina"
+  },
+  "lenha": {
+   "nome": "Lenha",
+   "base": 0.3,
+   "fora": 0.5,
+   "fundo": 300,
+   "grupo": "oficio"
+  }
+ },
+ "TIPOS": {
+  "rancho": {
+   "nome": "Rancho",
+   "plural": "Ranchos",
+   "fam": 2,
+   "moradia": true,
+   "custo": 20,
+   "cat": "Moradia",
+   "desc": "Sapê; 2 famílias",
+   "paga": "familias"
+  },
+  "casa": {
+   "nome": "Casa",
+   "plural": "Casas",
+   "fam": 4,
+   "moradia": true,
+   "custo": 80,
+   "cat": "Moradia",
+   "desc": "Madeira; 4 famílias",
+   "paga": "familias"
+  },
+  "caiada": {
+   "nome": "Casa caiada",
+   "plural": "Casas caiadas",
+   "fam": 5,
+   "moradia": true,
+   "custo": 150,
+   "cat": "Moradia",
+   "desc": "Cal e telha; 5 famílias",
+   "sprite": "caiada",
+   "nv": 4,
+   "paga": "familias"
+  },
+  "sobrado": {
+   "nome": "Sobrado",
+   "plural": "Sobrados",
+   "fam": 6,
+   "moradia": true,
+   "custo": 260,
+   "cat": "Moradia",
+   "desc": "Dois andares; 6 famílias",
+   "sprite": "sobrado2",
+   "nv": 7,
+   "paga": "familias"
+  },
+  "igreja": {
+   "nome": "Capela",
+   "plural": "Capelas",
+   "serv": "Igreja",
+   "raio": 10,
+   "de": "à capela",
+   "cor": "#8A5BB5",
+   "custo": 200,
+   "cat": "Serviços",
+   "desc": "Fé: nota às casas em 10 ruas",
+   "vagas": 1,
+   "setor": "servicos",
+   "paga": "colonia"
+  },
+  "matriz": {
+   "nome": "Igreja matriz",
+   "plural": "Matrizes",
+   "serv": "Igreja",
+   "raio": 16,
+   "de": "à matriz",
+   "cor": "#8A5BB5",
+   "tam": [
+    2,
+    2
+   ],
+   "custo": 900,
+   "cat": "Serviços",
+   "desc": "2×2. Fé: nota às casas em 16 ruas",
+   "vagas": 2,
+   "setor": "servicos",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "escola": {
+   "nome": "Escola",
+   "plural": "Escolas",
+   "serv": "Escola",
+   "raio": 8,
+   "de": "à escola",
+   "cor": "#2F5AA8",
+   "custo": 300,
+   "cat": "Serviços",
+   "desc": "Ensino: nota às casas em 8 ruas",
+   "vagas": 2,
+   "setor": "servicos",
+   "paga": "colonia"
+  },
+  "botica": {
+   "nome": "Botica",
+   "plural": "Boticas",
+   "serv": "Botica",
+   "raio": 8,
+   "de": "à botica",
+   "cor": "#14875A",
+   "custo": 250,
+   "cat": "Serviços",
+   "desc": "Saúde: nota às casas em 8 ruas",
+   "vagas": 1,
+   "setor": "servicos",
+   "paga": "colonia"
+  },
+  "santacasa": {
+   "nome": "Santa Casa",
+   "plural": "Santas Casas",
+   "serv": "Botica",
+   "raio": 18,
+   "de": "à Santa Casa",
+   "cor": "#14875A",
+   "custo": 1100,
+   "cat": "Serviços",
+   "desc": "Saúde: nota às casas em 18 ruas",
+   "vagas": 4,
+   "setor": "servicos",
+   "nv": 11,
+   "paga": "colonia"
+  },
+  "teatro": {
+   "nome": "Teatro",
+   "plural": "Teatros",
+   "serv": "Cultura",
+   "raio": 16,
+   "de": "ao teatro",
+   "cor": "#B5476B",
+   "custo": 1400,
+   "cat": "Serviços",
+   "desc": "Lazer: nota às casas em 16 ruas",
+   "vagas": 3,
+   "setor": "servicos",
+   "nv": 11,
+   "paga": "colonia"
+  },
+  "poco": {
+   "nome": "Poço",
+   "plural": "Poços",
+   "serv": "Água",
+   "raio": 5,
+   "de": "ao poço",
+   "cor": "#2E7FB8",
+   "custo": 60,
+   "cat": "Serviços",
+   "desc": "Água: nota às casas em 5 ruas",
+   "sprite": "poco2",
+   "paga": "colonia"
+  },
+  "oficina": {
+   "nome": "Casa do mestre",
+   "plural": "Casas do mestre",
+   "de": "à casa do mestre",
+   "raio": 8,
+   "ensina": true,
+   "cor": "#14875A",
+   "custo": 200,
+   "cat": "Retirado",
+   "desc": "Ensina um ofício em 8 ruas",
+   "nv": 99,
+   "paga": "colonia"
+  },
+  "diretoria": {
+   "nome": "Diretoria",
+   "plural": "Diretorias",
+   "de": "à diretoria",
+   "custo": 400,
+   "cat": "Serviços",
+   "desc": "+8 trechos de rua por estação",
+   "vagas": 2,
+   "setor": "servicos",
+   "paga": "colonia"
+  },
+  "camara": {
+   "nome": "Câmara",
+   "plural": "Câmaras",
+   "de": "à câmara",
+   "custo": 800,
+   "cat": "Serviços",
+   "desc": "Libera os impostos",
+   "vagas": 3,
+   "setor": "servicos",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "armazem": {
+   "nome": "Comércio",
+   "plural": "Comércios",
+   "serv": "Comércio",
+   "raio": 7,
+   "de": "ao comércio",
+   "cor": "#A67C12",
+   "custo": 200,
+   "cat": "Comércio",
+   "desc": "Recebe a produção da terra onde está e a até 6 lotes, e vende às famílias. Mercado +40",
+   "vagas": 1,
+   "setor": "comercio",
+   "cap": {
+    "mercado": 40
+   },
+   "paga": "colonia"
+  },
+  "mercado": {
+   "nome": "Mercado",
+   "plural": "Mercados",
+   "serv": "Comércio",
+   "raio": 12,
+   "de": "ao mercado",
+   "cor": "#A67C12",
+   "tam": [
+    2,
+    2
+   ],
+   "custo": 600,
+   "cat": "Comércio",
+   "desc": "2×2. Recebe a produção a até 10 lotes e vende às famílias. Mercado +120",
+   "vagas": 3,
+   "setor": "comercio",
+   "cap": {
+    "mercado": 120
+   },
+   "nv": 4,
+   "paga": "colonia"
+  },
+  "porto": {
+   "nome": "Cais",
+   "plural": "Cais",
+   "de": "ao cais",
+   "trabalho": true,
+   "beira": true,
+   "custo": 300,
+   "cat": "Transporte",
+   "desc": "Porta fluvial na beira do rio: canoas levam a carga a Iguape",
+   "vagas": 1,
+   "setor": "rio",
+   "paga": "colonia"
+  },
+  "pouso": {
+   "nome": "Pouso",
+   "plural": "Pousos",
+   "de": "ao pouso",
+   "trabalho": true,
+   "custo": 300,
+   "cat": "Transporte",
+   "desc": "Porta terrestre: tropas e carroças levam a carga a Curitiba",
+   "vagas": 1,
+   "setor": "comercio",
+   "nv": 4,
+   "paga": "colonia"
+  },
+  "invernada": {
+   "nome": "Invernada",
+   "plural": "Invernadas",
+   "de": "à invernada",
+   "trabalho": true,
+   "tam": [
+    3,
+    3
+   ],
+   "custo": 150,
+   "cat": "Retirado",
+   "desc": "3×3. Só com estrada. Tropas +50, até 4",
+   "vagas": 1,
+   "setor": "comercio",
+   "nv": 6,
+   "paga": "colonia"
+  },
+  "rMilho": {
+   "nome": "Milharal",
+   "plural": "Milharais",
+   "de": "ao milharal",
+   "plantacao": true,
+   "bem": "milho",
+   "y": 42,
+   "est": 2,
+   "custo": 40,
+   "cat": "Plantações",
+   "desc": "Comida; colhe no outono",
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rFeijao": {
+   "nome": "Feijoal",
+   "plural": "Feijoais",
+   "de": "ao feijoal",
+   "plantacao": true,
+   "bem": "feijao",
+   "y": 24,
+   "est": 1,
+   "custo": 45,
+   "cat": "Plantações",
+   "desc": "Comida; colhe no verão",
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rMandioca": {
+   "nome": "Mandiocal",
+   "plural": "Mandiocais",
+   "de": "ao mandiocal",
+   "plantacao": true,
+   "bem": "mandioca",
+   "y": 13,
+   "est": null,
+   "custo": 35,
+   "cat": "Plantações",
+   "desc": "Comida; colhe o ano todo",
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rArroz": {
+   "nome": "Arrozal",
+   "plural": "Arrozais",
+   "de": "ao arrozal",
+   "plantacao": true,
+   "bem": "arroz",
+   "y": 36,
+   "est": 2,
+   "custo": 60,
+   "perto": 3,
+   "cat": "Plantações",
+   "desc": "Comida; só perto do rio",
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rTrigo": {
+   "nome": "Trigal",
+   "plural": "Trigais",
+   "de": "ao trigal",
+   "plantacao": true,
+   "bem": "trigo",
+   "y": 28,
+   "est": 0,
+   "custo": 60,
+   "cat": "Plantações",
+   "desc": "Comida; colhe na primavera",
+   "nv": 4,
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rCana": {
+   "nome": "Canavial",
+   "plural": "Canaviais",
+   "de": "ao canavial",
+   "plantacao": true,
+   "bem": "cana",
+   "y": 64,
+   "est": 3,
+   "custo": 55,
+   "cat": "Plantações",
+   "desc": "Vai ao engenho ou ao alambique",
+   "nv": 5,
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rFumo": {
+   "nome": "Fumal",
+   "plural": "Fumais",
+   "de": "ao fumal",
+   "plantacao": true,
+   "bem": "fumo",
+   "y": 16,
+   "est": 1,
+   "custo": 70,
+   "cat": "Plantações",
+   "desc": "Para vender; colhe no verão",
+   "nv": 6,
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rAlgodao": {
+   "nome": "Algodoal",
+   "plural": "Algodoais",
+   "de": "ao algodoal",
+   "plantacao": true,
+   "bem": "algodao",
+   "y": 20,
+   "est": 2,
+   "custo": 70,
+   "cat": "Plantações",
+   "desc": "Vai ao tear; colhe no outono",
+   "nv": 9,
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "rCafe": {
+   "nome": "Cafezal",
+   "plural": "Cafezais",
+   "de": "ao cafezal",
+   "plantacao": true,
+   "bem": "cafe",
+   "y": 18,
+   "est": 3,
+   "custo": 90,
+   "cat": "Plantações",
+   "desc": "Para vender; colhe no inverno",
+   "nv": 10,
+   "vagas": 1,
+   "setor": "lavoura",
+   "paga": "familias",
+   "trabalho": true
+  },
+  "curral": {
+   "nome": "Curral",
+   "plural": "Currais",
+   "de": "ao curral",
+   "trabalho": true,
+   "bens": [
+    [
+     "carne",
+     9
+    ],
+    [
+     "couro",
+     3
+    ]
+   ],
+   "custo": 110,
+   "cat": "Criação",
+   "desc": "Carne e couro",
+   "vagas": 1,
+   "setor": "lavoura",
+   "nv": 3,
+   "paga": "colonia"
+  },
+  "chiqueiro": {
+   "nome": "Chiqueiro",
+   "plural": "Chiqueiros",
+   "de": "ao chiqueiro",
+   "trabalho": true,
+   "ruim": 1,
+   "capO": 18,
+   "receitas": [
+    {
+     "de": "milho",
+     "para": "toucinho",
+     "f": 0.5
+    }
+   ],
+   "custo": 90,
+   "cat": "Criação",
+   "desc": "Milho vira toucinho",
+   "vagas": 1,
+   "setor": "lavoura",
+   "nv": 3,
+   "paga": "colonia"
+  },
+  "pesqueiro": {
+   "nome": "Pesqueiro",
+   "plural": "Pesqueiros",
+   "de": "ao pesqueiro",
+   "trabalho": true,
+   "beira": true,
+   "bem": "peixe",
+   "y": 34,
+   "est": null,
+   "porEstacao": true,
+   "custo": 120,
+   "cat": "Criação",
+   "desc": "Beira do rio; peixe para a colônia",
+   "vagas": 2,
+   "setor": "rio",
+   "paga": "colonia"
+  },
+  "coleta": {
+   "nome": "Coleta de pinhão",
+   "plural": "Coletas de pinhão",
+   "de": "à coleta",
+   "trabalho": true,
+   "bem": "pinhao",
+   "y": 30,
+   "est": 2,
+   "matas": true,
+   "custo": 50,
+   "cat": "Criação",
+   "desc": "Rende mais entre as araucárias",
+   "vagas": 1,
+   "setor": "lavoura",
+   "sprite": "coleta",
+   "nv": 2,
+   "paga": "colonia"
+  },
+  "erval": {
+   "nome": "Erval",
+   "plural": "Ervais",
+   "de": "ao erval",
+   "trabalho": true,
+   "sobre": [
+    "erval"
+   ],
+   "bem": "erva",
+   "y": 40,
+   "est": 3,
+   "custo": 70,
+   "cat": "Criação",
+   "desc": "Só sobre erval nativo",
+   "vagas": 1,
+   "setor": "lavoura",
+   "sprite": "ervalcol",
+   "nv": 5,
+   "paga": "colonia"
+  },
+  "serraria": {
+   "nome": "Serraria",
+   "plural": "Serrarias",
+   "ruim": 3,
+   "de": "à serraria",
+   "trabalho": true,
+   "bem": "tabuas",
+   "y": 22,
+   "est": null,
+   "porEstacao": true,
+   "matas": true,
+   "custo": 250,
+   "cat": "Extração",
+   "desc": "Rende mais perto da mata",
+   "vagas": 2,
+   "setor": "oficio",
+   "paga": "colonia"
+  },
+  "olaria": {
+   "nome": "Olaria",
+   "plural": "Olarias",
+   "ruim": 3,
+   "de": "à olaria",
+   "trabalho": true,
+   "bem": "telhas",
+   "y": 14,
+   "est": null,
+   "porEstacao": true,
+   "custo": 200,
+   "cat": "Extração",
+   "desc": "Telhas; incomoda até 3 lotes",
+   "vagas": 2,
+   "setor": "oficio",
+   "paga": "colonia"
+  },
+  "mina": {
+   "nome": "Mina",
+   "plural": "Minas",
+   "ruim": 2,
+   "de": "à mina",
+   "trabalho": true,
+   "sobre": [
+    "cal",
+    "chumbo",
+    "ouro",
+    "ferro"
+   ],
+   "custo": 300,
+   "cat": "Extração",
+   "desc": "Só sobre veio",
+   "vagas": 2,
+   "setor": "mina",
+   "nv": 3,
+   "paga": "colonia"
+  },
+  "monjolo": {
+   "nome": "Monjolo",
+   "plural": "Monjolos",
+   "de": "ao monjolo",
+   "trabalho": true,
+   "capO": 30,
+   "receitas": [
+    {
+     "de": "milho",
+     "para": "fuba",
+     "f": 0.8
+    },
+    {
+     "de": "arroz",
+     "para": "arrozP",
+     "f": 0.85,
+     "nv": 3
+    }
+   ],
+   "custo": 130,
+   "cat": "Oficinas",
+   "desc": "Milho vira fubá; arroz é pilado",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 2,
+   "paga": "colonia"
+  },
+  "farinheira": {
+   "nome": "Casa de farinha",
+   "plural": "Casas de farinha",
+   "de": "à casa de farinha",
+   "trabalho": true,
+   "capO": 30,
+   "receitas": [
+    {
+     "de": "mandioca",
+     "para": "farinha",
+     "f": 0.8
+    }
+   ],
+   "custo": 150,
+   "cat": "Oficinas",
+   "desc": "Mandioca vira farinha",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 2,
+   "paga": "colonia"
+  },
+  "salga": {
+   "nome": "Salga e defumação",
+   "plural": "Salgas",
+   "de": "à salga",
+   "trabalho": true,
+   "ruim": 1,
+   "capO": 40,
+   "receitas": [
+    {
+     "de": "peixe",
+     "para": "salgado",
+     "f": 0.6
+    },
+    {
+     "de": "carne",
+     "para": "charque",
+     "f": 0.8,
+     "nv": 6
+    }
+   ],
+   "custo": 180,
+   "cat": "Oficinas",
+   "desc": "Peixe salgado e, depois, charque",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 3,
+   "paga": "colonia"
+  },
+  "moinho": {
+   "nome": "Moinho",
+   "plural": "Moinhos",
+   "de": "ao moinho",
+   "trabalho": true,
+   "beira": true,
+   "capO": 30,
+   "receitas": [
+    {
+     "de": "trigo",
+     "para": "farinhaT",
+     "f": 0.8
+    }
+   ],
+   "custo": 220,
+   "cat": "Oficinas",
+   "desc": "Na beira do rio; trigo vira farinha",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 4,
+   "paga": "colonia"
+  },
+  "engenho2": {
+   "nome": "Engenho",
+   "plural": "Engenhos",
+   "ruim": 3,
+   "de": "ao engenho",
+   "trabalho": true,
+   "tam": [
+    2,
+    2
+   ],
+   "capO": 64,
+   "receitas": [
+    {
+     "de": "cana",
+     "para": "rapadura",
+     "f": 0.4
+    },
+    {
+     "de": "cana",
+     "para": "acucar",
+     "f": 0.2,
+     "nv": 10
+    }
+   ],
+   "custo": 450,
+   "cat": "Oficinas",
+   "desc": "2×2. Cana vira rapadura e, depois, açúcar",
+   "vagas": 3,
+   "setor": "oficio",
+   "nv": 5,
+   "paga": "colonia"
+  },
+  "alambique": {
+   "nome": "Alambique",
+   "plural": "Alambiques",
+   "ruim": 1,
+   "de": "ao alambique",
+   "trabalho": true,
+   "capO": 40,
+   "receitas": [
+    {
+     "de": "cana",
+     "para": "aguardente",
+     "f": 0.3
+    }
+   ],
+   "custo": 240,
+   "cat": "Oficinas",
+   "desc": "Cana vira aguardente",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 6,
+   "paga": "colonia"
+  },
+  "barbaqua": {
+   "nome": "Barbaquá",
+   "plural": "Barbaquás",
+   "ruim": 1,
+   "de": "ao barbaquá",
+   "trabalho": true,
+   "capO": 40,
+   "receitas": [
+    {
+     "de": "erva",
+     "para": "mate",
+     "f": 0.5
+    }
+   ],
+   "custo": 220,
+   "cat": "Oficinas",
+   "desc": "Erva vira mate",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 5,
+   "paga": "colonia"
+  },
+  "paiolfumo": {
+   "nome": "Paiol de fumo",
+   "plural": "Paióis de fumo",
+   "de": "ao paiol",
+   "trabalho": true,
+   "capO": 20,
+   "receitas": [
+    {
+     "de": "fumo",
+     "para": "fumoC",
+     "f": 0.9
+    }
+   ],
+   "custo": 140,
+   "cat": "Oficinas",
+   "desc": "Folha vira fumo de corda",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 6,
+   "paga": "colonia"
+  },
+  "curtume": {
+   "nome": "Curtume",
+   "plural": "Curtumes",
+   "ruim": 3,
+   "de": "ao curtume",
+   "trabalho": true,
+   "capO": 12,
+   "receitas": [
+    {
+     "de": "couro",
+     "para": "sola",
+     "f": 0.8
+    }
+   ],
+   "custo": 200,
+   "cat": "Oficinas",
+   "desc": "Couro vira sola",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "carpintaria": {
+   "nome": "Carpintaria",
+   "plural": "Carpintarias",
+   "de": "à carpintaria",
+   "trabalho": true,
+   "capO": 8,
+   "receitas": [
+    {
+     "de": "tabuas",
+     "para": "moveis",
+     "f": 0.5
+    }
+   ],
+   "custo": 180,
+   "cat": "Oficinas",
+   "desc": "Tábuas viram móveis",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 8,
+   "paga": "colonia"
+  },
+  "tanoaria": {
+   "nome": "Tanoaria",
+   "plural": "Tanoarias",
+   "de": "à tanoaria",
+   "trabalho": true,
+   "capO": 10,
+   "receitas": [
+    {
+     "de": "tabuas",
+     "para": "barricas",
+     "f": 0.8
+    }
+   ],
+   "custo": 150,
+   "cat": "Oficinas",
+   "desc": "Tábuas viram barricas",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 8,
+   "paga": "colonia"
+  },
+  "ferraria": {
+   "nome": "Ferraria",
+   "plural": "Ferrarias",
+   "ruim": 1,
+   "de": "à ferraria",
+   "trabalho": true,
+   "capO": 8,
+   "receitas": [
+    {
+     "de": "ferro",
+     "para": "ferramentas",
+     "f": 0.6
+    }
+   ],
+   "custo": 260,
+   "cat": "Oficinas",
+   "desc": "Ferro vira ferramentas",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 8,
+   "paga": "colonia"
+  },
+  "terreiro": {
+   "nome": "Terreiro de café",
+   "plural": "Terreiros",
+   "de": "ao terreiro",
+   "trabalho": true,
+   "capO": 20,
+   "receitas": [
+    {
+     "de": "cafe",
+     "para": "cafeS",
+     "f": 0.8
+    }
+   ],
+   "custo": 160,
+   "cat": "Oficinas",
+   "desc": "Café seco e ensacado",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 10,
+   "paga": "colonia"
+  },
+  "tear": {
+   "nome": "Tear",
+   "plural": "Teares",
+   "de": "ao tear",
+   "trabalho": true,
+   "capO": 15,
+   "receitas": [
+    {
+     "de": "algodao",
+     "para": "pano",
+     "f": 0.8
+    }
+   ],
+   "custo": 280,
+   "cat": "Oficinas",
+   "desc": "Algodão vira pano",
+   "vagas": 2,
+   "setor": "oficio",
+   "nv": 9,
+   "paga": "colonia"
+  },
+  "sapataria": {
+   "nome": "Sapataria",
+   "plural": "Sapatarias",
+   "de": "à sapataria",
+   "trabalho": true,
+   "capO": 8,
+   "receitas": [
+    {
+     "de": "sola",
+     "para": "calcados",
+     "f": 0.7
+    }
+   ],
+   "custo": 170,
+   "cat": "Oficinas",
+   "desc": "Sola vira calçado",
+   "vagas": 1,
+   "setor": "oficio",
+   "nv": 11,
+   "paga": "colonia"
+  },
+  "chafariz": {
+   "nome": "Chafariz",
+   "plural": "Chafarizes",
+   "serv": "Água",
+   "raio": 7,
+   "de": "ao chafariz",
+   "cor": "#2E7FB8",
+   "custo": 350,
+   "cat": "Serviços",
+   "desc": "Água boa em 7 ruas; diminui incêndio e epidemia",
+   "sprite": "poco",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "cadeia": {
+   "nome": "Cadeia",
+   "plural": "Cadeias",
+   "de": "à cadeia",
+   "custo": 600,
+   "raio": 12,
+   "cat": "Serviços",
+   "desc": "Contém a desordem em 12 ruas",
+   "vagas": 1,
+   "setor": "servicos",
+   "sprite": "alojamento",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "bombeiros": {
+   "nome": "Quartel de bombeiros",
+   "plural": "Quartéis de bombeiros",
+   "de": "aos bombeiros",
+   "custo": 900,
+   "raio": 12,
+   "cat": "Serviços",
+   "desc": "Quase acaba com incêndio em 12 ruas",
+   "vagas": 2,
+   "setor": "servicos",
+   "sprite": "paiol",
+   "nv": 10,
+   "paga": "colonia"
+  },
+  "deposito": {
+   "nome": "Depósito de carroças",
+   "plural": "Depósitos de carroças",
+   "de": "ao depósito",
+   "custo": 1800,
+   "cat": "Retirado",
+   "desc": "Estação de carroças e tropas; recolhe a carga em 7 ruas",
+   "vagas": 2,
+   "setor": "comercio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§deposito",
+   "paga": "colonia"
+  },
+  "oficinaCarrocas": {
+   "nome": "Oficina de carroças",
+   "plural": "Oficinas de carroças",
+   "de": "à oficina de carroças",
+   "custo": 1500,
+   "cat": "Retirado",
+   "desc": "Libera carroças; frota quebra menos",
+   "vagas": 2,
+   "setor": "oficio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§oficinaC",
+   "paga": "colonia"
+  },
+  "depositoLenha": {
+   "nome": "Depósito de lenha",
+   "plural": "Depósitos de lenha",
+   "de": "ao depósito de lenha",
+   "trabalho": true,
+   "bem": "lenha",
+   "y": 110,
+   "est": null,
+   "matas": true,
+   "custo": 900,
+   "cat": "Transporte",
+   "desc": "Lenha para vapores, trens e serraria a vapor; corta a mata em volta",
+   "vagas": 2,
+   "setor": "oficio",
+   "fixo": true,
+   "sprite": "§lenha",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "entreposto": {
+   "nome": "Entreposto",
+   "plural": "Entrepostos",
+   "de": "ao entreposto",
+   "custo": 3500,
+   "cat": "Retirado",
+   "desc": "Baldeação mais barata na serra",
+   "vagas": 2,
+   "setor": "comercio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§entreposto",
+   "paga": "colonia"
+  },
+  "estacaoTrem": {
+   "nome": "Estação",
+   "plural": "Estações",
+   "de": "à estação",
+   "custo": 5000,
+   "cat": "Transporte",
+   "desc": "Porta ferroviária: encosta num trilho; os trens saem pela borda onde o trilho chega",
+   "vagas": 3,
+   "setor": "comercio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§estacao",
+   "paga": "colonia"
+  },
+  "oficinaFerro": {
+   "nome": "Oficina ferroviária",
+   "plural": "Oficinas ferroviárias",
+   "de": "à oficina ferroviária",
+   "custo": 6000,
+   "cat": "Retirado",
+   "desc": "Libera e mantém locomotivas",
+   "vagas": 3,
+   "setor": "oficio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§oficinaF",
+   "abre": 12,
+   "paga": "colonia"
+  },
+  "cais": {
+   "nome": "Porto",
+   "plural": "Portos",
+   "de": "ao porto",
+   "beira": true,
+   "custo": 5000,
+   "cat": "Transporte",
+   "desc": "Porta fluvial abaixo das corredeiras: vapores levam a carga a Iguape",
+   "vagas": 2,
+   "setor": "rio",
+   "fixo": true,
+   "sprite": "§cais",
+   "nv": 7,
+   "paga": "colonia"
+  },
+  "estaleiro": {
+   "nome": "Estaleiro",
+   "plural": "Estaleiros",
+   "de": "ao estaleiro",
+   "beira": true,
+   "custo": 6000,
+   "cat": "Retirado",
+   "desc": "Na beira; libera e conserta vapores",
+   "vagas": 3,
+   "setor": "oficio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§estaleiro",
+   "abre": 20,
+   "paga": "colonia"
+  },
+  "venda": {
+   "nome": "Venda",
+   "plural": "Vendas",
+   "de": "à venda",
+   "custo": 250,
+   "cat": "Transporte",
+   "desc": "Captação terrestre: tropas e carroças recolhem a produção a até 8 lotes",
+   "vagas": 1,
+   "setor": "comercio",
+   "trabalho": true,
+   "sprite": "§deposito",
+   "nv": 4,
+   "paga": "colonia"
+  },
+  "embarcadouro": {
+   "nome": "Embarcadouro",
+   "plural": "Embarcadouros",
+   "de": "ao embarcadouro",
+   "beira": true,
+   "custo": 200,
+   "cat": "Transporte",
+   "desc": "Captação fluvial na beira do rio ou de um ribeirão: canoas recolhem a produção a até 8 lotes",
+   "vagas": 1,
+   "setor": "rio",
+   "trabalho": true,
+   "sprite": "pesqueiro",
+   "nv": 4,
+   "paga": "colonia"
+  },
+  "parada": {
+   "nome": "Parada",
+   "plural": "Paradas",
+   "de": "à parada",
+   "custo": 1500,
+   "cat": "Transporte",
+   "desc": "Captação ferroviária junto a um trilho ligado à estação: vagões recolhem a produção a até 10 lotes",
+   "vagas": 1,
+   "setor": "comercio",
+   "corrida": true,
+   "fixo": true,
+   "sprite": "§entreposto",
+   "paga": "colonia"
+  }
+ },
+ "VEIC": {
+  "canoa": {
+   "nome": "Canoa",
+   "pl": "canoas",
+   "modo": "fluvial",
+   "carga": 120,
+   "compra": 120,
+   "custo": 10,
+   "nv": 1
+  },
+  "tropa": {
+   "nome": "Tropa",
+   "pl": "tropas",
+   "modo": "terrestre",
+   "carga": 60,
+   "compra": 300,
+   "custo": 20,
+   "nv": 4
+  },
+  "carroca": {
+   "nome": "Carroça",
+   "pl": "carroças",
+   "modo": "terrestre",
+   "carga": 150,
+   "compra": 650,
+   "custo": 35,
+   "nv": 7
+  },
+  "vapor": {
+   "nome": "Vapor",
+   "pl": "vapores",
+   "modo": "fluvial",
+   "carga": 700,
+   "compra": 4500,
+   "custo": 110,
+   "lenha": 40,
+   "nv": 7
+  },
+  "vagao": {
+   "nome": "Vagão",
+   "pl": "vagões",
+   "modo": "ferro",
+   "carga": 250,
+   "compra": 900,
+   "custo": 25,
+   "corrida": true
+  },
+  "trem1": {
+   "nome": "Trem leve",
+   "pl": "trens leves",
+   "modo": "ferro",
+   "carga": 900,
+   "compra": 10000,
+   "custo": 200,
+   "lenha": 60,
+   "corrida": true
+  },
+  "trem2": {
+   "nome": "Trem médio",
+   "pl": "trens médios",
+   "modo": "ferro",
+   "carga": 1500,
+   "compra": 16000,
+   "custo": 280,
+   "lenha": 80,
+   "corrida": true,
+   "abre": "trem2"
+  },
+  "trem3": {
+   "nome": "Trem pesado",
+   "pl": "trens pesados",
+   "modo": "ferro",
+   "carga": 2400,
+   "compra": 24000,
+   "custo": 380,
+   "lenha": 110,
+   "corrida": true,
+   "abre": "trem3"
+  }
+ },
+ "TRANSP": {
+  "armazem": {
+   "papel": "comercio",
+   "alcance": 6
+  },
+  "mercado": {
+   "papel": "comercio",
+   "alcance": 10
+  },
+  "venda": {
+   "papel": "captacao",
+   "modo": "terrestre",
+   "alcance": 8,
+   "veic": [
+    "tropa",
+    "carroca"
+   ],
+   "vagas": [
+    4,
+    6,
+    8
+   ]
+  },
+  "embarcadouro": {
+   "papel": "captacao",
+   "modo": "fluvial",
+   "alcance": 8,
+   "veic": [
+    "canoa"
+   ],
+   "vagas": [
+    4,
+    6,
+    8
+   ]
+  },
+  "parada": {
+   "papel": "captacao",
+   "modo": "ferro",
+   "alcance": 10,
+   "veic": [
+    "vagao"
+   ],
+   "vagas": [
+    4,
+    6,
+    8
+   ]
+  },
+  "porto": {
+   "papel": "porta",
+   "modo": "fluvial",
+   "veic": [
+    "canoa"
+   ],
+   "vagas": [
+    4,
+    6,
+    8
+   ]
+  },
+  "pouso": {
+   "papel": "porta",
+   "modo": "terrestre",
+   "veic": [
+    "tropa",
+    "carroca"
+   ],
+   "vagas": [
+    6,
+    8,
+    10
+   ]
+  },
+  "cais": {
+   "papel": "porta",
+   "modo": "fluvial",
+   "veic": [
+    "vapor"
+   ],
+   "vagas": [
+    3,
+    3,
+    3
+   ]
+  },
+  "estacaoTrem": {
+   "papel": "porta",
+   "modo": "ferro",
+   "veic": [
+    "trem1",
+    "trem2",
+    "trem3"
+   ],
+   "vagas": [
+    4,
+    4,
+    4
+   ]
+  }
+ },
+ "NIVEIS": [
+  null,
+  {
+   "trab": 0,
+   "renda": 0
+  },
+  {
+   "trab": 14,
+   "renda": 450
+  },
+  {
+   "trab": 28,
+   "renda": 1100
+  },
+  {
+   "trab": 50,
+   "renda": 2200,
+   "marco": 1
+  },
+  {
+   "trab": 65,
+   "renda": 3000
+  },
+  {
+   "trab": 85,
+   "renda": 3900
+  },
+  {
+   "trab": 110,
+   "renda": 5000,
+   "marco": 2
+  },
+  {
+   "trab": 140,
+   "renda": 6500
+  },
+  {
+   "trab": 175,
+   "renda": 8000
+  },
+  {
+   "trab": 220,
+   "renda": 10000,
+   "marco": 3
+  },
+  {
+   "trab": 320,
+   "renda": 19000
+  },
+  {
+   "trab": 420,
+   "renda": 25000,
+   "pre": {
+    "santacasa": 1,
+    "teatro": 1
+   }
+  }
+ ],
+ "MARCOS": [
+  {
+   "nome": "Assentamento",
+   "verba": 120,
+   "repasse": 0
+  },
+  {
+   "nome": "Freguesia",
+   "fam": 90,
+   "sat": 50,
+   "pre": {
+    "igreja": 1,
+    "escola": 1,
+    "diretoria": 1
+   },
+   "prazo": 32,
+   "verba": 120,
+   "repasse": 0.1
+  },
+  {
+   "nome": "Vila",
+   "fam": 180,
+   "sat": 55,
+   "terras": 4,
+   "pre": {
+    "igreja": 2,
+    "escola": 2,
+    "botica": 2,
+    "mercado": 1
+   },
+   "prazo": 40,
+   "verba": 80,
+   "repasse": 0.1
+  },
+  {
+   "nome": "Cidade",
+   "fam": 360,
+   "sat": 60,
+   "terras": 9,
+   "estrada": true,
+   "pre": {
+    "matriz": 1,
+    "camara": 1,
+    "escola": 4,
+    "botica": 3,
+    "mercado": 2
+   },
+   "prazo": 48,
+   "verba": 40,
+   "repasse": 0.1
+  }
+ ],
+ "LEIS_C": {
+  "posturas": {
+   "nome": "Posturas de saúde",
+   "ganho": "Epidemias 50% mais raras",
+   "custo": "Satisfação −1",
+   "sat": -1
+  },
+  "feira": {
+   "nome": "Feira semanal",
+   "ganho": "Mercado 15% maior; satisfação +2",
+   "custo": "Frete 5% mais caro: o armazém perde clientes",
+   "sat": 2
+  },
+  "tabelado": {
+   "nome": "Comida tabelada",
+   "ganho": "Satisfação +3",
+   "custo": "Comida exportada rende 15% menos",
+   "sat": 3
+  },
+  "registro": {
+   "nome": "Registro de lotes",
+   "ganho": "Impostos rendem 10% mais",
+   "custo": "Satisfação −3",
+   "sat": -3
+  },
+  "escolaOb": {
+   "nome": "Escola obrigatória",
+   "ganho": "Famílias aprendem mais rápido; satisfação +2",
+   "custo": "Produção 4% menor",
+   "sat": 2
+  },
+  "mutirao": {
+   "nome": "Mutirão de obras",
+   "ganho": "12 trechos de rua a mais por estação",
+   "custo": "Satisfação −2",
+   "sat": -2
+  },
+  "domingo": {
+   "nome": "Trabalho aos domingos",
+   "ganho": "Produção 10% maior",
+   "custo": "Satisfação −5",
+   "sat": -5
+  },
+  "longa": {
+   "nome": "Jornada longa",
+   "ganho": "Produção mais 10% maior",
+   "custo": "Satisfação −7",
+   "sat": -7,
+   "req": "domingo"
+  }
+ },
+ "ESCOLHAS": {
+  "3": {
+   "tit": "Como plantar",
+   "a": {
+    "id": "policult",
+    "txt": "Policultura",
+    "ef": "Pragas bem mais raras"
+   },
+   "b": {
+    "id": "monocult",
+    "txt": "Monocultura",
+    "ef": "Plantações rendem 20% mais; pragas 60% mais frequentes"
+   }
+  },
+  "6": {
+   "tit": "Como trabalhar nas oficinas",
+   "a": {
+    "id": "familiar",
+    "txt": "Oficina familiar",
+    "ef": "Satisfação +3"
+   },
+   "b": {
+    "id": "manufat",
+    "txt": "Manufatura",
+    "ef": "Oficinas transformam 30% mais; satisfação −3"
+   }
+  },
+  "9": {
+   "tit": "Quem leva a carga",
+   "a": {
+    "id": "livres",
+    "txt": "Tropeiros livres",
+    "ef": "Tropas levam 30% mais"
+   },
+   "b": {
+    "id": "lage",
+    "txt": "Contrato com o armazém",
+    "ef": "Frete 30% menor; preços 5% menores"
+   }
+  },
+  "12": {
+   "tit": "Para onde vai a cidade",
+   "a": {
+    "id": "publica",
+    "txt": "Escola pública",
+    "ef": "Escolas alcançam 6 ruas a mais"
+   },
+   "b": {
+    "id": "missao",
+    "txt": "Irmandades",
+    "ef": "Igrejas alcançam 6 ruas a mais; satisfação +2"
+   }
+  }
+ },
+ "IMPOSTOS": {
+  "lote": {
+   "nome": "Prestação do lote",
+   "sub": "Cada família paga pelo lote",
+   "tipo": "valor",
+   "passo": 2,
+   "max": 30,
+   "un": "por família ao ano"
+  },
+  "dizimo": {
+   "nome": "Dízimo",
+   "sub": "Sobre o que se colhe e se aproveita; o que se perde não paga",
+   "tipo": "taxa",
+   "passo": 0.02,
+   "max": 0.3,
+   "porRecurso": true
+  },
+  "exportacao": {
+   "nome": "Dízimo de exportação",
+   "sub": "Sobre o que sai pelo porto",
+   "tipo": "taxa",
+   "passo": 0.02,
+   "max": 0.3,
+   "porRecurso": true
+  },
+  "negocio": {
+   "nome": "Licença de negócio",
+   "sub": "Cada venda ou mercado paga por ano",
+   "tipo": "valor",
+   "passo": 5,
+   "max": 80,
+   "un": "por negócio ao ano"
+  }
+ },
+ "DILEMAS": {
+  "chegada": {
+   "titulo": "A leva chegou antes da hora",
+   "quem": "A comissão das famílias",
+   "quando": "[fn]",
+   "intervalo": 40,
+   "texto": "Seis famílias subiram o rio hoje, com um mês de antecedência. Não há casa para todas e já chove.",
+   "falas": [
+    [
+     "Inácio",
+     "Podemos apertar todos nos ranchos. É o mais barato."
+    ],
+    [
+     "Comerciante",
+     "Empresto madeira. Entre amigos, a conta fica para depois."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Apertar todos",
+     "ef": "Satisfação −5",
+     "cron": "apertou a leva nos ranchos.",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Aceitar a madeira do armazém",
+     "ef": "+$ 150. A conta volta",
+     "cron": "aceitou a madeira do armazém.",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Mandar esperar em Curitiba",
+     "ef": "−$ 40",
+     "cron": "mandou a leva esperar em Curitiba.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "caixaLage": {
+   "titulo": "Uma caixa do armazém",
+   "quem": "O dono do armazém",
+   "quando": "[fn]",
+   "intervalo": 99,
+   "texto": "O dono do armazém deixou $ 400 na diretoria, “para as despesas”. Em troca, pede que ninguém olhe as cadernetas das famílias.",
+   "falas": [
+    [
+     "Inácio",
+     "Dinheiro sem recibo costuma cobrar depois, senhor."
+    ],
+    [
+     "Comissão das famílias",
+     "Há família trabalhando só para pagar o que o armazém anota."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Aceitar a caixa",
+     "ef": "+$ 400. Alguém pode ver",
+     "cron": "aceitou a caixa do armazém.",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Devolver e abrir as cadernetas",
+     "ef": "Satisfação +6",
+     "cron": "devolveu a caixa e abriu as cadernetas.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "cobranca": {
+   "titulo": "O armazém veio cobrar",
+   "quem": "O dono do armazém",
+   "texto": "Passou o tempo, diretor. O armazém quer o pagamento, ou o direito de ser o único a vender às famílias por dois anos.",
+   "falas": [
+    [
+     "Inácio",
+     "Pagar dói agora. A exclusividade dói todo ano."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Pagar a dívida",
+     "ef": "−$ 250",
+     "cron": "pagou a dívida com o armazém.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Dar a exclusividade",
+     "ef": "Satisfação −6 por 2 anos",
+     "cron": "deu exclusividade ao armazém.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "denuncia": {
+   "titulo": "A carta da comissão",
+   "quem": "A comissão das famílias",
+   "texto": "A comissão escreveu a Curitiba contando sobre a caixa do armazém. Um funcionário quer explicações, e a história já corre entre as famílias.",
+   "falas": [
+    [
+     "Comissão das famílias",
+     "Nós avisamos, senhor. Não vamos fingir que não vimos."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Devolver à província",
+     "ef": "−$ 400; satisfação +4",
+     "cron": "devolveu à província o dinheiro do armazém.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Negar tudo",
+     "ef": "Próxima meta exige 5% mais famílias; satisfação −4",
+     "cron": "negou a história da caixa.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "divino": {
+   "titulo": "A Festa do Divino",
+   "quem": "O padre",
+   "quando": "[fn]",
+   "intervalo": 12,
+   "texto": "O padre pede ajuda para a festa. As famílias falam disso há semanas.",
+   "falas": [
+    [
+     "Padre",
+     "O povo trabalha melhor quando tem por que trabalhar."
+    ],
+    [
+     "Inácio",
+     "A conta também tem dias santos, senhor."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Grande festa",
+     "ef": "−$ 100; satisfação +8",
+     "cron": "fez uma grande Festa do Divino.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Ajudar com pouco",
+     "ef": "−$ 25; satisfação +3",
+     "cron": "ajudou com pouco na festa.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Não ajudar",
+     "ef": "Satisfação −3",
+     "cron": "não ajudou na festa.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "febre": {
+   "titulo": "Febre nos ranchos",
+   "quem": "A comissão das famílias",
+   "quando": "[fn]",
+   "chance": "[fn]",
+   "intervalo": 16,
+   "texto": "Crianças amanheceram com febre. A comissão pede remédio de Curitiba. O padre pede uma novena.",
+   "falas": [
+    [
+     "Comissão das famílias",
+     "Separe os doentes e traga quinino, senhor."
+    ],
+    [
+     "Padre",
+     "Remédio é caro. Fé, não."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Comprar quinino",
+     "ef": "−$ 120",
+     "cron": "comprou quinino contra a febre.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Isolar os doentes",
+     "ef": "Satisfação −4; 2 famílias partem",
+     "cron": "isolou os doentes da febre.",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Confiar na novena",
+     "ef": "Satisfação +2; 5 famílias partem",
+     "cron": "confiou na novena contra a febre.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "benedito": {
+   "titulo": "Uma tropa de fora",
+   "quem": "Um tropeiro de Sorocaba",
+   "quando": "[fn]",
+   "intervalo": 24,
+   "texto": "Um tropeiro trouxe sal e ferragens mais baratos que os do armazém. Volta todo ano, se a colônia comprar dele.",
+   "falas": [
+    [
+     "Tropeiro",
+     "E ninguém me anota em caderneta."
+    ],
+    [
+     "Comerciante",
+     "Quero ver quem traz sal quando o caminho fechar."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Comprar do tropeiro",
+     "ef": "−$ 60; satisfação +4",
+     "cron": "comprou da tropa de fora.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Ficar com o armazém",
+     "ef": "+$ 30 de agrado do armazém",
+     "cron": "mandou a tropa de fora embora.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "ferreiro": {
+   "titulo": "Um ferreiro alemão",
+   "quem": "Um ferreiro recém-chegado",
+   "quando": "[fn]",
+   "intervalo": 99,
+   "texto": "O ferreiro sabe consertar arado, roda e serra, mas só fica se a colônia pagar a bigorna.",
+   "falas": [
+    [
+     "Inácio",
+     "Um ferreiro abre muitos caminhos, senhor."
+    ],
+    [
+     "Comissão das famílias",
+     "E as famílias que esperam casa há mais tempo?"
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Pagar para ele ficar",
+     "ef": "−$ 150; satisfação −2",
+     "cron": "pagou a bigorna do ferreiro.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Deixar seguir viagem",
+     "ef": "Satisfação +1",
+     "cron": "deixou o ferreiro seguir.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "kanhro": {
+   "titulo": "Os Kaingang vieram à diretoria",
+   "quem": "Uma liderança Kaingang",
+   "quando": "[fn]",
+   "intervalo": 24,
+   "texto": "Uma liderança Kaingang chegou com dois homens e um cesto vazio. O pinheiral está sumindo. Ele quer saber se o diretor manda nos machados.",
+   "falas": [
+    [
+     "Liderança Kaingang",
+     "Antes de vocês, ninguém precisava pedir licença para colher pinhão."
+    ],
+    [
+     "Inácio",
+     "O agrimensor diz que ali há terra boa, senhor. Só ele diz."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Poupar o pinheiral",
+     "ef": "−$ 80; satisfação +2",
+     "cron": "prometeu poupar o pinheiral dos Kaingang.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Dizer que a terra é da colônia",
+     "ef": "Satisfação −1. Eles podem voltar",
+     "cron": "disse aos Kaingang que a terra era da colônia.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "pinheiral": {
+   "titulo": "Cercas no chão",
+   "quem": "Os colonos da divisa",
+   "texto": "Na divisa da mata, cercas amanheceram derrubadas e uma roça foi colhida à noite. Os colonos querem que a diretoria faça alguma coisa.",
+   "falas": [
+    [
+     "Inácio",
+     "Um acordo custa menos que um inverno de medo, senhor."
+    ],
+    [
+     "Colono",
+     "Ninguém dorme direito aqui em cima."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Buscar um acordo",
+     "ef": "−$ 120; satisfação +2",
+     "cron": "fez um acordo com os Kaingang na divisa.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Deixar como está",
+     "ef": "Satisfação −5; 2 famílias partem",
+     "cron": "deixou a divisa como estava.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "trocas": {
+   "titulo": "Trocas na beira da mata",
+   "quem": "Os Kaingang",
+   "quando": "[fn]",
+   "intervalo": 20,
+   "texto": "Um grupo Kaingang trouxe pinhão, mel e cestos. Querem facas, sal e panelas em troca.",
+   "falas": [
+    [
+     "Comerciante",
+     "Pinhão no inverno vale ouro, diretor."
+    ],
+    [
+     "Inácio",
+     "Troca boa faz vizinho bom."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Trocar com ferramentas da colônia",
+     "ef": "−$ 40; satisfação +4",
+     "cron": "trocou ferramentas por pinhão com os Kaingang.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Deixar o armazém negociar",
+     "ef": "+$ 50",
+     "cron": "deixou o armazém negociar com os Kaingang.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "comissao": {
+   "titulo": "Colonos pedem trabalho",
+   "quem": "As famílias",
+   "quando": "[fn]",
+   "intervalo": 16,
+   "texto": "Um grupo veio em comissão. Não há trabalho para todos, e já se fala em voltar para Curitiba.",
+   "falas": [
+    [
+     "Inácio",
+     "Um auxílio acalma. Não resolve."
+    ],
+    [
+     "Comissão das famílias",
+     "Quem vai embora conta para os outros como foi."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Dar um auxílio",
+     "ef": "−$ 120; satisfação +6",
+     "cron": "deu auxílio às famílias sem trabalho.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Prometer obras",
+     "ef": "Satisfação +2. A promessa volta",
+     "cron": "prometeu obras às famílias.",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Mandar de volta",
+     "ef": "Satisfação −5",
+     "cron": "mandou a comissão de volta.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "promessa": {
+   "titulo": "A comissão voltou",
+   "quem": "As famílias",
+   "texto": "Faz um ano. A comissão voltou com o padre e pergunta pelas obras prometidas.",
+   "falas": [
+    [
+     "Padre",
+     "Palavra de diretor vale quanto, senhor?"
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Cumprir com dinheiro",
+     "ef": "−$ 200; satisfação +7",
+     "cron": "cumpriu a promessa.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Dizer que não há como",
+     "ef": "Satisfação −8",
+     "cron": "não cumpriu a promessa.",
+     "fx": "[fn]"
+    }
+   ]
+  },
+  "engenheiro": {
+   "titulo": "O engenheiro da província",
+   "quem": "O engenheiro da província",
+   "quando": "[fn]",
+   "intervalo": 24,
+   "texto": "O engenheiro passa medindo a estrada para Curitiba. Com um pouco de dinheiro, suas turmas abrem mais caminho nesta estação.",
+   "falas": [
+    [
+     "Inácio",
+     "A estrada é o que nos liga ao mundo, senhor."
+    ]
+   ],
+   "ops": [
+    {
+     "txt": "Pagar pelos serviços",
+     "ef": "−$ 200; 40 trechos a mais nesta estação",
+     "cron": "contratou o engenheiro.",
+     "pode": "[fn]",
+     "fx": "[fn]"
+    },
+    {
+     "txt": "Agradecer e seguir",
+     "ef": "Nada muda",
+     "cron": "dispensou o engenheiro.",
+     "fx": "[fn]"
+    }
+   ]
+  }
+ },
+ "ACONT": {
+  "republica": {
+   "nome": "Proclamação da República",
+   "dura": 6,
+   "aviso": "Notícias da Corte: a monarquia está por um fio. Se cair, a província vira estado e as regras mudam.",
+   "ef": "Levas 40% maiores enquanto durar; a verba muda de vez"
+  },
+  "encilhamento": {
+   "nome": "Crise do Encilhamento",
+   "dura": 6,
+   "aviso": "Os bancos do Rio emitem papel sem lastro. Vem aí uma febre de preços.",
+   "ef": "Preços sobem e despencam a cada estação; empréstimo a 12%"
+  },
+  "federalista": {
+   "nome": "Revolução Federalista",
+   "dura": 0,
+   "aviso": "Tropas federalistas sobem do Rio Grande. Curitiba pode cair.",
+   "ef": "Saída sul fechada: tropas, carroças e trem pelo sul param; a revolução pede dinheiro ou homens"
+  },
+  "mate": {
+   "nome": "Ciclo do mate",
+   "dura": 14,
+   "aviso": "Compradores do Prata disputam a erva-mate. O preço vai disparar, e o que sobe depressa costuma cair.",
+   "ef": "Erva e mate valem 60% mais por 8 estações; depois 40% menos por 6"
+  }
+ },
+ "CLIMA_P": [
+  {
+   "limpo": 0.35,
+   "nublado": 0.25,
+   "chuva": 0.25,
+   "temporal": 0.1,
+   "neblina": 0.05
+  },
+  {
+   "limpo": 0.3,
+   "nublado": 0.15,
+   "chuva": 0.35,
+   "temporal": 0.2
+  },
+  {
+   "limpo": 0.35,
+   "nublado": 0.25,
+   "neblina": 0.3,
+   "chuva": 0.1
+  },
+  {
+   "limpo": 0.35,
+   "nublado": 0.2,
+   "neblina": 0.35,
+   "chuva": 0.1
+  }
+ ],
+ "VIAGEM": {
+  "canoa": 0.35,
+  "vapor": 0.12,
+  "tropa": 0.9,
+  "carroca": 0.55
+ },
+ "MARGENS": [
+  -0.3,
+  0,
+  0.15,
+  0.3,
+  0.6
+ ],
+ "Y_VEIO": {
+  "cal": 24,
+  "chumbo": 18,
+  "ouro": 2,
+  "ferro": 20
+ },
+ "DIETA": {
+  "milho": 3,
+  "fuba": 1,
+  "feijao": 3,
+  "mandioca": 2,
+  "farinha": 2,
+  "arroz": 2,
+  "arrozP": 1,
+  "peixe": 3,
+  "carne": 1,
+  "toucinho": 1,
+  "pinhao": 1,
+  "trigo": 1,
+  "farinhaT": 1,
+  "salgado": 1,
+  "charque": 1
+ },
+ "COMIDAS": [
+  "peixe",
+  "mandioca",
+  "milho",
+  "pinhao",
+  "farinha",
+  "arroz",
+  "salgado",
+  "fuba",
+  "feijao",
+  "trigo",
+  "arrozP",
+  "carne",
+  "toucinho",
+  "farinhaT",
+  "charque"
+ ],
+ "COM_CONSUMO": [
+  "rapadura",
+  "aguardente",
+  "acucar",
+  "erva",
+  "mate",
+  "fumoC",
+  "pano",
+  "cafeS",
+  "calcados",
+  "tabuas",
+  "telhas",
+  "moveis",
+  "barricas",
+  "cal",
+  "ferramentas"
+ ],
+ "PERECIVEL": {
+  "milho": 1,
+  "mandioca": 1,
+  "peixe": 1,
+  "pinhao": 1,
+  "carne": 1
+ },
+ "NV_LIBERA": {
+  "2": [
+   "monjolo",
+   "farinheira",
+   "coleta",
+   "oficina"
+  ],
+  "3": [
+   "curral",
+   "chiqueiro",
+   "salga",
+   "mina"
+  ],
+  "4": [
+   "caiada",
+   "mercado",
+   "rTrigo",
+   "moinho",
+   "pouso",
+   "venda",
+   "embarcadouro"
+  ],
+  "5": [
+   "rCana",
+   "engenho2",
+   "erval",
+   "barbaqua"
+  ],
+  "6": [
+   "alambique",
+   "rFumo",
+   "paiolfumo",
+   "invernada"
+  ],
+  "7": [
+   "sobrado",
+   "matriz",
+   "camara",
+   "curtume",
+   "chafariz",
+   "cadeia",
+   "cais",
+   "depositoLenha"
+  ],
+  "8": [
+   "carpintaria",
+   "tanoaria",
+   "ferraria"
+  ],
+  "9": [
+   "rAlgodao",
+   "tear"
+  ],
+  "10": [
+   "rCafe",
+   "terreiro",
+   "bombeiros"
+  ],
+  "11": [
+   "sapataria",
+   "santacasa",
+   "teatro"
+  ]
+ },
+ "VAGAS_T": {
+  "igreja": 1,
+  "matriz": 2,
+  "escola": 2,
+  "botica": 1,
+  "santacasa": 4,
+  "teatro": 3,
+  "diretoria": 2,
+  "camara": 3,
+  "armazem": 1,
+  "mercado": 3,
+  "porto": 1,
+  "pouso": 1,
+  "invernada": 1,
+  "rMilho": 1,
+  "rFeijao": 1,
+  "rMandioca": 1,
+  "rArroz": 1,
+  "rTrigo": 1,
+  "rCana": 1,
+  "rFumo": 1,
+  "rAlgodao": 1,
+  "rCafe": 1,
+  "curral": 1,
+  "chiqueiro": 1,
+  "pesqueiro": 2,
+  "coleta": 1,
+  "erval": 1,
+  "serraria": 2,
+  "olaria": 2,
+  "mina": 2,
+  "monjolo": 1,
+  "farinheira": 2,
+  "salga": 2,
+  "moinho": 2,
+  "engenho2": 3,
+  "alambique": 1,
+  "barbaqua": 2,
+  "paiolfumo": 1,
+  "curtume": 1,
+  "carpintaria": 1,
+  "tanoaria": 1,
+  "ferraria": 2,
+  "terreiro": 1,
+  "tear": 2,
+  "sapataria": 1,
+  "cadeia": 1,
+  "bombeiros": 2,
+  "deposito": 2,
+  "oficinaCarrocas": 2,
+  "depositoLenha": 2,
+  "entreposto": 2,
+  "estacaoTrem": 3,
+  "oficinaFerro": 3,
+  "cais": 2,
+  "estaleiro": 3,
+  "venda": 1,
+  "embarcadouro": 1,
+  "parada": 1
+ },
+ "SETOR": {
+  "igreja": "servicos",
+  "matriz": "servicos",
+  "escola": "servicos",
+  "botica": "servicos",
+  "santacasa": "servicos",
+  "teatro": "servicos",
+  "diretoria": "servicos",
+  "camara": "servicos",
+  "armazem": "comercio",
+  "mercado": "comercio",
+  "porto": "rio",
+  "pouso": "comercio",
+  "invernada": "comercio",
+  "rMilho": "lavoura",
+  "rFeijao": "lavoura",
+  "rMandioca": "lavoura",
+  "rArroz": "lavoura",
+  "rTrigo": "lavoura",
+  "rCana": "lavoura",
+  "rFumo": "lavoura",
+  "rAlgodao": "lavoura",
+  "rCafe": "lavoura",
+  "curral": "lavoura",
+  "chiqueiro": "lavoura",
+  "pesqueiro": "rio",
+  "coleta": "lavoura",
+  "erval": "lavoura",
+  "serraria": "oficio",
+  "olaria": "oficio",
+  "mina": "mina",
+  "monjolo": "oficio",
+  "farinheira": "oficio",
+  "salga": "oficio",
+  "moinho": "oficio",
+  "engenho2": "oficio",
+  "alambique": "oficio",
+  "barbaqua": "oficio",
+  "paiolfumo": "oficio",
+  "curtume": "oficio",
+  "carpintaria": "oficio",
+  "tanoaria": "oficio",
+  "ferraria": "oficio",
+  "terreiro": "oficio",
+  "tear": "oficio",
+  "sapataria": "oficio",
+  "cadeia": "servicos",
+  "bombeiros": "servicos",
+  "deposito": "comercio",
+  "oficinaCarrocas": "oficio",
+  "depositoLenha": "oficio",
+  "entreposto": "comercio",
+  "estacaoTrem": "comercio",
+  "oficinaFerro": "oficio",
+  "cais": "rio",
+  "estaleiro": "oficio",
+  "venda": "comercio",
+  "embarcadouro": "rio",
+  "parada": "comercio"
+ },
+ "CUSTO": {
+  "rua": 5,
+  "rancho": 20,
+  "casa": 80,
+  "caiada": 150,
+  "sobrado": 260,
+  "igreja": 200,
+  "matriz": 900,
+  "escola": 300,
+  "botica": 250,
+  "santacasa": 1100,
+  "teatro": 1400,
+  "poco": 60,
+  "oficina": 200,
+  "diretoria": 400,
+  "camara": 800,
+  "armazem": 200,
+  "mercado": 600,
+  "porto": 300,
+  "pouso": 300,
+  "invernada": 150,
+  "rMilho": 40,
+  "rFeijao": 45,
+  "rMandioca": 35,
+  "rArroz": 60,
+  "rTrigo": 60,
+  "rCana": 55,
+  "rFumo": 70,
+  "rAlgodao": 70,
+  "rCafe": 90,
+  "curral": 110,
+  "chiqueiro": 90,
+  "pesqueiro": 120,
+  "coleta": 50,
+  "erval": 70,
+  "serraria": 250,
+  "olaria": 200,
+  "mina": 300,
+  "monjolo": 130,
+  "farinheira": 150,
+  "salga": 180,
+  "moinho": 220,
+  "engenho2": 450,
+  "alambique": 240,
+  "barbaqua": 220,
+  "paiolfumo": 140,
+  "curtume": 200,
+  "carpintaria": 180,
+  "tanoaria": 150,
+  "ferraria": 260,
+  "terreiro": 160,
+  "tear": 280,
+  "sapataria": 170,
+  "chafariz": 350,
+  "cadeia": 600,
+  "bombeiros": 900,
+  "deposito": 1800,
+  "oficinaCarrocas": 1500,
+  "depositoLenha": 900,
+  "entreposto": 3500,
+  "estacaoTrem": 5000,
+  "oficinaFerro": 6000,
+  "cais": 5000,
+  "estaleiro": 6000,
+  "venda": 250,
+  "embarcadouro": 200,
+  "parada": 1500
+ },
+ "BIOMAS": {
+  "varzea": {
+   "mata": -0.45,
+   "nomes": [
+    "Várzea Grande",
+    "Várzea do Ribeira",
+    "Barra do Ribeirão",
+    "Ilha Comprida",
+    "Porto Velho",
+    "Várzea do Socorro",
+    "Baixada do Rio",
+    "Ilha das Garças",
+    "Remanso",
+    "Volta Grande",
+    "Prainha",
+    "Vargem Alegre"
+   ],
+   "txt": "Baixada fértil, perto da cheia.",
+   "solo": {
+    "arroz": 1.35,
+    "cana": 1.25,
+    "milho": 1.15,
+    "mandioca": 1.1,
+    "feijao": 1,
+    "trigo": 0.7,
+    "cafe": 0.7,
+    "fumo": 1,
+    "algodao": 0.9
+   },
+   "veios": {}
+  },
+  "campo": {
+   "mata": -0.75,
+   "nomes": [
+    "Campo do Tigre",
+    "Campos Altos",
+    "Campina dos Veados",
+    "Campo Largo",
+    "Rincão do Vento",
+    "Coxilha Rica",
+    "Campo Bonito",
+    "Campina Grande",
+    "Rincão das Emas",
+    "Campo do Meio",
+    "Boa Vista",
+    "Capão Raso"
+   ],
+   "txt": "Campo aberto, bom para trigo e criação.",
+   "solo": {
+    "trigo": 1.35,
+    "feijao": 1.15,
+    "milho": 1,
+    "mandioca": 0.85,
+    "arroz": 0.7,
+    "cana": 0.75,
+    "cafe": 0.85,
+    "fumo": 1.05,
+    "algodao": 1.1
+   },
+   "veios": {
+    "erval": 2
+   }
+  },
+  "mata": {
+   "mata": 0.12,
+   "nomes": [
+    "Mata da Serra",
+    "Pinhais do Açungui",
+    "Capão Fechado",
+    "Mata do Pinhão",
+    "Sertão dos Pinheiros",
+    "Capão Alto",
+    "Pinheiral",
+    "Mata Escura",
+    "Sertão Velho",
+    "Mata Virgem",
+    "Capão da Onça",
+    "Pinhal Grande"
+   ],
+   "txt": "Araucária fechada: madeira e pinhão.",
+   "solo": {
+    "milho": 0.9,
+    "mandioca": 1,
+    "feijao": 0.9,
+    "trigo": 0.8,
+    "arroz": 0.7,
+    "cana": 0.85,
+    "cafe": 1,
+    "fumo": 0.9,
+    "algodao": 0.7
+   },
+   "veios": {}
+  },
+  "erval": {
+   "mata": -0.25,
+   "nomes": [
+    "Ervais do Norte",
+    "Erval Velho",
+    "Campos do Mate",
+    "Rincão da Erva",
+    "Erval Bonito",
+    "Faxinal do Mate",
+    "Faxinal Velho",
+    "Erval Grande",
+    "Faxinal da Serra",
+    "Erval do Meio"
+   ],
+   "txt": "Faxinal com erva-mate nativa.",
+   "solo": {
+    "milho": 1,
+    "feijao": 1,
+    "mandioca": 1,
+    "trigo": 0.9,
+    "arroz": 0.7,
+    "cana": 0.85,
+    "cafe": 1,
+    "fumo": 1,
+    "algodao": 0.9
+   },
+   "veios": {
+    "erval": 9
+   }
+  },
+  "serra": {
+   "mata": 0.02,
+   "nomes": [
+    "Serra do Chumbo",
+    "Pedra Branca",
+    "Morro do Ferro",
+    "Serra Negra",
+    "Lajeado",
+    "Pico das Furnas",
+    "Serra Alta",
+    "Morro Agudo",
+    "Pedra Grande",
+    "Serra da Bocaina"
+   ],
+   "txt": "Morro de pedra, com veios e pouca roça.",
+   "solo": {
+    "milho": 0.7,
+    "mandioca": 0.8,
+    "feijao": 0.75,
+    "trigo": 0.7,
+    "arroz": 0.6,
+    "cana": 0.65,
+    "cafe": 0.9,
+    "fumo": 0.8,
+    "algodao": 0.65
+   },
+   "veios": {
+    "cal": 3,
+    "chumbo": 3,
+    "ferro": 3
+   }
+  },
+  "lavras": {
+   "mata": 0.02,
+   "nomes": [
+    "Ribeirão das Lavras",
+    "Cascalho Rico",
+    "Lavras Velhas",
+    "Córrego do Ouro",
+    "Bateia",
+    "Grupiara",
+    "Catas Altas",
+    "Córrego Rico"
+   ],
+   "txt": "Cascalho com ouro, pouco e espalhado.",
+   "solo": {
+    "milho": 0.95,
+    "mandioca": 0.95,
+    "feijao": 0.9,
+    "trigo": 0.8,
+    "arroz": 0.9,
+    "cana": 0.9,
+    "cafe": 0.9,
+    "fumo": 0.95,
+    "algodao": 0.8
+   },
+   "veios": {
+    "ouro": 4,
+    "cal": 1
+   }
+  }
+ },
+ "COBRANCA": {
+  "branda": {
+   "nome": "Branda",
+   "txt": "Só cobra de quem sobra dinheiro. Entra menos, e ninguém perde o lote cedo.",
+   "fator": 1.5,
+   "perde": 6,
+   "sat": 3
+  },
+  "normal": {
+   "nome": "Normal",
+   "txt": "Cobra de quem consegue pagar. Três atrasos e o lote volta para a colônia, e a casa fica livre para a próxima leva.",
+   "fator": 1,
+   "perde": 3,
+   "sat": 0
+  },
+  "rigida": {
+   "nome": "Rígida",
+   "txt": "Cobra de todos. Entra mais, mas a satisfação cai, e dois atrasos bastam para perder o lote.",
+   "fator": 1,
+   "perde": 2,
+   "sat": -6
+  }
+ },
+ "ORDEM_MATERIA": [
+  "milho",
+  "arroz",
+  "mandioca",
+  "trigo",
+  "peixe",
+  "carne",
+  "cana",
+  "erva",
+  "fumo",
+  "cafe",
+  "algodao",
+  "couro",
+  "sola",
+  "tabuas",
+  "ferro"
+ ],
+ "ORDEM_SETOR": [
+  "lavoura",
+  "rio",
+  "comercio",
+  "oficio",
+  "mina",
+  "servicos"
+ ],
+ "SAFRA": {
+  "rapadura": true,
+  "aguardente": true,
+  "acucar": true,
+  "erva": true,
+  "mate": true,
+  "fumoC": true,
+  "pano": true,
+  "cafeS": true,
+  "calcados": false,
+  "tabuas": false,
+  "telhas": false,
+  "moveis": false,
+  "barricas": false,
+  "cal": false,
+  "ferramentas": false
+ },
+ "GRANDES": {
+  "matriz": 0,
+  "mercado": 1,
+  "engenho2": 2,
+  "invernada": 3
+ },
+ "PLURAL": {
+  "rua": "Trechos de rua",
+  "rancho": "Ranchos",
+  "casa": "Casas",
+  "caiada": "Casas caiadas",
+  "sobrado": "Sobrados",
+  "igreja": "Capelas",
+  "matriz": "Matrizes",
+  "escola": "Escolas",
+  "botica": "Boticas",
+  "santacasa": "Santas Casas",
+  "teatro": "Teatros",
+  "poco": "Poços",
+  "oficina": "Casas do mestre",
+  "diretoria": "Diretorias",
+  "camara": "Câmaras",
+  "armazem": "Comércios",
+  "mercado": "Mercados",
+  "porto": "Cais",
+  "pouso": "Pousos",
+  "invernada": "Invernadas",
+  "rMilho": "Milharais",
+  "rFeijao": "Feijoais",
+  "rMandioca": "Mandiocais",
+  "rArroz": "Arrozais",
+  "rTrigo": "Trigais",
+  "rCana": "Canaviais",
+  "rFumo": "Fumais",
+  "rAlgodao": "Algodoais",
+  "rCafe": "Cafezais",
+  "curral": "Currais",
+  "chiqueiro": "Chiqueiros",
+  "pesqueiro": "Pesqueiros",
+  "coleta": "Coletas de pinhão",
+  "erval": "Ervais",
+  "serraria": "Serrarias",
+  "olaria": "Olarias",
+  "mina": "Minas",
+  "monjolo": "Monjolos",
+  "farinheira": "Casas de farinha",
+  "salga": "Salgas",
+  "moinho": "Moinhos",
+  "engenho2": "Engenhos",
+  "alambique": "Alambiques",
+  "barbaqua": "Barbaquás",
+  "paiolfumo": "Paióis de fumo",
+  "curtume": "Curtumes",
+  "carpintaria": "Carpintarias",
+  "tanoaria": "Tanoarias",
+  "ferraria": "Ferrarias",
+  "terreiro": "Terreiros",
+  "tear": "Teares",
+  "sapataria": "Sapatarias",
+  "chafariz": "Chafarizes",
+  "cadeia": "Cadeias",
+  "bombeiros": "Quartéis de bombeiros",
+  "deposito": "Depósitos de carroças",
+  "oficinaCarrocas": "Oficinas de carroças",
+  "depositoLenha": "Depósitos de lenha",
+  "entreposto": "Entrepostos",
+  "estacaoTrem": "Estações",
+  "oficinaFerro": "Oficinas ferroviárias",
+  "cais": "Portos",
+  "estaleiro": "Estaleiros",
+  "venda": "Vendas",
+  "embarcadouro": "Embarcadouros",
+  "parada": "Paradas"
+ },
+ "EST_NOME": [
+  "Primavera",
+  "Verão",
+  "Outono",
+  "Inverno"
+ ],
+ "CLIMA_NOME": {
+  "limpo": "céu limpo",
+  "nublado": "nublado",
+  "chuva": "chuva",
+  "temporal": "temporais",
+  "neblina": "neblina",
+  "geada": "geada",
+  "cheia": "cheia"
+ },
+ "PERFIL": {
+  "alemã": "oficio",
+  "sueca": "oficio",
+  "suíça": "oficio",
+  "italiana": "lavoura",
+  "brasileira": "lavoura",
+  "francesa": "comercio",
+  "belga": "comercio",
+  "inglesa": "mina",
+  "espanhola": "rio"
+ },
+ "DESTINOS": {
+  "iguape": {
+   "nome": "Iguape",
+   "via": "rio abaixo",
+   "avulsa": 0.5,
+   "tarifa": 0.5,
+   "mult": "[fn]",
+   "fundo": 1
+  },
+  "curitiba": {
+   "nome": "Curitiba",
+   "via": "saída sul",
+   "avulsa": 1,
+   "tarifa": 1,
+   "mult": "[fn]",
+   "fundo": 1.5
+  },
+  "paranagua": {
+   "nome": "Paranaguá",
+   "via": "porto do mar",
+   "avulsa": null,
+   "tarifa": 1.2,
+   "mult": "[fn]",
+   "fundo": 3
+  },
+  "saopaulo": {
+   "nome": "São Paulo",
+   "via": "saída norte",
+   "avulsa": null,
+   "tarifa": 1,
+   "mult": "[fn]",
+   "fundo": 3
+  }
+ },
+ "FATOR_CUSTO_MARCO": [
+  1,
+  1,
+  1.25,
+  1.6
+ ],
+ "RECEITA_DO_BEM": {
+  "toucinho": {
+   "t": "chiqueiro",
+   "de": "milho"
+  },
+  "fuba": {
+   "t": "monjolo",
+   "de": "milho"
+  },
+  "arrozP": {
+   "t": "monjolo",
+   "de": "arroz"
+  },
+  "farinha": {
+   "t": "farinheira",
+   "de": "mandioca"
+  },
+  "salgado": {
+   "t": "salga",
+   "de": "peixe"
+  },
+  "charque": {
+   "t": "salga",
+   "de": "carne"
+  },
+  "farinhaT": {
+   "t": "moinho",
+   "de": "trigo"
+  },
+  "rapadura": {
+   "t": "engenho2",
+   "de": "cana"
+  },
+  "acucar": {
+   "t": "engenho2",
+   "de": "cana"
+  },
+  "aguardente": {
+   "t": "alambique",
+   "de": "cana"
+  },
+  "mate": {
+   "t": "barbaqua",
+   "de": "erva"
+  },
+  "fumoC": {
+   "t": "paiolfumo",
+   "de": "fumo"
+  },
+  "sola": {
+   "t": "curtume",
+   "de": "couro"
+  },
+  "moveis": {
+   "t": "carpintaria",
+   "de": "tabuas"
+  },
+  "barricas": {
+   "t": "tanoaria",
+   "de": "tabuas"
+  },
+  "ferramentas": {
+   "t": "ferraria",
+   "de": "ferro"
+  },
+  "cafeS": {
+   "t": "terreiro",
+   "de": "cafe"
+  },
+  "pano": {
+   "t": "tear",
+   "de": "algodao"
+  },
+  "calcados": {
+   "t": "sapataria",
+   "de": "sola"
+  }
+ },
+ "NOME_VEIO": {
+  "ouro": "ouro",
+  "chumbo": "chumbo",
+  "cal": "cal",
+  "ferro": "ferro",
+  "erval": "erva-mate"
+ },
+ "OFICINAS": [
+  "chiqueiro",
+  "monjolo",
+  "farinheira",
+  "salga",
+  "moinho",
+  "engenho2",
+  "alambique",
+  "barbaqua",
+  "paiolfumo",
+  "curtume",
+  "carpintaria",
+  "tanoaria",
+  "ferraria",
+  "terreiro",
+  "tear",
+  "sapataria"
+ ],
+ "ESTACAO_ROCA": [
+  "broto",
+  "cheia",
+  "cheia",
+  "restolho"
+ ],
+ "MAX_TROPA": {
+  "pouso": 6,
+  "invernada": 4
+ },
+ "GUIA": {
+  "caixa": {
+   "tit": "Renda não é caixa",
+   "sub": "De onde vem o dinheiro das obras",
+   "p": "[fn]"
+  },
+  "ordem": {
+   "tit": "O que decidir a cada estação",
+   "sub": "Resolva o primeiro item que estiver acontecendo",
+   "l": "[fn]"
+  },
+  "gente": {
+   "tit": "Famílias, casas e levas",
+   "sub": "Como controlar quem chega",
+   "p": "[fn]"
+  },
+  "construir": {
+   "tit": "O que construir",
+   "sub": "Cada situação pede uma obra",
+   "l": "[fn]"
+  },
+  "capacidade": {
+   "tit": "Como a produção chega e sai",
+   "sub": "Lombo, captação, comércio e porta",
+   "p": "[fn]"
+  },
+  "produzir": {
+   "tit": "O que produzir",
+   "sub": "Do básico às cadeias novas",
+   "l": "[fn]"
+  },
+  "metas": {
+   "tit": "Metas da província",
+   "sub": "Freguesia, Vila e Cidade",
+   "p": "[fn]"
+  },
+  "estrada": {
+   "tit": "A estrada até Curitiba",
+   "sub": "Um desafio de expansão",
+   "p": "[fn]"
+  },
+  "armadilhas": {
+   "tit": "Armadilhas",
+   "sub": "Erros que custam caro",
+   "l": "[fn]"
+  },
+  "corrida": {
+   "tit": "A corrida dos transportes",
+   "sub": "O que muda quando a colônia vira cidade",
+   "p": "[fn]"
+  }
+ },
+ "INFO": {
+  "capacidade": [
+   "Transporte",
+   "A produção chega ao comércio no lombo ou por uma captação (venda, embarcadouro, parada). O comércio vende às famílias e manda a sobra às portas (cais, porto, pouso, estação). Cada veículo leva uma carga por estação; o que não cabe vai no lombo ou espera e perde 10%."
+  ],
+  "evolucao": [
+   "Evolução",
+   "Cada ponto é o fim de uma estação. A produção é a estimada para o ano inteiro, para a colheita não virar sobe e desce. Carga é o que quer sair na estação mais cheia; a linha acima de carros e canoas mostra que a carga espera. Toque no gráfico para ler os valores."
+  ],
+  "escolhasRel": [
+   "O que suas escolhas fizeram",
+   "Mede a colônia antes e depois de cada obra ou decisão, com os preços daquele momento. Os números de cima somam tudo o que você fez na estação."
+  ],
+  "perdas": [
+   "Perdas",
+   "A pizza soma todas as arrobas produzidas no ano. Acima de 25% perdidos, a província tira um ponto na prestação de contas. No Resumo, as perdas aparecem pela causa, porque cada uma se resolve de um jeito."
+  ],
+  "retorno": [
+   "Resultado por recurso",
+   "Estimativa de um ano com os prédios e preços de hoje, já sem o frete. \"Oficinas pagaram\" é quando uma oficina compra a matéria-prima: não é venda para fora. As colunas mostram em que estação a venda acontece, com a atual em azul. A renda das famílias entra dividida ao longo do ano, e a manutenção sai do caixa da colônia."
+  ],
+  "repasse": [
+   "Repasse",
+   "A partir da Freguesia, a licença de comércio traz ao caixa 10% da renda das famílias. É assim que a renda delas volta para a colônia."
+  ],
+  "equipe": [
+   "Equipe",
+   "Famílias na vaga e rendimento. Prédio sem gente não funciona, e famílias não aparecem sozinhas: se ninguém está sem trabalho, a equipe sai de outro prédio. O rendimento vem da nota da casa de quem trabalha: nota 30 rende 80%, 60 rende 95%, 90 rende 110%."
+  ],
+  "solo": [
+   "Solo",
+   "Quanto este lote favorece a cultura. Cada terra tem seus solos: veja \"Bom solo\" ao tocar na terra, ou mova a plantação."
+  ],
+  "mata": [
+   "Mata em volta",
+   "Quanto há de árvores por perto. Rende mais em mata fechada. Ruas e prédios por perto derrubam a mata."
+  ],
+  "incomoda": [
+   "Casas incomodadas",
+   "Casa vizinha perde nota: 30 pontos a 1 lote, 20 a 2 e 10 a 3. Afaste das moradias com \"Mover\"."
+  ],
+  "suprimento": [
+   "Suprimento",
+   "A produção segue uma ordem: quem planta come, o mercado interno compra, as oficinas transformam, e só o que sobra sai pelo rio. Toque em cada etapa para ver os números."
+  ],
+  "recursos": [
+   "Recursos",
+   "Matéria-prima sai da plantação, da criação, do rio, do mato ou da mina. Processado passou por uma oficina. A barra mostra o destino de cada arroba. \"Iguape\" é o preço de exportação, antes do frete; \"aqui\" é o preço na colônia, para o que não é exportado. A seta compara o preço com um ano atrás; toque no recurso para ver o gráfico. O alternador mostra, em cinza, os recursos que a colônia ainda não produz. Faturamento é tudo o que se vendeu, antes do frete; a renda das famílias é o que sobra. As arrobas produzidas contam também o que vira outro produto, como a mandioca e a farinha."
+  ],
+  "investir": [
+   "Onde investir",
+   "As obras que mais aumentam a renda pelo que custam. O caixa paga a obra e a renda fica com as famílias; o caixa só recebe o repasse, desde a Freguesia. Boa parte do ganho vem de ocupar quem está sem trabalho."
+  ],
+  "vagas": [
+   "Vagas",
+   "Prédios e plantações abrem vagas. A barra é o rendimento da equipe, que vem da nota das casas de quem trabalha. Toque para ver os prédios."
+  ],
+  "rendimento": [
+   "Rendimento",
+   "Quem vive bem trabalha melhor. Cada família rende conforme a nota da casa: nota 30 rende 80%, 60 rende 95%, 90 rende 110%. Água, botica, escola, igreja, comércio e comida variada sobem a nota; impostos e vizinhos que incomodam baixam."
+  ],
+  "faltas": [
+   "O que falta a quem trabalha",
+   "Serviços fora do alcance das casas de quem trabalha. Levar o serviço até elas sobe a nota e o rendimento dessas famílias. Toque para ver no mapa."
+  ],
+  "familias": [
+   "Famílias",
+   "As famílias guardam parte da renda e usam a poupança para melhorar casas e plantações. Sem renda, atrasam a parcela. Família sem trabalho e com a casa de nota abaixo de 55 vai embora depois de dois anos."
+  ],
+  "cobranca": [
+   "Cobrança",
+   "Cada família paga cinco parcelas anuais, a partir do fim do segundo ano. Quem atrasa demais perde o lote, e a casa fica livre para a próxima leva."
+  ],
+  "impostos": [
+   "Impostos",
+   "Só existem com a Câmara. A proposta passa a valer na estação seguinte. Imposto alto reduz a satisfação e pode levar famílias a sair."
+  ],
+  "leisC": [
+   "Leis da Câmara",
+   "Regras sem imposto. Cada uma tem ganho e custo, e passa a valer na estação seguinte."
+  ],
+  "influencia": [
+   "Influência",
+   "Sua posição junto à província. Ganha 1 a cada novo nível e título, e 1 por ano com nota máxima na prestação de contas. Perde 1 quando a verba é cortada. Paga anexações e pedidos."
+  ],
+  "prestacao": [
+   "Prestação de contas",
+   "A cada duas estações, a província soma pontos. +1 com satisfação de 60 para cima, +1 com menos de 20% de parcelas atrasadas. −1 com satisfação abaixo de 45, −1 com mais de 40% de atrasos, −1 com caixa no vermelho ou caindo mais de $ 500 sem contar obras, −1 com mais de 25% da produção desperdiçada, −1 ou −2 com a colônia atrasada para a próxima meta (+1 se estiver à frente). 2 pontos: verba +10%. −1: verba −15%. −2 ou menos: verba −30%. Perder o prazo da meta traz um inspetor (verba pela metade, só mais 2 anos); perder de novo encerra a colônia."
+  ],
+  "nucleos": [
+   "Núcleos",
+   "Uma terra entregue a um administrador. Ele cresce sozinho conforme a satisfação, que sobe com apoio e cai com taxa alta. A autonomia sobe com o tempo e com taxa alta; em 100, o núcleo pede emancipação. Retomar o controle traz as famílias que couberem nas casas vazias da sede."
+  ],
+  "cronica": [
+   "Crônica",
+   "O que a diretoria decidiu e o que aconteceu na colônia, estação por estação."
+  ],
+  "patrimonio": [
+   "Patrimônio",
+   "Compara o que mais uma unidade, num lote livre de verdade, renderia por ano com o que custa manter. Quando a última rende muito mais do que uma nova, a matéria-prima ou o mercado já estão no limite: a nova pouco acrescenta. \"Falta gente\": ela ficaria vazia. \"Falta escoar\": a produção é boa, mas não há como levar a carga. Nos dois casos, não é motivo para demolir."
+  ],
+  "nivel": [
+   "Nível da colônia",
+   "Sobe com famílias trabalhando e renda. Cada nível libera construções. Os níveis 4, 7 e 10 também exigem as metas da província, dentro do prazo. O nível 12 pede Santa Casa e Teatro."
+  ],
+  "escolhas": [
+   "Escolhas",
+   "A cada 3 níveis, você escolhe um caminho entre dois. A escolha vale até o fim da partida."
+  ],
+  "satisfacao": [
+   "Satisfação",
+   "Média das notas das casas: serviços ao alcance, bens à venda, vizinhos que incomodam e impostos."
+  ],
+  "escoamento": [
+   "Tropas",
+   "A estrada até Curitiba abre um segundo mercado. Pousos e invernadas aumentam quanto as tropas levam."
+  ],
+  "conselhos": [
+   "Conselhos de Inácio",
+   "Inácio lê os números da colônia e aponta o que mais pesa agora. Os ganhos vêm do mesmo cálculo da Economia, com preços e estoques de hoje."
+  ],
+  "terraN": [
+   "Terra",
+   "Anexar custa influência e dinheiro, e o custo sobe com o tamanho da colônia. Só se anexa o que faz divisa."
+  ]
+ },
+ "CONST": {
+  "CONSUMO_ROCA": 3,
+  "VALOR_MESA": 0.8,
+  "GUARDA": {
+   "sem": 0.9,
+   "grao": 0.97,
+   "fresco": 0.85
+  },
+  "FRETE_RIO": 0.5,
+  "LOMBO_LIVRE": 6,
+  "K_ESCOLHA": 8,
+  "PESO_COM_ISOLADO": 0.6,
+  "CARGA": {
+   "carros": 60,
+   "porto": 120
+  },
+  "PRECO_LOTE": 20,
+  "SEMENTES": 6,
+  "AJUDA": 5,
+  "SALARIO_NOVO": 2,
+  "LIMITE_PERDA": 0.25,
+  "NX": 90,
+  "NY": 105,
+  "REG": 15,
+  "COLS": 6,
+  "LINS": 7,
+  "A0": 22,
+  "M0": 47,
+  "SEDE_ID": "1,3",
+  "TETO_NUCLEO": 120,
+  "GEN_VAR": 24,
+  "LENHA_PRECO": 0.4,
+  "CUSTO_EXPEDICAO": 60,
+  "AUTOSAVES": 5
+ }
+}

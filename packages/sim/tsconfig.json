@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "../..", "outDir": "dist" },
+  "include": ["src", "test", "test/fixtures/*.json", "../../legacy/id-map.json"],
+  "references": [{ "path": "../data" }]
+}
