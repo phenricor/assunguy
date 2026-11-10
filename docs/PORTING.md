@@ -68,11 +68,14 @@ Order of the slices:
 ## Rule changes from the November interface review
 
 These are deliberate departures from the prototype (see `docs/ui-review.md`). The oracle switches the
-same rules off in the prototype before recording, so golden tests still compare like with like.
+same rules off in the prototype before recording (see the patches at the top of the oracle), so golden tests still compare like with like.
 
 - Lot installments and their collection policy are gone: no `cobraParcelas`, no `parcelas`/`atraso` on
   families, no collection setting, and the province report no longer counts arrears. The oracle replaces
   `cobraParcelas` with a no-op.
+- A commerce's whole land is no longer lossless on foot; only the free distance (6 lots) from the nearest
+  commerce is. On the saves this costs 3% of income (canoes) and 0.4% (speedrun). The advisor must suggest a
+  trading post or landing for far fields, and a commerce only where there are families and a gateway.
 - Relief works are always on.
 - Extra funds and extra time from the province are offered by the advisor when available, not as
   buttons on the province tab. Advice the colony cannot pay for is listed but blocked.

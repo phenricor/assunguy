@@ -32,6 +32,14 @@ the catalog artboards show them applied.
 - Extra time and extra funds from the province are no longer buttons in Direção: província; the advisor
   suggests them when they are available.
 - Advice whose cost is above the cash in hand is shown blocked.
+- Walking to commerce is lossless only within 6 lots of it; the whole-land exception is gone.
+
+## Routes (approved)
+
+Tapping a commerce, collection point or gateway shows the whole network it belongs to, from the fields to
+the gateway: its reach as an area, lines from fields (on foot or to a collection point), from collection
+points to commerce (thickness by share), from commerce to gateway, and the gateway's destination and how
+full it is. A "Rotas" map layer shows the whole network at once.
 
 ## Screen by screen
 

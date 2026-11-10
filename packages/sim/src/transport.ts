@@ -80,13 +80,8 @@ export function geography(s: GameState, linked: Set<LotKey>): Geography {
     if (!(T.output || T.extraOutputs || t === 'mine') || T.recipes) continue;
     let jL = 0, dL = 1e9;
     commerce.forEach((c, j) => { const d = distance(key, c.key); if (d < dL) { dL = d; jL = j; } });
-    // the whole land of a commerce is known road: within it, carrying on foot loses nothing
-    if (dL > FREE_CARRY) {
-      const land = landOf(...parseKey(key));
-      let jm = -1, dm = 1e9;
-      commerce.forEach((c, j) => { if (landOf(...parseKey(c.key)) === land) { const d = distance(key, c.key); if (d < dm) { dm = d; jm = j; } } });
-      if (jm >= 0) { dL = FREE_CARRY; jL = jm; }
-    }
+    // on foot, nothing is lost within the free distance of the nearest commerce; farther, it is lost on the way
+    // (the prototype also made a commerce's whole land lossless; removed in the November review)
     const reach: number[] = [];
     collections.forEach((c, i) => { if (distance(key, c.key) <= c.reach) reach.push(i); });
     producers[key] = { carry: dL, carryTo: jL, collections: reach, land: landOf(...parseKey(key)) };

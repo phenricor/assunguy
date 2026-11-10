@@ -202,9 +202,6 @@ const SCENARIOS = {
     for (const [name, txt] of saves()) {
       out[name] = await page.evaluate(([txt, load]) => {
         const state = (0, eval)(load)(txt);
-        cobraParcelas = () => ({ recebido: 0, pagas: 0, atrasos: 0, perderam: [] });
-        prestaContas = (0, eval)('(' + prestaContas.toString().replace("if (parte < .2) { nota += 1; razoes.push('parcelas em dia'); } else if (parte > .4) { nota -= 1; razoes.push('muitas parcelas atrasadas'); }", '') + ')');
-        pedidoDeTroca = (0, eval)('(' + pedidoDeTroca.toString().replace('(f.parcelas || 0) >= 5', 'M.mercadoSim.t - f.chegou >= 24') + ')');
         abreRelatorio = () => {}; salva = () => {}; salvaNuvem = () => {};
         const snap = () => JSON.parse(JSON.stringify({
           t: M.mercadoSim.t, seed: M.mercadoSim.semente, caixa: M.caixa, inf: M.influencia, nivelC: M.nivelC, marco: M.marco || 0, prazo: M.prazo, exig: M.exig || 0, verbaMod: M.verbaMod,
@@ -248,6 +245,14 @@ const SCENARIOS = {
   const page = await browser.newPage();
   await page.goto(`http://localhost:${server.address().port}/index.html`);
   await page.waitForFunction(() => typeof mercadoInicial === 'function');
+  // rules removed in the November review are switched off here too, so the port compares like with like
+  await page.evaluate(() => {
+    const patch = (fn, from, to) => { const src = fn.toString(); if (!src.includes(from)) throw new Error('patch target missing: ' + from.slice(0, 50)); return (0, eval)('(' + src.replace(from, to) + ')'); };
+    cobraParcelas = () => ({ recebido: 0, pagas: 0, atrasos: 0, perderam: [] });
+    prestaContas = patch(prestaContas, "if (parte < .2) { nota += 1; razoes.push('parcelas em dia'); } else if (parte > .4) { nota -= 1; razoes.push('muitas parcelas atrasadas'); }", '');
+    pedidoDeTroca = patch(pedidoDeTroca, '(f.parcelas || 0) >= 5', 'M.mercadoSim.t - f.chegou >= 24');
+    prepGeo = patch(prepGeo, 'if (dL > LOMBO_LIVRE) {', 'if (false) {');
+  });
   const out = await SCENARIOS[name](page, process.argv[3]);
   fs.mkdirSync(FIXTURES, { recursive: true });
   fs.writeFileSync(path.join(FIXTURES, `${name}.json`), JSON.stringify(out));
