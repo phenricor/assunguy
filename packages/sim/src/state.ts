@@ -3,6 +3,7 @@ import type { BuildingId, GoodId, Sector, VehicleId } from '@assunguy/data';
 import type { MapState } from './map.js';
 import type { MarketState } from './market.js';
 import type { LandId, LotKey } from './world.js';
+import type { DilemmaId, LongCrisisId, QueuedEvent } from './events.js';
 
 /** A home slot: the house's anchor lot and the family's place in it. */
 export type FamilyId = `${LotKey}#${number}`;
@@ -66,10 +67,31 @@ export interface GameState {
   /** Path choices taken at each level. */
   choices: Partial<Record<number, string>>;
   greatWorks: Partial<Record<string, GreatWork>>;
-  /** Ongoing problems: an epidemic, disorder. */
-  problems: { epidemic?: number; disorder?: number; [k: string]: number | undefined };
-  /** The crisis under way, if any. */
-  crisis: { id: string; seasonsLeft: number } | null;
+  /** City problems: an epidemic under way, the disorder level, the last fire. */
+  problems: { epidemic?: { disease: string; seasonsLeft: number; since: number } | null; disorder?: number; lastFire?: number; fireHomes?: number };
+  /** The long crisis under way (republic, encilhamento, federalist revolution, mate cycle), if any. */
+  crisis: { id: string; seasonsLeft: number; since?: number } | null;
+  nextCrisis?: { id: LongCrisisId; at: number } | null;
+  lastCrisis?: number;
+  crisesSeen?: LongCrisisId[];
+  /** Events waiting for the player's decision, oldest first. */
+  queue: QueuedEvent[];
+  /** Consequences scheduled for a later season. */
+  agenda: { id: DilemmaId; t: number }[];
+  /** Season each dilemma was last drawn. */
+  used: Partial<Record<string, number>>;
+  lastDilemma?: number;
+  nextArrival?: number;
+  nextSwapAsk?: number;
+  flags: Partial<Record<string, boolean>>;
+  chronicle: { t: number; key: string; params?: Record<string, string | number> }[];
+  /** What happened this season, for the report: buildings, swaps, decisions. */
+  log: { t: number; kind: string; [k: string]: unknown }[];
+  weather?: { t: number; kind: string };
+  /** Extra street lots the works crews can lay this season (the engineer). */
+  extraStreets?: number;
+  /** A missed deadline was already announced. */
+  warned: boolean;
   /** Vehicles at each transport building. */
   fleet: Record<LotKey, Partial<Record<VehicleId, number>>>;
   /** Tariff margin set at each transport building. */

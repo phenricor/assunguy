@@ -12,3 +12,4 @@ export * from './families.js';
 export * from './province.js';
 export * from './placement.js';
 export * from './measure.js';
+export * from './events.js';

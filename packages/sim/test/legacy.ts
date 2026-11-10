@@ -37,7 +37,25 @@ export function legacyMap(save: Record<string, unknown>): MapState {
 }
 
 const GREAT_WORKS: Record<string, string> = { telegrafo: 'telegraph', rodagem: 'macadamRoad', ramal: 'railSpur', escolaNormal: 'normalSchool', charqueada: 'jerkyPlant', usinaCal: 'limeWorks', hospital: 'hospital', serrariaVapor: 'steamSawmill' };
-const CRISES: Record<string, string> = { federalista: 'federalist' };
+const CRISES: Record<string, string> = { republica: 'republic', encilhamento: 'encilhamento', federalista: 'federalist', mate: 'mate' };
+export const DILEMMA: Record<string, string> = { chegada: 'earlyArrival', caixaLage: 'storeBox', cobranca: 'storeDebt', denuncia: 'accusation', divino: 'divino', febre: 'fever', benedito: 'peddler', ferreiro: 'blacksmith', kanhro: 'kaingangVisit', pinheiral: 'fences', trocas: 'barter', comissao: 'committee', promessa: 'promise', engenheiro: 'engineer' };
+const FLAGS: Record<string, string> = { caixa: 'storeBox', vogt: 'blacksmith' };
+const DISEASE: Record<string, string> = { febre: 'fever', 'cólera': 'cholera' };
+/** A queued prototype event as the port's queue entry. */
+export function legacyEvent(e: any): any {
+  if (e.tipo === 'dilema') return { kind: 'dilemma', id: DILEMMA[e.id] };
+  if (e.tipo === 'crise') return { kind: 'crisis', id: e.id === 'geada' ? 'frost' : 'flood' };
+  if (e.tipo === 'leva') return { kind: 'immigrants', n: e.n, origin: table('origins')[e.origem] };
+  if (e.tipo === 'pedeTroca') return { kind: 'cropSwap', key: e.key, family: e.fam, from: table('buildings')[e.de], to: table('buildings')[e.para], gain: e.ganho, cost: e.custo, losses: (e.perde ?? []).map(([b, v]: [string, number]) => [goodFromLegacy(b), v]) };
+  if (e.tipo === 'escolha') return { kind: 'pathChoice', level: e.nivel };
+  if (e.tipo === 'decreto') return { kind: 'decree', milestone: e.nome };
+  if (e.tipo === 'intervencao') return { kind: 'inspector', milestone: e.nome };
+  if (e.tipo === 'fim') return { kind: 'end', milestone: e.nome };
+  if (e.tipo === 'vitoria') return { kind: 'victory' };
+  if (e.tipo === 'intro') return { kind: 'intro' };
+  if (e.tipo === 'fdj' && e.id === 'requisicao') return { kind: 'requisition' };
+  return { kind: 'unknown', legacy: e };
+}
 const TAX_IDS: Record<string, TaxId> = { lote: 'lotInstallment', dizimo: 'tithe', exportacao: 'exportDuty', negocio: 'businessTax' };
 const byGood = (o: Record<string, number> | undefined) => Object.fromEntries(Object.entries(o ?? {}).map(([g, v]) => [goodFromLegacy(g), v]));
 
@@ -64,8 +82,16 @@ export function legacyState(save: Record<string, unknown>): GameState {
     taxes, laws: Object.fromEntries(Object.keys(m.leisC ?? {}).filter((k) => m.leisC[k]).map((k) => [table('laws')[k], true])),
     choices: Object.fromEntries(Object.entries(m.escolhas ?? {}).map(([n, c]) => [n, table('choices')[c as string]])),
     greatWorks: Object.fromEntries(Object.entries(m.gobras ?? {}).map(([k, g]: [string, any]) => [GREAT_WORKS[k] ?? k, { ...(g.ativo ? { active: true } : {}), ...(g.feito ? { done: true } : {}), ...(g.pago ? { paid: g.pago } : {}), ...(g.extra ? { extra: g.extra } : {}), ...(g.parou ? { stalled: true } : {}) }])),
-    problems: { epidemic: m.prob?.epi ? 1 : 0, disorder: m.prob?.desordem ? 1 : 0 },
-    crisis: m.acont ? { id: CRISES[m.acont.id] ?? m.acont.id, seasonsLeft: m.acont.restam } : null,
+    problems: { epidemic: m.prob?.epi ? { disease: DISEASE[m.prob.epi.nome] ?? m.prob.epi.nome, seasonsLeft: m.prob.epi.restam, since: m.prob.epi.desde } : null, disorder: m.prob?.desordem || 0, ...(m.prob?.ultFogo !== undefined ? { lastFire: m.prob.ultFogo } : {}), ...(m.prob?.fogoCasas !== undefined ? { fireHomes: m.prob.fogoCasas } : {}) },
+    crisis: m.acont ? { id: CRISES[m.acont.id] ?? m.acont.id, seasonsLeft: m.acont.restam, ...(m.acont.desde !== undefined ? { since: m.acont.desde } : {}) } : null,
+    ...(m.acontProx ? { nextCrisis: { id: CRISES[m.acontProx.id], at: m.acontProx.em } } : {}), ...(m.acontUlt !== undefined ? { lastCrisis: m.acontUlt } : {}), ...(m.acontFeitos ? { crisesSeen: m.acontFeitos.map((x: string) => CRISES[x]) } : {}),
+    queue: (m.fila ?? []).map(legacyEvent), agenda: (m.agenda ?? []).map((a: any) => ({ id: DILEMMA[a.id], t: a.t })),
+    used: Object.fromEntries(Object.entries(m.usados ?? {}).map(([k, v]) => [DILEMMA[k] ?? k, v as number])),
+    ...(m.ultimoDilema !== undefined ? { lastDilemma: m.ultimoDilema } : {}), ...(m.proxLeva !== undefined ? { nextArrival: m.proxLeva } : {}), ...(m.proxPedidoTroca !== undefined ? { nextSwapAsk: m.proxPedidoTroca } : {}),
+    flags: Object.fromEntries(Object.entries(m.flags ?? {}).map(([k, v]) => [FLAGS[k] ?? k, !!v])),
+    chronicle: (m.cronica ?? []).map((c: any) => ({ t: c.t, key: 'legacy', params: { text: c.txt } })), log: [],
+    ...(m.clima ? { weather: { t: m.clima.t, kind: table('weather')[m.clima.tipo] ?? m.clima.tipo } } : {}),
+    ...(m.ruasExtra ? { extraStreets: m.ruasExtra } : {}), warned: !!m.aviso,
     fleet: Object.fromEntries(Object.entries(m.veic ?? {}).map(([k, f]) => [k, Object.fromEntries(Object.entries(f as Record<string, number>).map(([v, n]) => [table('vehicles')[v], n]))])),
     tariffMargin: { ...(m.tarifa ?? {}) },
     transport: { volume: { ...(m.transp?.vol ?? {}) }, firewoodShortage: m.transp?.lenhaFalta ?? 0, ...(m.transp?.ult ? { last: { margin: m.transp.ult.margem, loss: m.transp.ult.perda } } : {}) },
