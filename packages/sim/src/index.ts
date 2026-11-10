@@ -7,3 +7,4 @@ export * from './network.js';
 export * from './state.js';
 export * from './economy.js';
 export * from './transport.js';
+export * from './ratings.js';

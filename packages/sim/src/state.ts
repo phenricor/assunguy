@@ -32,7 +32,8 @@ export interface TaxLaw { general: number; byGood?: Partial<Record<GoodId, numbe
 
 export interface GreatWork { done?: boolean; paid?: number; seasons?: number }
 
-export interface Effect { satisfaction?: number; seasonsLeft: number; reason: string }
+/** A passing effect on the colony's mood (a festival, a scandal), with an i18n key for its reason. */
+export interface Effect { satisfaction?: number; seasonsLeft: number; reason: string; params?: Record<string, string | number> }
 
 export interface GameState {
   seed: number;
@@ -70,7 +71,10 @@ export interface GameState {
   fleet: Record<LotKey, Partial<Record<VehicleId, number>>>;
   /** Tariff margin set at each transport building. */
   tariffMargin: Record<LotKey, number>;
-  transport: { volume: Record<LotKey, number>; firewoodShortage: number };
+  transport: { volume: Record<LotKey, number>; firewoodShortage: number; last?: { margin: number; loss: number } };
+  effects: Effect[];
+  /** How many dishes the families' table had last season. */
+  variety?: number;
   /** Freight cut bought by the relief works (0 to 1). */
   freightRelief: number;
   /** Families employed by the relief works. */

@@ -103,6 +103,25 @@ const SCENARIOS = {
     }
     return out;
   },
+  // home ratings, health and tax burden; the speedrun save is also rated with taxes in force
+  ratings: async (page) => {
+    const out = {};
+    const variants = [];
+    for (const [name, txt] of saves()) { variants.push([name, txt, null]); if (name === 'speedrun') variants.push([name + '-taxed', txt, { lote: { geral: 4 }, dizimo: { geral: 0.1, por: { milho: 0.14 } }, exportacao: { geral: 0.06, por: { feijao: 0.1 } }, negocio: { geral: 10 } }]); }
+    for (const [name, txt, leis] of variants) {
+      out[name] = await page.evaluate(([txt, load, leis]) => {
+        let state = (0, eval)(load)(txt);
+        if (leis) { M.leis = leis; state = JSON.parse(JSON.stringify(M)); }
+        const R = calcula(M);
+        const num = (v) => (v === 'máx. 20' ? 'cap' : Number(String(v).replace('−', '-').replace('+', '')));
+        const ef = leis ? efeitoImpostos(M) : null;
+        return { state, media: R.media, fams: R.fams, saude: M.saude, lig: [...R.lig].sort(),
+          notas: Object.fromEntries(Object.entries(R.notas).map(([k, n]) => [k, { nota: n.nota, vals: n.itens.map((i) => num(i.val)) }])),
+          taxes: ef && { grupos: ef.grupos.map((g) => ({ g: g.g, fam: g.fam, antes: g.antes, depois: g.depois, total: g.total, peso: g.peso, queda: g.queda })), riscoFam: ef.riscoFam, riscoNegocios: ef.riscoNegocios, receita: ef.receita } };
+      }, [txt, LOAD.toString(), leis]);
+    }
+    return out;
+  },
 };
 
 (async () => {

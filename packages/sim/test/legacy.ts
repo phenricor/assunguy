@@ -68,7 +68,9 @@ export function legacyState(save: Record<string, unknown>): GameState {
     crisis: m.acont ? { id: CRISES[m.acont.id] ?? m.acont.id, seasonsLeft: m.acont.restam } : null,
     fleet: Object.fromEntries(Object.entries(m.veic ?? {}).map(([k, f]) => [k, Object.fromEntries(Object.entries(f as Record<string, number>).map(([v, n]) => [table('vehicles')[v], n]))])),
     tariffMargin: { ...(m.tarifa ?? {}) },
-    transport: { volume: { ...(m.transp?.vol ?? {}) }, firewoodShortage: m.transp?.lenhaFalta ?? 0 },
+    transport: { volume: { ...(m.transp?.vol ?? {}) }, firewoodShortage: m.transp?.lenhaFalta ?? 0, ...(m.transp?.ult ? { last: { margin: m.transp.ult.margem, loss: m.transp.ult.perda } } : {}) },
+    effects: (m.efeitos ?? []).map((e: any) => ({ satisfaction: e.sat, seasonsLeft: e.restam, reason: 'legacy', params: { text: e.txt } })),
+    ...(m.variedade !== undefined ? { variety: m.variedade } : {}),
     freightRelief: m.frenteFrete ?? 0, reliefWorkers: { ...(m.frenteIds ?? {}) }, race: null,
   };
 }
