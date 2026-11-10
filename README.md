@@ -143,4 +143,4 @@ cd apps/game && npx vite build   # o jogo, em dist/index.html
 
 ### Licença
 
-© 2026 Paullo. Todos os direitos reservados. O projeto ainda não tem licença aberta.
+O jogo é distribuído sob a [PolyForm Noncommercial 1.0.0](LICENSE). Pode ser usado, estudado, modificado e compartilhado para fins não comerciais. O uso comercial depende de autorização do autor.

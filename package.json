@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0-beta.1",
   "description": "Assunguy: a colony-building game set in 19th-century Paraná.",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "packageManager": "pnpm@10.28.0",
   "scripts": {

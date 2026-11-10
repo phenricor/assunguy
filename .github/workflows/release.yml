@@ -1,40 +1,64 @@
-# Publishes a GitHub Release with the game's single HTML file and the version's section of CHANGELOG.md.
-# Two ways in: push a tag vX.Y.Z (or vX.Y.Z-beta.N) that matches package.json, or run this workflow by hand
-# from the Actions tab, which tags the current commit with the version in package.json. Versions with a
-# suffix are pre-releases.
+# Publishes a GitHub Release with the game's single HTML file and the version's section of CHANGELOG.md, then
+# puts the same file on GitHub Pages. It runs:
+# - on a push to main whose package.json version has no release yet (a version bump releases it);
+# - on a pushed tag vX.Y.Z or vX.Y.Z-beta.N matching package.json;
+# - by hand from the Actions tab.
+# Versions with a suffix are pre-releases. Pages has to be turned on once in the repository settings
+# (Settings, Pages, Source: GitHub Actions); until then the deploy job fails and the release still goes out.
 name: Release
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: release
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.v.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
+      - name: Version and tag
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
+            echo "The tag $GITHUB_REF_NAME does not match the version in package.json ($tag)."; exit 1
+          fi
+          publish=true
+          if [ "$GITHUB_REF_TYPE" = branch ] && [ "$GITHUB_EVENT_NAME" = push ] && gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "$tag is already released; nothing to do."; publish=false
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@v4
+        if: steps.v.outputs.publish == 'true'
       - uses: actions/setup-node@v4
+        if: steps.v.outputs.publish == 'true'
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Version and tag
-        id: v
-        run: |
-          tag="v$(node -p "require('./package.json').version")"
-          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
-            echo "The tag $GITHUB_REF_NAME does not match the version in package.json ($tag)."; exit 1
-          fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm --filter @assunguy/game build
-      - run: node scripts/release-notes.mjs "${TAG#v}" > notes.md
+      - if: steps.v.outputs.publish == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.v.outputs.publish == 'true'
+        run: pnpm typecheck
+      - if: steps.v.outputs.publish == 'true'
+        run: pnpm test
+      - if: steps.v.outputs.publish == 'true'
+        run: pnpm --filter @assunguy/game build
+      - if: steps.v.outputs.publish == 'true'
+        run: node scripts/release-notes.mjs "${TAG#v}" > notes.md
         env:
           TAG: ${{ steps.v.outputs.tag }}
       - name: Publish the release
+        if: steps.v.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.v.outputs.tag }}
@@ -48,3 +72,23 @@ jobs:
           else
             gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "Assunguy ${TAG}" --notes-file notes.md $pre
           fi
+      - name: Keep the build for Pages
+        if: steps.v.outputs.publish == 'true'
+        run: mkdir -p site && cp apps/game/dist/index.html site/index.html && touch site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.v.outputs.publish == 'true'
+        with:
+          path: site
+  pages:
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

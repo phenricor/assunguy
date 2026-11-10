@@ -11,11 +11,6 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
-### Added
-
-- Links to the author (GitHub, email and website) in the start menu's lower right corner.
-- The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
-
 ## [1.0.0-beta.1] - 2026-11-10
 
 The first beta: the whole game, from the first ten families to the railway race.
@@ -42,6 +37,9 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The version, shown in the start menu and in Settings.
 - Saves record their format and the game version; older formats are migrated when loaded, and saves from a
   newer version are refused with a message.
+- Links to the author (GitHub, email and website) in the start menu's lower right corner.
+- The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
+- Licensed under PolyForm Noncommercial 1.0.0.
 
 [Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.1...HEAD
 [1.0.0-beta.1]: https://github.com/phenricor/assunguy/releases/tag/v1.0.0-beta.1
