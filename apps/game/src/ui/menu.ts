@@ -14,6 +14,18 @@ let screen: Screen = 'start', openCol: string | null = null;
 export const menuOpen = (): boolean => { const el = document.getElementById('menuIni'); return !!(el && !el.hidden); };
 const date = (ms: number) => new Date(ms).toLocaleDateString(locale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 const year = (t: number) => Math.max(1, Math.floor((t - 12) / 4) + 1);
+// the author's links, in the start menu's lower right corner
+const LINKS = { github: 'https://github.com/phenricor', site: 'https://paullocorr.com', email: 'paullocorr@gmail.com' };
+const LINK_ICONS = {
+  github: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" stroke="none" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>',
+  email: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>',
+  site: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+};
+const links = () => `<nav class="mi-links" aria-label="${esc(T('ui.menu.links'))}">`
+  + `<a href="${LINKS.github}" target="_blank" rel="noopener" aria-label="${esc(T('ui.menu.github'))}" title="${esc(T('ui.menu.github'))}">${LINK_ICONS.github}</a>`
+  + `<a href="mailto:${LINKS.email}" data-email aria-label="${esc(T('ui.menu.email', { email: LINKS.email }))}" title="${LINKS.email}">${LINK_ICONS.email}</a>`
+  + `<a href="${LINKS.site}" target="_blank" rel="noopener" aria-label="${esc(T('ui.menu.site'))}" title="${esc(T('ui.menu.site'))}">${LINK_ICONS.site}</a>`
+  + `</nav><p class="mi-aviso" role="status" hidden></p>`;
 const NOTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
 
 export function startMenu(): void { void openMenu('start'); }
@@ -53,7 +65,7 @@ export async function openMenu(which: Screen = 'start'): Promise<void> {
   }
   const cv = el.querySelector('.mi-paisagem');
   const on = api.Musica.ligada || api.Sons.ligado;
-  el.innerHTML = `${brand}<div class="mi-caixa">${h}</div><p class="mi-versao">v${esc(APP_VERSION)}</p><div class="mi-musica"><button type="button" class="mi-som mi-nota" data-som aria-pressed="${on}" aria-label="${esc(T(on ? 'ui.menu.soundOff' : 'ui.menu.soundOn'))}">${NOTE}</button><button type="button" class="mi-lang" data-lang>${locale() === 'pt-BR' ? 'EN' : 'PT'}</button></div>`;
+  el.innerHTML = `${brand}<div class="mi-caixa">${h}</div><p class="mi-versao">v${esc(APP_VERSION)}</p>${links()}<div class="mi-musica"><button type="button" class="mi-som mi-nota" data-som aria-pressed="${on}" aria-label="${esc(T(on ? 'ui.menu.soundOff' : 'ui.menu.soundOn'))}">${NOTE}</button><button type="button" class="mi-lang" data-lang>${locale() === 'pt-BR' ? 'EN' : 'PT'}</button></div>`;
   if (cv) el.insertBefore(cv, el.firstChild);
   wireMenu(el);
 }
@@ -67,6 +79,12 @@ function closeMenu(): void {
 }
 
 function wireMenu(el: HTMLElement): void {
+  // the email link opens the mail app where it can; the address is also copied and shown, since some pages block mailto
+  const mail = el.querySelector<HTMLElement>('[data-email]'), aviso = el.querySelector<HTMLElement>('.mi-aviso');
+  if (mail && aviso) mail.onclick = () => {
+    const show = (key: string) => { aviso.textContent = T(key, { email: LINKS.email }); aviso.hidden = false; setTimeout(() => { aviso.hidden = true; }, 4000); };
+    navigator.clipboard?.writeText(LINKS.email).then(() => show('ui.menu.emailCopied'), () => show('ui.menu.emailShown')) ?? show('ui.menu.emailShown');
+  };
   el.querySelectorAll<HTMLElement>('[data-som]').forEach((b) => { b.onclick = () => { const on = !(api.Musica.ligada || api.Sons.ligado); if (api.Musica.ligada !== on) api.Musica.alterna(); if (api.Sons.ligado !== on) api.Sons.alterna(); b.setAttribute('aria-pressed', String(on)); }; });
   el.querySelectorAll<HTMLElement>('[data-lang]').forEach((b) => { b.onclick = () => { setLocale((locale() === 'pt-BR' ? 'en' : 'pt-BR') as Locale); void openMenu(screen); }; });
   el.querySelectorAll<HTMLElement>('[data-mi]').forEach((b) => { b.onclick = async () => {

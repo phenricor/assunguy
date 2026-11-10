@@ -46,3 +46,10 @@ textarea.fb-txt[readonly] { min-height: 96px; color: #5A4A3A; }
 #infoPop #fbOver { margin-top: 6px; }
 /* the version, at the foot of the start menu */
 #menuIni .mi-versao { position: absolute; left: 14px; bottom: max(10px, env(safe-area-inset-bottom, 0px)); margin: 0; font-size: 12px; letter-spacing: .02em; color: rgba(246, 239, 223, .85); text-shadow: 0 1px 2px rgba(36, 28, 20, .6); pointer-events: none; }
+/* the author's links, lower right of the start menu */
+#menuIni .mi-links { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; }
+#menuIni .mi-links a { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 20px; background: rgba(246, 239, 223, .82); border: 1px solid rgba(246, 239, 223, .9); color: var(--anil); }
+#menuIni .mi-links a:hover { background: rgba(246, 239, 223, .96); }
+#menuIni .mi-links a:focus-visible { outline: 2px solid var(--anil); outline-offset: 2px; }
+#menuIni .mi-links svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#menuIni .mi-aviso { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 50px); margin: 0; padding: 6px 10px; font-size: 13px; color: #3D3126; background: rgba(246, 239, 223, .95); border-radius: 3px; user-select: text; }

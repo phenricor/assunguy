@@ -222,6 +222,9 @@ U = {
   'settings.music': ('Música', 'Music'), 'settings.sounds': ('Sons', 'Sounds'), 'settings.language': ('Idioma', 'Language'), 'settings.saved': ('Jogo salvo.', 'Game saved.'), 'settings.saveFailed': ('Não foi possível salvar.', 'Could not save.'),
   'menu.newerFile': ('Este jogo foi salvo por uma versão mais nova. Atualize o jogo para abri-lo.', 'This game was saved by a newer version. Update the game to open it.'),
   'settings.version': ('Versão {version}', 'Version {version}'),
+  'menu.links': ('Contato do autor', 'Contact the author'), 'menu.github': ('GitHub do autor', 'The author on GitHub'),
+  'menu.email': ('E-mail do autor: {email}', 'Email the author: {email}'), 'menu.site': ('Site do autor', 'The author\'s website'),
+  'menu.emailCopied': ('E-mail copiado: {email}', 'Email copied: {email}'), 'menu.emailShown': ('E-mail: {email}', 'Email: {email}'),
   # feedback
   'feedback.title': ('Enviar comentário', 'Send feedback'),
   'feedback.intro': ('Conte o que achou do jogo, o que não funcionou ou o que poderia melhorar. A mensagem sai pelo seu app de e-mail.', 'Say what you think of the game, what did not work or what could be better. The message goes out through your email app.'),

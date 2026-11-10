@@ -143,4 +143,4 @@ cd apps/game && npx vite build   # o jogo, em dist/index.html
 
 ### Licença
 
-A definir.
+© 2026 Paullo. Todos os direitos reservados. O projeto ainda não tem licença aberta.

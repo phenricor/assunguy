@@ -11,6 +11,11 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Added
+
+- Links to the author (GitHub, email and website) in the start menu's lower right corner.
+- The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
+
 ## [1.0.0-beta.1] - 2026-11-10
 
 The first beta: the whole game, from the first ten families to the railway race.
