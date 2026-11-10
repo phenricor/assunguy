@@ -586,7 +586,8 @@ export function advise(s: GameState, w: World): Advice[] {
   // with the deadline near or the colony behind its pace, what the milestone asks for comes first: worth saving for
   if (MILESTONES[s.milestone + 1]) {
     const pace = goalPace(s, w), left = s.deadline - s.market.t;
-    if (left <= 16 || (pace && pace.behind > 0.15)) for (const y of list) if (y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands') y.weight = Math.max(y.weight, 84);
+    // above the idle-hands investments (up to about 87), so the cash goes to the goal; more so in the last three years
+    if (left <= 24 || (pace && pace.behind > 0.15)) for (const y of list) if (y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands') y.weight = Math.max(y.weight, left <= 12 ? 92 : 88);
     // families weigh most in the milestone and only come to empty homes: behind on them, homes come even with idle
     // hands (the prototype held huts back above 30% idle, so an advisor-led colony fell far short of its families)
     const tg = MILESTONES[s.milestone + 1] as MilestoneDef, missing = Math.round((tg.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05)) - Object.keys(s.families).length;

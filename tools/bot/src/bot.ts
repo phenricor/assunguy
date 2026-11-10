@@ -4,7 +4,7 @@
 // income, satisfaction, how full the gateways are and how much is wasted.
 import { MILESTONES, type BuildingId } from '@assunguy/data';
 import {
-  advise, allocate, annex, canPlace, streetLine, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
+  advise, allocate, annex, suggestedLand, sizeOf, canPlace, streetLine, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
   passSeason, proposeTax, resolveEvent, sellVehicle, soilOf, swapCrop, upgrade, wasteShare,
   type Advice, type AdviceAction, type CommandResult, type GameState, type LandId, type LotKey, type SeasonReport, type World,
 } from '@assunguy/sim';
@@ -15,17 +15,22 @@ export interface SeasonLog {
   /** Where the purse's money came from and went this season. */
   purse: SeasonReport['cash'];
 }
-export interface Run { policy: string; seed: number; seasons: SeasonLog[]; milestones: { milestone: number; t: number; deadline: number }[]; ended: 'victory' | 'end' | 'limit'; missed: number }
+export interface Run { final?: { s: GameState; w: World }; policy: string; seed: number; seasons: SeasonLog[]; milestones: { milestone: number; t: number; deadline: number }[]; ended: 'victory' | 'end' | 'limit'; missed: number }
 
 const parse = (k: string) => k.split(',').map(Number) as [number, number];
 
-/** Every free lot on our lands where a building of this type fits. */
+/** A lot that continues a street in a straight line: the robot keeps these open so the streets can grow. */
+function streetEnd(s: GameState, a: number, b: number): boolean {
+  const st = (x: number, y: number) => !!s.map.streets[`${x},${y}` as LotKey];
+  return ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).some(([x, y]) => st(a - x, b - y) && st(a - 2 * x, b - 2 * y));
+}
+/** Every free lot on our lands where a building of this type fits, leaving the street ends open. */
 function freeLots(s: GameState, w: World, t: BuildingId): [number, number][] {
-  const out: [number, number][] = [];
+  const [sw, sh] = sizeOf(t), out: [number, number][] = [];
   for (const id of Object.keys(s.map.lands) as LandId[]) {
     if (s.map.lands[id] !== 'ours') continue;
     const [c, l] = parse(id);
-    for (let a = c * 15; a < c * 15 + 15; a++) for (let b = l * 15; b < l * 15 + 15; b++) if (!canPlace(s.map, w, t, a, b)) out.push([a, b]);
+    for (let a = c * 15; a < c * 15 + 15; a++) for (let b = l * 15; b < l * 15 + 15; b++) if (!canPlace(s.map, w, t, a, b)) { let end = false; for (let x = 0; x < sw && !end; x++) for (let y = 0; y < sh && !end; y++) end = streetEnd(s, a + x, b + y); if (!end) out.push([a, b]); }
   }
   return out;
 }
@@ -53,7 +58,9 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
     case 'build': {
       if (a.building === 'street') return false;
       let at = lotFor(s, w, a.building, a.near);
-      if (!at && extendStreets(s, w)) at = lotFor(s, w, a.building, a.near);
+      // out of lots: open up to three street lines, then annex the next land if streets alone do not do it
+      for (let i = 0; i < 3 && !at && extendStreets(s, w); i++) at = lotFor(s, w, a.building, a.near);
+      if (!at) { const land = suggestedLand(s, w, false); if (land && (s.map.lands[land] || okd(explore(s, w, land))) && okd(annex(s, w, land))) for (let i = 0; i < 3 && !at && extendStreets(s, w); i++) at = lotFor(s, w, a.building, a.near); }
       return !!at && okd(build(s, w, a.building, ...at));
     }
     case 'select': return a.upgrade ? okd(upgrade(s, w, a.key)) : false;
@@ -99,7 +106,7 @@ function events(s: GameState, w: World): 'victory' | 'end' | null {
  * greedy: takes the heaviest advice it can pay for, even when a heavier one is waiting for money.
  * patient: when the heaviest advice is blocked by cash, it saves for it instead of spending on the next one.
  */
-export interface BotOptions { seasons?: number; actionsPerSeason?: number; reserve?: number; policy?: 'greedy' | 'patient' }
+export interface BotOptions { seasons?: number; actionsPerSeason?: number; reserve?: number; policy?: 'greedy' | 'patient'; /** Keep the final state on the run. */ keep?: boolean }
 /** Plays a new game from a seed. Deterministic: the same seed and options give the same run. */
 export function play(seed: number, o: BotOptions = {}): Run {
   const { s, w } = newGame(seed);
@@ -130,6 +137,7 @@ export function play(seed: number, o: BotOptions = {}): Run {
     });
   }
   run.ended = ended ?? 'limit';
+  if (o.keep) run.final = { s, w };
   return run;
 }
 
