@@ -51,16 +51,24 @@ the two helpers that did it in the middle of the prototype's advice.
 (takes the heaviest advice it can pay for) and patient (saves for heavier advice it cannot pay for yet).
 The advisor never suggests opening streets, so the robot keeps streets ahead of the houses on its own.
 
-Findings, three seeds (1869, 4242, 777), both policies, November 2026:
+Findings before the balance review, three seeds (1869, 4242, 777), both policies:
 
-- No run reaches the parish. At its deadline (season 44) the colonies have 46 to 52 families of the 90 it
-  asks for; the province grants more time, the inspector comes, and every run ends at season 58.
-- The purse is the bottleneck: the median cash over a run is $ 67 to $ 93. The grant barely covers upkeep
-  until taxes, so heavier advice (school, directorate, store package) waits for money that does not come.
-- Idle families stay at 30% to 40%, so the advisor stops asking for huts (it wants jobs first) while jobs
-  wait for cash.
-- The pier is full (85% or more) in up to 16 of 35 seasons of a run.
-- A human did better on the same rules: the speedrun save reached the parish by season 42.
+- No run reached the parish: 46 to 52 families of 90 at the deadline (season 44); every run ended at 58.
+- The purse was the bottleneck (median cash $ 67 to $ 93): the grant barely covers upkeep until taxes.
+- Idle families stayed at 30% to 40%, so the advisor stopped asking for huts while jobs waited for cash.
+- The advisor never asked for streets.
+
+After the advisor's priorities changed (streets, the milestone first near the deadline, homes when behind on
+families), with the same rules, 60 seasons, greedy (`src/experiment.ts`):
+
+| Variant | Parish reached (season) | Families at 44 | Median cash |
+|---|---|---|---|
+| base | never (3 of 3) | 70 to 72 | $ 54 to $ 88 |
+| grant $ 200 at the start | 57, 58, never | 72 to 83 | $ 184 to $ 237 |
+| 10% of trade from the start | 52, never, never | 64 to 84 | $ 246 to $ 553 |
+| 10% of trade and grant $ 160 | 47, 47, 51 | 88 to 92 | $ 262 to $ 315 |
+
+The parish is due at 44, 48 with the extra time the province grants.
 
 ## The advisor
 
