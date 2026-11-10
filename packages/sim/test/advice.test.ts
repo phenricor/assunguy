@@ -130,7 +130,9 @@ describe('advisor: priorities from the balance review', () => {
     const a = advise(s, w).find((x) => x.rule === 'streets.room');
     expect(a?.action?.kind).toBe('streets');
     const act = a!.action as { kind: 'streets'; from: [number, number]; to: [number, number] };
-    expect(streets(s, w, act.from, act.to).opened).toBe(4);
+    const len = Math.abs(act.to[0] - act.from[0]) + Math.abs(act.to[1] - act.from[1]) + 1;
+    expect(len).toBeGreaterThanOrEqual(2);
+    expect(streets(s, w, act.from, act.to).opened).toBe(len);
     expect(roomByStreets(s, w)).toBeGreaterThanOrEqual(6);
   });
   it('near the deadline, what the milestone asks for comes first; behind on families, homes come even with idle hands', () => {

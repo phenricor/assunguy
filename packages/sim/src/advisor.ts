@@ -470,11 +470,13 @@ export function streetLine(s: GameState, w: World): { from: [number, number]; to
   for (const key of Object.keys(s.map.streets) as LotKey[]) {
     const [a, b] = parseKey(key);
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      const cells = [1, 2, 3, 4].map((i) => [a + dx * i, b + dy * i] as [number, number]);
-      if (!cells.every(([x, y]) => !canPlaceStreet(s.map, w, x, y))) continue;
+      // the free stretch out of this street lot, up to 6 lots (a stretch of at least 2 opens lots on both sides)
+      const cells: [number, number][] = [];
+      for (let i = 1; i <= 6; i++) { const x = a + dx * i, y = b + dy * i; if (canPlaceStreet(s.map, w, x, y)) break; cells.push([x, y]); }
+      if (cells.length < 2) continue;
       let lots = 0;
       for (const [x, y] of cells) for (const [sx, sy] of dx ? [[0, 1], [0, -1]] as const : [[1, 0], [-1, 0]] as const) { const e = canPlace(s.map, w, 'hut', x + sx, y + sy); if (!e || e === 'needsStreet') lots += 1; }
-      if (!best || lots > best.lots) best = { from: cells[0]!, to: cells[3]!, lots };
+      if (!best || lots > best.lots || (lots === best.lots && cells.length < Math.abs(best.to[0] - best.from[0]) + Math.abs(best.to[1] - best.from[1]) + 1)) best = { from: cells[0]!, to: cells[cells.length - 1]!, lots };
     }
   }
   return best && best.lots >= 3 ? best : null;
