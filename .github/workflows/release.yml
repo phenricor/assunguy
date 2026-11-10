@@ -1,9 +1,12 @@
-# A tag vX.Y.Z (or vX.Y.Z-beta.N) runs the checks, builds the game and publishes a GitHub Release with the
-# game's single HTML file and the version's section of CHANGELOG.md. Versions with a suffix are pre-releases.
+# Publishes a GitHub Release with the game's single HTML file and the version's section of CHANGELOG.md.
+# Two ways in: push a tag vX.Y.Z (or vX.Y.Z-beta.N) that matches package.json, or run this workflow by hand
+# from the Actions tab, which tags the current commit with the version in package.json. Versions with a
+# suffix are pre-releases.
 name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -17,17 +20,31 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: The tag must match the version in package.json
-        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - name: Version and tag
+        id: v
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
+            echo "The tag $GITHUB_REF_NAME does not match the version in package.json ($tag)."; exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm --filter @assunguy/game build
-      - run: node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" > notes.md
+      - run: node scripts/release-notes.mjs "${TAG#v}" > notes.md
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
         run: |
-          file="assunguy-${GITHUB_REF_NAME}.html"
+          file="assunguy-${TAG}.html"
           cp apps/game/dist/index.html "$file"
-          pre=""; case "$GITHUB_REF_NAME" in *-*) pre="--prerelease";; esac
-          gh release create "$GITHUB_REF_NAME" "$file" --title "Assunguy ${GITHUB_REF_NAME}" --notes-file notes.md $pre
+          pre=""; case "$TAG" in *-*) pre="--prerelease";; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$file" --clobber
+            gh release edit "$TAG" --title "Assunguy ${TAG}" --notes-file notes.md $pre
+          else
+            gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "Assunguy ${TAG}" --notes-file notes.md $pre
+          fi

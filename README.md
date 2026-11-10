@@ -37,8 +37,9 @@ minor or patch change is set out at the top of `CHANGELOG.md`; saves carry their
 (`apps/game/src/saveFormat.ts`), with a migration for each change.
 
 To release: set the version in every `package.json`, turn `Unreleased` in `CHANGELOG.md` into the version's
-section, commit, then tag and push (`git tag -a v1.0.0-beta.2 -m "1.0.0-beta.2" && git push --follow-tags`). The
-release workflow checks, builds and publishes a GitHub Release with the game's HTML file.
+section and commit. Then either run the Release workflow from the Actions tab (it tags the commit with the
+version) or push the tag yourself (`git tag -a v1.0.0-beta.2 -m "1.0.0-beta.2" && git push --follow-tags`).
+The workflow checks, builds and publishes a GitHub Release with the game's HTML file.
 
 ## Commands
 
