@@ -81,10 +81,12 @@ function highlight(t: BuildingId, key: LotKey, s2: GameState, r1: Ratings, flow:
 
 /** What would send its cargo through a new transport building, and whether it already had a way out. */
 interface Flow { list: { key: LotKey; fresh: boolean; n: number; /** the commerce its cargo passes through first (a collection point behind a gateway) */ via?: LotKey }[]; role: 'collection' | 'commerce' | 'gateway' }
-function flowInto(t: BuildingId, key: LotKey, s: GameState, s2: GameState): Flow | null {
+function flowInto(t: BuildingId, key: LotKey, s: GameState, s2: GameState, from?: LotKey): Flow | null {
   const R = roleOf(t);
   if (!R) return null;
-  const G0 = geography(s, connected(s.map)), G1 = geography(s2, connected(s2.map)), c0 = store.economy(), list: Flow['list'] = [];
+  // moving a building: compare with the colony without it, so what it already served counts as gained here
+  const base = from ? (() => { const b = { ...s.map.buildings }; delete b[from]; return { ...s, map: { ...s.map, buildings: b } } as GameState; })() : s;
+  const G0 = geography(base, connected(base.map)), G1 = geography(s2, connected(s2.map)), c0 = store.economy(), list: Flow['list'] = [];
   const sent = (k: LotKey) => Math.round(c0.outlet[k]?.sent ?? 0);
   const carried = (k: LotKey) => Math.round(c0.transport.collections.find((x) => x.key === k)?.carried ?? 0);
   // the commerce a collection point sends most of its load to
@@ -145,6 +147,8 @@ function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[], f
     L.push(K.row(T('ui.build.reach'), T('ui.lotsN', { n: reachN })));
     flowRows(flow, L);
     if (prods.length && same.length) L.push(K.row(T('ui.build.alreadyNear', { place: building(t).toLowerCase() }), T('ui.nOfM', { n: covered, m: prods.length }), covered > prods.length / 2 ? 'menos' : ''));
+    // a rail stop collects only once its rails lead to a train station
+    if (t === 'railStop' && flow && !geography(s2, lig).collections.some((c) => c.key === key)) return K.note(T('ui.build.flow.railStopUnlinked'), 'ruim');
     if (!prods.length) return K.note(T('ui.build.noProducers'), 'ruim');
     if (covered > prods.length / 2) return K.note(T('ui.build.mostCovered'), 'ruim');
   } else if (R.role === 'commerce') {
@@ -171,7 +175,7 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     h += `<p class="erro">${esc(r.error === 'noCash' ? T('ui.build.noCash', { cost: fmt(cost) }) : errorText(r))}</p>`;
   } else {
     const r0 = store.ratings(), r1 = rateHomes(s2, w), m0 = Math.round(r0.mean), m1 = Math.round(r1.mean);
-    const flow = flowInto(t, key, s, s2);
+    const flow = flowInto(t, key, s, s2, from);
     setPreview(highlight(t, key, s2, r1, flow));
     if (!from) L.push(K.row(T('ui.build.cost'), `$ ${fmt(cost)}`));
     const up = upkeepOf(t, s.milestone);

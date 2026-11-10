@@ -332,6 +332,7 @@ U = {
   'build.flow.gateway.new': ('Comércios que ganham saída', 'Commerces that gain a way out'), 'build.flow.gateway.kept': ('Comércios que já tinham porta', 'Commerces that already had a gateway'),
   'build.flow.gateway.none': ('Nenhum comércio ao alcance: a carga não chegaria até aqui.', 'No commerce within reach: no cargo would get here.'),
   'build.flow.behind': ('Captações que passam a ter saída', 'Collection points that gain a way out'),
+  'build.flow.railStopUnlinked': ('A parada só recolhe quando os trilhos dela levam até uma estação.', 'A rail stop only collects once its rails lead to a train station.'),
   'build.flow.arrobas': ('Arrobas que trariam', 'Arrobas they would bring'),
   'build.carriesTo': ('Leva para', 'Carries to'), 'build.toIguape': ('Iguape', 'Iguape'), 'build.toCuritiba': ('Curitiba', 'Curitiba'),
   'build.toRailEdge': ('A borda onde o trilho chega', 'The edge where the rails arrive'),

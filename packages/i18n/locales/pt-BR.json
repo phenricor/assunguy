@@ -1136,6 +1136,7 @@
  "ui.build.flow.gateway.kept": "Comércios que já tinham porta",
  "ui.build.flow.gateway.new": "Comércios que ganham saída",
  "ui.build.flow.gateway.none": "Nenhum comércio ao alcance: a carga não chegaria até aqui.",
+ "ui.build.flow.railStopUnlinked": "A parada só recolhe quando os trilhos dela levam até uma estação.",
  "ui.build.forestAround": "Mata em volta",
  "ui.build.gatewayInReach": "Porta ao alcance",
  "ui.build.homesBetter": "Casas melhoradas",

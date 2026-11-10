@@ -1136,6 +1136,7 @@
  "ui.build.flow.gateway.kept": "Commerces that already had a gateway",
  "ui.build.flow.gateway.new": "Commerces that gain a way out",
  "ui.build.flow.gateway.none": "No commerce within reach: no cargo would get here.",
+ "ui.build.flow.railStopUnlinked": "A rail stop only collects once its rails lead to a train station.",
  "ui.build.forestAround": "Forest around",
  "ui.build.gatewayInReach": "Gateway in reach",
  "ui.build.homesBetter": "Homes improved",

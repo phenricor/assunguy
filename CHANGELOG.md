@@ -15,6 +15,8 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 - The transport preview also shows collection points: a store shows the trading posts and landings that would
   unload there, and a gateway shows those behind each commerce, with their line to it.
+- Moving a transport building counts what it already served as gained at the new place, not as already served.
+- A rail stop whose rails do not lead to a station says that it would collect nothing yet.
 
 ## [1.0.0-beta.5] - 2026-11-10
 
