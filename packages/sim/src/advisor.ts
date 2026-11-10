@@ -531,7 +531,8 @@ export function advise(s: GameState, w: World): Advice[] {
     add({ rule: `farLand.${far.option}`, weight: workWeight(far.cost, far.gain), params: { land: far.land, fields: far.fields, lost: Math.round(far.lostOnFoot), cost: far.cost, gain: Math.round(far.gain) }, action: far.action, cost: far.cost });
   }
   // the producer losing the most on the way, and what fixes it
-  for (const o of worstOutlets(s, c).slice(0, 3)) {
+  // only producers losing a real share, and not a field replanted in the last year (no churning back and forth)
+  for (const o of worstOutlets(s, c).filter((x) => x.share < 0.85 && !((s.firstHarvest?.[x.key] ?? -Infinity) > s.market.t - 4)).slice(0, 3)) {
     const fix = producerFix(s, w, o.key, c);
     if (!fix || fix.gain < 15) continue;
     const same = (y: Advice) => JSON.stringify(y.action) === JSON.stringify(fix.action) || (y.action?.kind === 'swap' && fix.action.kind === 'swap' && y.action.from === fix.action.from && y.action.to === fix.action.to);

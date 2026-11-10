@@ -9,7 +9,7 @@
     "build": "pnpm -r build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b packages/data packages/i18n packages/sim",
+    "typecheck": "tsc -b packages/data packages/i18n packages/sim tools/bot",
     "import:legacy": "python3 tools/legacy-import/import.py",
     "balance": "pnpm --filter @assunguy/bot run balance"
   },

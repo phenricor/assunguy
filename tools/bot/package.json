@@ -1,0 +1,15 @@
+{
+  "name": "@assunguy/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/bot.ts",
+  "scripts": {
+    "balance": "tsx src/balance.ts",
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@assunguy/data": "workspace:*",
+    "@assunguy/sim": "workspace:*"
+  }
+}
