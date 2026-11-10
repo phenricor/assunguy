@@ -46,7 +46,7 @@ export function legacyState(save: Record<string, unknown>): GameState {
   const m = save as any;
   const families: Record<string, Family> = {};
   for (const [id, f] of Object.entries(m.fams ?? {}) as [string, any][]) {
-    families[id] = { id: id as FamilyId, surname: f.nome, trade: f.oficio ? (table('sectors')[f.oficio] as Family['trade']) : null, skill: f.hab, newcomer: f.nova, idle: f.parada, arrived: f.chegou, savings: f.fundo ?? 0, ...(f.origem ? { origin: table('origins')[f.origem] } : {}) };
+    families[id] = { id: id as FamilyId, surname: f.nome, trade: f.oficio ? (table('sectors')[f.oficio] as Family['trade']) : null, skill: f.hab, newcomer: f.nova, idle: f.parada, arrived: f.chegou, savings: f.fundo ?? 0, ...(f.filho ? { child: true } : {}), ...(f.origem ? { origin: table('origins')[f.origem] } : {}) };
   }
   const taxes = Object.fromEntries(Object.entries(TAX_IDS).map(([pt, en]) => {
     const l = m.leis?.[pt];
@@ -72,5 +72,7 @@ export function legacyState(save: Record<string, unknown>): GameState {
     effects: (m.efeitos ?? []).map((e: any) => ({ satisfaction: e.sat, seasonsLeft: e.restam, reason: 'legacy', params: { text: e.txt } })),
     ...(m.variedade !== undefined ? { variety: m.variedade } : {}),
     freightRelief: m.frenteFrete ?? 0, reliefWorkers: { ...(m.frenteIds ?? {}) }, race: null,
+    vacated: { ...(m.vagos ?? {}) }, arrivalCosts: m.chegadasEst ?? 0, immigrationAgent: m.agente ? { ...(m.agente.origem ? { origin: table('origins')[m.agente.origem] } : {}) } : null,
+    ...(m.filhosAno !== undefined ? { childrenThisYear: m.filhosAno } : {}), produced: byGood(m.prodBem),
   };
 }

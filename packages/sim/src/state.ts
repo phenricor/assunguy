@@ -25,6 +25,8 @@ export interface Family {
   arrived: number;
   savings: number;
   origin?: string;
+  /** Formed by children of the colony, not by immigrants. */
+  child?: boolean;
 }
 
 /** A tax in force: a general rate (or amount) and optional rates per good. */
@@ -79,6 +81,15 @@ export interface GameState {
   freightRelief: number;
   /** Families employed by the relief works. */
   reliefWorkers: Partial<Record<FamilyId, true>>;
+  /** Home slots freed this season (a family lost its lot); no group moves in until next season. */
+  vacated: Partial<Record<FamilyId, true>>;
+  /** Arrival aid and seed paid this season, shown in the report. */
+  arrivalCosts: number;
+  /** The immigration agent under contract, if any, and the origin it recruits from. */
+  immigrationAgent: { origin?: string } | null;
+  childrenThisYear?: number;
+  /** Last season's production by good, for screens and home upgrades. */
+  produced: Partial<Record<GoodId, number>>;
   /** The late-game transport race; not ported yet. */
   race: null;
 }

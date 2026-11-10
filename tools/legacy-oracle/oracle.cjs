@@ -122,6 +122,27 @@ const SCENARIOS = {
     }
     return out;
   },
+  // families: a new game's founders, newcomers by origin, and one season of idling, supply and saving
+  families: async (page) => {
+    const fresh = await page.evaluate(() => {
+      geraMundo(1869, 2);
+      const m = mapaInicial(); m.mercadoSim = mercadoInicial(); sincronizaFamilias(m, true);
+      const newcomers = [];
+      for (const o of [undefined, ...Object.keys(PERFIL)]) for (const id of ['20,53#0', '31,49#1', '45,12#3']) newcomers.push({ id, o, f: novaFamilia(id, true, o) });
+      return { founders: m.fams, newcomers };
+    });
+    const [, txt] = saves().find(([n]) => n === 'speedrun');
+    const season = await page.evaluate(([txt, load]) => {
+      const state = (0, eval)(load)(txt);
+      passaFamilias(M);
+      const afterPass = Object.fromEntries(Object.values(M.fams).map((f) => [f.id, [f.nova, f.parada]]));
+      const c1 = economiaSem(M); atualizaAbast(c1);
+      const supply = { abast: M.abast, variedade: M.variedade };
+      const done = familiasInvestem(M, c1);
+      return { state, afterPass, supply, done, savings: Object.fromEntries(Object.values(M.fams).map((f) => [f.id, f.fundo])), predios: M.predios, nivel: M.nivel, vagas: vagasDeMoradia(M) };
+    }, [txt, LOAD.toString()]);
+    return { ...fresh, season };
+  },
 };
 
 (async () => {
