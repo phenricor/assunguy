@@ -11,6 +11,26 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.4] - 2026-11-10
+
+### Fixed
+
+- The season report is back as in the prototype, with the interface review's changes: families out of work,
+  satisfaction (and what it was) and income a year at the top; the purse card with the season's accounts, and
+  the outlet capacity in use; the families' improvements; "Evolução" with the families chart and "Carga
+  parada" by season, now labelled with dates; "Efeito das suas decisões" as one card per work, law, tax and
+  event, with a verdict and its effects; "Rentabilidade do patrimônio" with a verdict for each kind of
+  building, from most to least worth it; and the result per good with its breakdown and the four seasons.
+- Works in the report are named properly ("4 ranchos", "9 trechos de rua").
+- Placing a home shows again the satisfaction each home would have, over every home on the map, and the
+  new home's own; the build sheet also shows the forest around, the homes that already had a service, and
+  for transport buildings their reach and what they serve.
+- Counts in texts ("{n} famílias", "{n} estações") are filled in again.
+- The level path choices show their title and each option's effect.
+- News that name a good ("Procura por {good} caiu em Iguape") name it again.
+- The extra funds and more time requests are back in Direção, Província, under "Pedir à província".
+- The satisfaction and purse arrows no longer wrap under the number.
+
 ## [1.0.0-beta.3] - 2026-11-10
 
 ### Added
@@ -59,7 +79,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.3...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.4...HEAD
+[1.0.0-beta.4]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.3...v1.0.0-beta.4
 [1.0.0-beta.3]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.2...v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.1...v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/phenricor/assunguy/releases/tag/v1.0.0-beta.1

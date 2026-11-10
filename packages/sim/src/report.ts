@@ -75,7 +75,7 @@ export function seriesPoint(s: GameState, c: Economy): SeriesPoint {
 export interface Decisions {
   works: { building: string; kind: 'built' | 'upgraded'; n: number; cost: number; change: Change }[];
   demolished: { building: string; n: number; change: Change }[];
-  events: { event: string; option: number; change: Change }[];
+  events: { event: string; option: number; params?: Record<string, string | number>; change: Change }[];
 }
 export function seasonDecisions(s: GameState, t: number): Decisions {
   const works: Record<string, Decisions['works'][number]> = {}, demolished: Record<string, Decisions['demolished'][number]> = {}, events: Decisions['events'] = [];
@@ -84,7 +84,7 @@ export function seasonDecisions(s: GameState, t: number): Decisions {
     const ch = a.change as Change | undefined;
     if (a.kind === 'built' || a.kind === 'upgraded') { const k = `${a.kind}:${String(a.building)}`; const x = (works[k] ??= { building: String(a.building), kind: a.kind, n: 0, cost: 0, change: {} }); x.n += 1; x.cost += Number(a.cost ?? 0); addChange(x.change, ch); }
     if (a.kind === 'demolished') { const x = (demolished[String(a.building)] ??= { building: String(a.building), n: 0, change: {} }); x.n += 1; addChange(x.change, ch); }
-    if (a.kind === 'decision') events.push({ event: String(a.event), option: Number(a.option), change: ch ?? {} });
+    if (a.kind === 'decision') events.push({ event: String(a.event), option: Number(a.option), ...(a.params ? { params: a.params as Record<string, string | number> } : {}), change: ch ?? {} });
   }
   return { works: Object.values(works), demolished: Object.values(demolished), events };
 }

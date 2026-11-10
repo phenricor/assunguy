@@ -141,7 +141,7 @@ export function defineEvent(s: GameState, ev: QueuedEvent): Defined {
     case 'pathChoice': {
       const [a, b] = PATH_CHOICES[ev.level] as [string, string];
       const pick = (id: string): Option => ({ params: { choice: id }, apply: (s2, w) => { s2.choices[ev.level] = id; updateRatings(s2, w); } });
-      return { id: 'pathChoice', params: { level: ev.level, a, b }, options: [pick(a), pick(b)] };
+      return { id: 'pathChoice', params: { level: ev.level, a, b, title: `event.pathChoice.level.${ev.level}`, aEffect: `choice.${a}.effect`, bEffect: `choice.${b}.effect` }, options: [pick(a), pick(b)] };
     }
     case 'intro': return { id: 'intro', options: [{ apply: () => {} }], changesGame: true };
     case 'decree': return { id: 'decree', params: { milestone: ev.milestone }, options: [
@@ -174,7 +174,7 @@ export function resolveEvent(s: GameState, w: World, option: number): void {
   if (d.changesGame) { op.apply(s, w); if (ev.kind !== 'intro') { syncFamilies(s); updateRatings(s, w); } return; }
   // the prototype measured the colony before and after (re-rating it both times), then re-rated once more
   updateRatings(s, w); const before = snapshot(s, w); op.apply(s, w); syncFamilies(s); updateRatings(s, w);
-  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option, change: change(before, snapshot(s, w)) });
+  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option, ...(d.params ? { params: d.params } : {}), change: change(before, snapshot(s, w)) });
   updateRatings(s, w);
 }
 

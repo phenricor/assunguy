@@ -22,3 +22,4 @@ export * from './districts.js';
 export * from './report.js';
 export * from './installments.js';
 export * from './race.js';
+export * from './assets.js';

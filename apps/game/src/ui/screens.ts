@@ -3,7 +3,7 @@
 import { BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
-  proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
+  askProvince, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
   type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
 import * as store from '../store';
@@ -170,6 +170,7 @@ function openGood(g: GoodId): void {
   document.querySelector<HTMLElement>('#infoPop [data-fecha-pop]')?.addEventListener('click', () => closePopup());
 }
 hooks2.openEconomy = () => openEconomy();
+hooks2.openTransport = () => openTransport();
 
 // ---- Governo
 
@@ -213,9 +214,13 @@ export function openDirection(tab = 'province'): void {
   let body = '';
   if (tab === 'province') {
     const y = yearly(s), last = (s.reports as SeasonReport[]).filter((r) => r.province).at(-1)?.province, pace = goalPace(s, w);
+    const timeLocked = s.influence < 6 || !MILESTONES[s.milestone + 1] || !!s.extendedDeadline || s.intervention;
     body = K.rows([K.row(T('ui.gov.grantYear'), `$ ${fmt(y.grant)}`), K.row(T('ui.gov.share'), `$ ${fmt(y.share)}`), K.row(T('ui.gov.upkeepYear'), `−$ ${fmt(y.upkeep)}`, 'menos'), ...(pace ? [K.row(T('ui.gov.pace'), T('ui.gov.paceLine', { done: Math.round(pace.done * 100), time: Math.round(pace.time * 100) }), pace.behind > 0.15 ? 'menos' : '')] : [])])
       + (last ? K.section(T('ui.gov.lastReport')) + K.rows(last.reasons.map((r) => K.row(T(`ui.province.${r.reason}`, r.params), ''))) : '')
-      + K.note(esc(T('ui.gov.provinceInfo')), 'neutra');
+      + K.section(T('ui.gov.ask'), 'influence') + K.cards([
+        K.card({ title: T('ui.gov.askFunds'), sub: esc(T(s.extraDemand ? 'ui.gov.askFundsSubNow' : 'ui.gov.askFundsSub', { n: s.extraDemand * 5 })), right: 4, rightSub: T('ui.gov.influence'), attrs: `data-pede="extraFunds" ${s.influence < 4 ? 'disabled' : ''}`, dim: s.influence < 4 }),
+        K.card({ title: T('ui.gov.askTime'), sub: esc(T(s.extendedDeadline ? 'ui.gov.askTimeDone' : s.intervention ? 'ui.gov.askTimeInspector' : 'ui.gov.askTimeSub')), right: 6, rightSub: T('ui.gov.influence'), attrs: `data-pede="extraTime" ${timeLocked ? 'disabled' : ''}`, dim: timeLocked }),
+      ]);
   } else if (tab === 'taxes' && hasCouncil(s)) {
     const eff = taxEffect(s, w);
     body = K.tiles([{ v: `$ ${fmt(store.economy().revenue.total)}`, r: T('ui.gov.taxesYear') }, { v: eff.familiesAtRisk, r: T('ui.gov.atRisk'), bad: eff.familiesAtRisk > 0 }])
@@ -242,6 +247,10 @@ export function openDirection(tab = 'province'): void {
     body = chronicled(s).length ? K.rows(chronicled(s).slice().reverse().map((x) => K.row(chronicleText(x), T('ui.yearN', { n: yearOf(x.t) })))) : K.empty(T('ui.gov.noChronicle'));
   }
   const p = screen({ id: 'direction', title: T('ui.gov.direction'), tabs, tab, body, onTab: openDirection, button: 'bGoverno' });
+  p.querySelectorAll<HTMLElement>('[data-pede]').forEach((b) => {
+    const req = b.dataset.pede as 'extraFunds' | 'extraTime';
+    b.onclick = () => confirm(T(`ui.advisor.province.${req}`), [K.row(T(`ui.advisor.province.${req}.effect`), '')], T('ui.advisor.ask'), () => { if (store.run((x) => askProvince(x, req))) { refresh(); openDirection('province'); hint(T('ui.advisor.asked'), 2600); } });
+  });
   p.querySelectorAll<HTMLElement>('[data-law]').forEach((b) => { b.onclick = () => { if (store.run((x, y) => toggleLaw(x, y, b.dataset.law as string))) { refresh(); openDirection('laws'); } }; });
   p.querySelectorAll<HTMLElement>('[data-work]').forEach((b) => { b.onclick = () => { const id = b.dataset.work as GreatWorkId, on = !s.greatWorks[id]?.active, G = GREAT_WORKS[id]; confirm(T(on ? 'ui.gov.startWork' : 'ui.gov.stopWork', { work: id }), on ? [K.row(T('ui.gov.instalment'), `$ ${fmt(G.cost / G.seasons)}`), K.row(T('ui.seasons'), G.seasons)] : [], T(on ? 'ui.gov.start' : 'ui.gov.stop'), () => { if (store.run((x) => setGreatWork(x, id, on))) { refresh(); openDirection('works'); } }); }; });
   (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).forEach((id) => p.querySelectorAll<HTMLElement>(`[data-tax-${id}]`).forEach((b) => { b.onclick = () => { const v = Number(b.getAttribute(`data-tax-${id}`)) / 100; if (store.run((x) => proposeTax(x, id, v ? { general: v } : null))) { refresh(); openDirection('taxes'); hint(T('ui.gov.proposed'), 2600); } }; }));

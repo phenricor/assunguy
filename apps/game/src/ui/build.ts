@@ -1,14 +1,14 @@
 // Building: the list by category, the preview on a lot (what changes if it is built there), streets and
 // moving. Previews run the command on a copy of the state, so what they show is what the game will do.
-import { BUILDINGS, type BuildingId } from '@assunguy/data';
+import { BUILDINGS, TRANSPORT_ROLES, type BuildingId, type TransportRoleDef } from '@assunguy/data';
 import {
   build, move, streets, measure, rails, undoStreet, demolishStreet, canPlace, computeEconomy, rateHomes, reach, serviceRadius, connected,
-  costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST,
-  type CommandResult, type GameState, type LotKey, type World,
+  costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST, forestFactor, distance,
+  type CommandResult, type GameState, type LotKey, type Ratings, type World,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T, building, goodName, plural } from '../i18n';
-import { api, hooks, PT } from '../view';
+import { api, hooks, PT, protoCalc } from '../view';
 import { $, K, esc, fmt, hint, confirm, sheet, sheetWith, signedMoney } from './kit';
 import { ui, setMode, setPreview, select, cancel, refresh, keepOpen, focus } from './app';
 
@@ -42,7 +42,7 @@ export function openBuildList(): void {
     if (t === 'street') return `<button type="button" data-t="street"><i style="background:#C9A26E;clip-path:polygon(50% 26%,100% 60%,50% 94%,0 60%)"></i>${esc(T('ui.build.street'))}<small>${esc(T('ui.build.streetDesc'))}</small></button>`;
     const locked = level(t) > s.level;
     const mini = api.miniatura(PT.building[t]) as string;
-    return `<button type="button" data-t="${t}" ${locked ? 'disabled class="trava"' : ''}><i style="${mini}"></i>${esc(building(t))}<small>${locked ? `<b>${esc(T('ui.build.level', { n: level(t) }))}</b>` : ''}${esc(T(`building.${t}.description`))}</small></button>`;
+    return `<button type="button" data-t="${t}" ${locked ? 'disabled class="trava"' : ''}><i style="${mini}"></i>${esc(building(t))}<small><b>${locked ? esc(T('ui.build.level', { n: level(t) })) : `$ ${fmt(costOf(t, s.milestone))}`}</b>${esc(T(`building.${t}.description`))}</small></button>`;
   });
   sheetWith(T('ui.build.title'), '', `${K.tabs(tabs, ui.category, 'cat')}<div class="grade">${cards.join('')}</div>`);
   const strip = sheet().querySelector('.abas') as HTMLElement;
@@ -69,9 +69,36 @@ function trial(fn: (s: GameState, w: World) => CommandResult): { r: CommandResul
 const errorText = (r: CommandResult) => (r.ok ? '' : T(`error.${r.error}`));
 
 /** What the renderer highlights for a building at a lot: its reach, its nuisance, its catchment. */
-function highlight(t: BuildingId, key: LotKey, s2: GameState): Record<string, unknown> {
+// notas: every home's rating after the change, which the map shows over the homes while the player chooses the lot
+function highlight(t: BuildingId, key: LotKey, s2: GameState, r1: Ratings): Record<string, unknown> {
   const tp = api.TIPOS[PT.building[t] as string] ?? {}, tr = api.TRANSP[PT.building[t] as string];
-  return { key, dist: tp.serv ? reach(s2.map, key, serviceRadius(s2, key)) : new Map(), cor: tp.serv ? tp.cor : '#9C3A20', ruim: tp.ruim, serv: tp.serv, alcT: tr && tr.alcance, tipoT: PT.building[t] };
+  return { key, dist: tp.serv ? reach(s2.map, key, serviceRadius(s2, key)) : new Map(), cor: tp.serv ? tp.cor : '#9C3A20', ruim: tp.ruim, serv: tp.serv, alcT: tr && tr.alcance, tipoT: PT.building[t], notas: protoCalc(s2, r1).notas };
+}
+const roleOf = (t: BuildingId) => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
+const makesGoods = (t: BuildingId) => { const D = def(t); return !!(D.output || D.extraOutputs || D.recipes); };
+const SIDES = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+/** What a transport building would do on this lot, as the prototype showed it. Returns a note when the place is poor. */
+function transportRows(t: BuildingId, key: LotKey, s2: GameState, L: string[]): string {
+  const R = roleOf(t);
+  if (!R) return '';
+  const lig = connected(s2.map);
+  if (R.role === 'collection') {
+    const reachN = R.reach ?? 0, prods = (Object.keys(s2.map.buildings) as LotKey[]).filter((x) => x !== key && lig.has(x) && makesGoods(s2.map.buildings[x] as BuildingId) && distance(x, key) <= reachN);
+    const same = (Object.keys(s2.map.buildings) as LotKey[]).filter((x) => x !== key && s2.map.buildings[x] === t);
+    const covered = prods.filter((x) => same.some((c) => distance(x, c) <= reachN)).length;
+    L.push(K.row(T('ui.build.reach'), T('ui.lotsN', { n: reachN })));
+    L.push(K.row(T('ui.build.producersInReach'), prods.length, prods.length ? '' : 'menos'));
+    if (prods.length && same.length) L.push(K.row(T('ui.build.alreadyNear', { place: building(t).toLowerCase() }), T('ui.nOfM', { n: covered, m: prods.length }), covered > prods.length / 2 ? 'menos' : ''));
+    if (!prods.length) return K.note(T('ui.build.noProducers'), 'ruim');
+    if (covered > prods.length / 2) return K.note(T('ui.build.mostCovered'), 'ruim');
+  } else if (R.role === 'commerce') {
+    const gw = (Object.keys(s2.map.buildings) as LotKey[]).some((x) => roleOf(s2.map.buildings[x] as BuildingId)?.role === 'gateway' && distance(x, key) <= (R.reach ?? 0) + 4);
+    L.push(K.row(T('ui.build.receivesUpTo'), T('ui.lotsN', { n: R.reach ?? 0 })));
+    L.push(K.row(T('ui.build.gatewayInReach'), gw ? T('ui.yes') : T('ui.build.noGatewayInReach'), gw ? 'mais' : 'menos'));
+  } else {
+    L.push(K.row(T('ui.build.carriesTo'), T(R.mode === 'road' ? 'ui.build.toCuritiba' : R.mode === 'rail' ? 'ui.build.toRailEdge' : 'ui.build.toIguape')));
+  }
+  return '';
 }
 
 export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): void {
@@ -84,12 +111,14 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     setPreview(null);
     h += `<p class="erro">${esc(r.error === 'noCash' ? T('ui.build.noCash', { cost: fmt(cost) }) : errorText(r))}</p>`;
   } else {
-    setPreview(highlight(t, key, s2));
     const r0 = store.ratings(), r1 = rateHomes(s2, w), m0 = Math.round(r0.mean), m1 = Math.round(r1.mean);
+    setPreview(highlight(t, key, s2, r1));
     if (!from) L.push(K.row(T('ui.build.cost'), `$ ${fmt(cost)}`));
     const up = upkeepOf(t, s.milestone);
     if (!from && up) L.push(K.row(T('ui.build.upkeep'), `$ ${fmt(up)}`));
-    if (m1 !== m0) L.push(K.row(T('ui.satisfaction'), `${m0} → ${m1}`, m1 > m0 ? 'mais' : 'menos'));
+    L.push(K.row(T('ui.satisfaction'), `${m0} → ${m1}`, m1 > m0 ? 'mais' : m1 < m0 ? 'menos' : ''));
+    // a new home: the rating it would have here, also shown over it on the map
+    if (T0.housing && r1.homes[key]) L.push(K.row(T('ui.build.thisHome'), Math.round(r1.homes[key]!.rating), r1.homes[key]!.rating >= m0 ? 'mais' : 'menos'));
     if (T0.crop && T0.output) L.push(K.row(T('ui.build.soil'), `${Math.round(soilOf(w, key, T0.output.good as never) * 100)}%`));
     if (!T0.housing && !from) {
       const d = from ? 0 : measure(s, w, { [t]: 1 }).incomeTotal - measure(s, w).incomeTotal;
@@ -98,13 +127,25 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     }
     if (T0.housing) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.housing)));
     else if (T0.jobs) L.push(K.row(T('ui.capacity'), plural('ui.families', T0.jobs)));
+    if (T0.nearForest) L.push(K.row(T('ui.build.forestAround'), `${Math.round(forestFactor(s2, a, b) * 100)}%`));
+    const trNote = transportRows(t, key, s2, L);
     if (T0.service) {
       let better = 0;
       for (const k of Object.keys(r1.homes)) { const x = r0.homes[k as LotKey]; if (x && (r1.homes[k as LotKey]?.rating ?? 0) > x.rating) better++; }
       L.push(K.row(T('ui.build.homesBetter'), better));
+      // homes in reach that already had this service: how much the new one repeats what exists (striped on the map)
+      const dist = reach(s2.map, key, serviceRadius(s2, key)), svc = T0.service as string;
+      let inReach = 0, repeats = 0;
+      for (const h of Object.keys(r0.homes) as LotKey[]) {
+        const [x, y] = h.split(',').map(Number) as [number, number];
+        if (!SIDES.some(([i, j]) => dist.has(`${x + i},${y + j}` as LotKey))) continue;
+        inReach++;
+        if (!r0.homes[h]!.items.some((it) => it.kind === 'outOfReach' && it.service === svc)) repeats++;
+      }
+      if (inReach) L.push(K.row(T('ui.build.alreadyHad', { what: T(`service.${svc}`).toLowerCase() }), T('ui.nOfM', { n: repeats, m: inReach }), repeats > inReach / 2 ? 'menos' : ''));
     }
     if (T0.nuisance) { let worse = 0; for (const k of Object.keys(r1.homes)) { const x = r0.homes[k as LotKey]; if (x && (r1.homes[k as LotKey]?.rating ?? 0) < x.rating) worse++; } if (worse) L.push(K.row(T('ui.build.homesBothered'), worse, 'menos')); }
-    h += K.rows(L);
+    h += K.rows(L) + trNote;
     if (!connected(s2.map).has(key)) h += K.note(T('ui.build.unlinked'), 'ruim');
   }
   if (!from && T0.jobs && !allocate(s).idle.length) h += K.note(T('ui.build.nobodyIdle'), 'neutra');

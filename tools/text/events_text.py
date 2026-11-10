@@ -182,6 +182,9 @@ SHOCK = {'frost': ('Geada nas roças', 'Frost on the fields'), 'flood': ('Cheia 
 CHRON = {'fire': ('perdeu {n} casas num incêndio.', 'lost {n} houses in a fire.'), 'epidemic': ('enfrentou uma epidemia de {disease}.', 'faced an epidemic of {disease}.'), 'crisis': ('viveu {crisis}.', 'lived through {crisis}.'),
  'lawPassed': ('aprovou a lei {law}.', 'passed the law {law}.'), 'agentEnded': ('encerrou o contrato com o agente de imigração por falta de caixa.', 'ended the immigration agent\'s contract for lack of cash.'),
  'childrenMarried': ('viu {n} famílias novas de filhos da colônia.', "saw {n} new families of the colony's children."), 'caveExplored': ('colonos exploraram a {cave}.', 'settlers explored {cave}.'), 'storeClosed': ('viu uma venda fechar por causa dos impostos.', 'saw a store close because of taxes.')}
+# the title of each level's path choice
+PATH = {3: ('Como plantar', 'How to farm'), 6: ('Como trabalhar nas oficinas', 'How the workshops work'),
+        9: ('Quem leva a carga', 'Who carries the cargo'), 12: ('Para onde vai a cidade', 'Where the town is heading')}
 DISEASE = {'fever': ('febre', 'fever'), 'cholera': ('cólera', 'cholera')}
 
 def build():
@@ -197,6 +200,7 @@ def build():
     for k, (pt, en) in CRISIS.items(): out['pt-BR'][f'crisis.{k}'] = pt; out['en'][f'crisis.{k}'] = en
     for k, (pt, en) in SHOCK.items(): out['pt-BR'][f'shock.{k}'] = pt; out['en'][f'shock.{k}'] = en
     for k, (pt, en) in CHRON.items(): out['pt-BR'][f'chronicle.{k}'] = pt; out['en'][f'chronicle.{k}'] = en
+    for k, (pt, en) in PATH.items(): out['pt-BR'][f'event.pathChoice.level.{k}'] = pt; out['en'][f'event.pathChoice.level.{k}'] = en
     for k, (pt, en) in DISEASE.items(): out['pt-BR'][f'disease.{k}'] = pt; out['en'][f'disease.{k}'] = en
     for loc, kv in out.items():
         f = os.path.join(ROOT, 'packages', 'i18n', 'locales', f'{loc}.json'); c = json.load(open(f, encoding='utf-8')); c.update(kv)

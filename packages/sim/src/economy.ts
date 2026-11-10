@@ -128,7 +128,8 @@ export function natureNear(s: Pick<GameState, 'map'>, a: number, b: number, kind
   }
   return false;
 }
-const forestFactor = (s: GameState, a: number, b: number) => {
+/** Forest around a lot, for the buildings that live off it: 50% with no trees nearby, up to 100%. */
+export const forestFactor = (s: GameState, a: number, b: number) => {
   let n = 0;
   for (let x = -4; x <= 4; x++) for (let y = -4; y <= 4; y++) if (s.map.trees[lotKey(a + x, b + y)]) n += 1;
   return 0.5 + 0.5 * Math.min(1, n / 16);

@@ -30,12 +30,13 @@ const NS: Record<string, string> = {
 const isLot = (v: string) => /^\d+,\d+$/.test(v);
 
 /** A parameter value as the player reads it: ids become names, numbers get the locale's separators. */
-export function nameOf(k: string, v: string | number): string {
+export function nameOf(k: string, v: string | number, rest?: Record<string, string | number>): string {
   if (typeof v === 'number') return Number.isInteger(v) ? tr.number(v) : tr.number(v, Math.abs(v) < 10 ? 1 : 0);
   if (k === 'land' && ctx && isLot(v)) { const L = ctx.w.lands[v as LandId]; return L ? landName(tr, L) : v; }
   if ((k === 'at' || k === 'key') && ctx && isLot(v)) { const t = ctx.s.map.buildings[v as LotKey]; return t ? tr.t(`building.${t}`) : v; }
   if (k === 'district' && ctx) { try { return districtName(tr, JSON.parse(v), (id) => (ctx!.w.lands[id as LandId] ? landName(tr, ctx!.w.lands[id as LandId]!) : id)); } catch { return v; } }
-  if (v.includes('.') && tr.has(v)) return tr.t(v);
+  // a value that is itself a key (a news item's reason) is written with the other parameters
+  if (v.includes('.') && tr.has(v)) return tr.t(v, rest && fmtParams(Object.fromEntries(Object.entries(rest).filter(([x, y]) => x !== k && !(typeof y === 'string' && y.includes('.'))))));
   const ns = NS[k];
   if (ns && tr.has(`${ns}.${v}`)) return tr.t(`${ns}.${v}`);
   return v;
@@ -43,14 +44,15 @@ export function nameOf(k: string, v: string | number): string {
 export function fmtParams(p?: Record<string, string | number>): Params | undefined {
   if (!p) return p;
   const out: Params = {};
-  for (const [k, v] of Object.entries(p)) out[k] = nameOf(k, v);
+  for (const [k, v] of Object.entries(p)) out[k] = nameOf(k, v, p);
   return out;
 }
 
 /** Looks a key up, with the names in its parameters written out. */
 export const T = (key: string, p?: Record<string, string | number>): string => tr.t(key, fmtParams(p));
 export const has = (key: string): boolean => tr.has(key);
-export const plural = (key: string, n: number, p?: Record<string, string | number>): string => tr.plural(key, n, fmtParams(p));
+// the catalogs write the count as {n}
+export const plural = (key: string, n: number, p?: Record<string, string | number>): string => tr.plural(key, n, fmtParams({ n, ...p }));
 export const money = (v: number): string => tr.money(v);
 export const num = (v: number, d = 0): string => tr.number(v, d);
 export const pct = (v: number): string => `${tr.number(Math.round(v * 100))}%`;

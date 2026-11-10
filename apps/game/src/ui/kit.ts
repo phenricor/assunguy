@@ -20,7 +20,7 @@ export const K = {
   info: (key: string) => `<button type="button" class="k-info" data-info="${key}" aria-label="${esc(T('ui.kit.more'))}">i</button>`,
   section: (t: string, info?: string) => `<h3 class="k-sec"><span>${t}</span>${info ? K.info(info) : ''}</h3>`,
   tabs: (list: [string, string][], current: string, name = 'aba') => `<div class="abas" role="tablist">${list.map(([id, txt]) => `<button type="button" role="tab" data-${name}="${id}" aria-selected="${id === current}">${txt}</button>`).join('')}</div>`,
-  tiles: (items: { v: string | number; r: string; bad?: boolean }[]) => `<div class="tiles">${items.map((x) => `<div class="${x.bad ? 'alerta' : ''}"><b ${String(x.v).length > 9 ? 'style="font-size:14px"' : ''}>${x.v}</b><span>${x.r}</span></div>`).join('')}</div>`,
+  tiles: (items: { v: string | number; r: string; bad?: boolean }[]) => `<div class="tiles">${items.map((x) => `<div class="${x.bad ? 'alerta' : ''}"><b ${String(x.v).replace(/<[^>]*>/g, '').length > 9 ? 'style="font-size:14px"' : ''}>${x.v}</b><span>${x.r}</span></div>`).join('')}</div>`,
   row: (label: string, value?: string | number, tone?: string) => `<li class="${tone ?? ''}"><span>${label}</span><span>${value ?? ''}</span></li>`,
   rows: (items: string[]) => `<ul class="linhas">${items.join('')}</ul>`,
   bar: (f: number, color?: string) => `<span class="barra"><i style="width:${Math.max(0, Math.min(1, f)) * 100}%${color ? `;background:${color}` : ''}"></i></span>`,
