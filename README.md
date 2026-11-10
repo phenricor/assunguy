@@ -31,6 +31,10 @@ legacy/
 - Porting from the prototype is checked by golden tests: `tools/legacy-oracle` records what the prototype
   computes and the TypeScript port must match it.
 
+## Porting
+
+See `docs/PORTING.md` for what is ported, the order of the next slices, and the quirks kept on purpose.
+
 ## Commands
 
 ```
