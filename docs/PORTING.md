@@ -64,6 +64,17 @@ same rules off in the prototype before recording, so golden tests still compare 
 - Extra funds and extra time from the province are offered by the advisor when available, not as
   buttons on the province tab. Advice the colony cannot pay for is listed but blocked.
 
+## Advisor fixes to make when porting it
+
+- "Roças sem comércio" suggests a store in a far land without checking that the store reaches a gateway
+  (store reach + 4 lots). Far from the pier, the store is isolated: producers carry to it for free, but it
+  only sells to the families around it and the rest spoils. In the speedrun save (Campos do Mate) the store
+  alone costs $ 2.498 a year; the follow-up rule then asks for a waystation. The port must offer store +
+  waystation + mule trains as one package, measured by the economy (+$ 425 a year with 2 mule trains,
+  +$ 565 with 4, most of it from the second exit to Curitiba), or no store at all.
+- A collection point alone there is break-even ($ 10 a year with a landing, −$ 60 with a trading post):
+  the walking loss it saves is small and the pier is already 84% full.
+
 ## Known prototype quirks kept on purpose
 
 - The Kaingang village lands are still drawn and then turned into forest, so seeds build the same maps.
