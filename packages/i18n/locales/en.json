@@ -1286,6 +1286,8 @@
  "ui.home.upgrades": "Upgrades",
  "ui.homesN": "{n} homes",
  "ui.inSeasons": "In {n} seasons",
+ "ui.inSeasons.one": "Next season",
+ "ui.inSeasons.other": "In {n} seasons",
  "ui.info.building.body": "Services, commerce and workshops are upgraded by the colony. Homes and fields by the families, with their savings.",
  "ui.info.building.title": "About this building",
  "ui.info.collections.body": "Trading posts and landings collect produce far from commerce, with mule trains, wagons or canoes.",

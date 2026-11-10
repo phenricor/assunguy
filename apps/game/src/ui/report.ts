@@ -108,7 +108,7 @@ function openReportAt(i: number): void {
     minus('ui.report.wages', c.wages); minus('ui.report.relief', c.relief); minus('ui.report.arrivals', c.arrivals); minus('ui.report.upkeep', c.upkeep); minus('ui.report.fleet', c.fleet); minus('ui.report.agent', c.agent); minus('ui.report.greatWorks', c.greatWorks); minus('ui.report.works', c.works);
     popup(T('ui.report.accountsTitle'), '', K.rows(L));
   };
-  api.Sons?.toca?.('papel');
+  api.Sons?.toca?.('aba');
 }
 
 export const _x = { MILESTONES, num, GOOD: null as unknown as GoodId, S: null as unknown as GameState };

@@ -24,7 +24,7 @@ svg.lin { fill: none !important; stroke: currentColor; stroke-width: 1.7; stroke
 .k-cam svg { width: 22px; height: 22px; display: block; margin-bottom: 4px; color: var(--anil); }
 .k-cam svg:not(.lin) path { fill: currentColor; }
 #stats li { overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 400px) { #stats { gap: 3px 4px; } #stats li { font-size: 11px; gap: 3px; letter-spacing: -.1px; } #stats svg { width: 12px; height: 12px; } }
+@media (max-width: 400px) { #stats { gap: 3px 4px; } #stats li { font-size: 11px; gap: 3px; letter-spacing: -.1px; } #stats svg { width: 12px; height: 12px; } #stats li:nth-child(2) { font-size: 10.5px; letter-spacing: -.2px; } }
 /* wide screens: the sheets and panels keep a phone-like width at the side, the map stays in view */
 @media (min-width: 900px) {
   #folha { left: auto !important; right: 16px !important; width: 560px; max-width: calc(100vw - 32px); }

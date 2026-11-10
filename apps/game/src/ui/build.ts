@@ -121,7 +121,7 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
       hooks.openBuilding(key, undefined, from ? '' : T('ui.build.undoNote'));
     };
     // moving a field restarts the wait for its first harvest: ask first
-    if (from && T0.crop) confirm(T('ui.build.moveTitle', { building: t }), [K.row(T('ui.build.firstHarvest'), T('ui.inSeasons', { n: firstHarvest(t, s.market.t) - s.market.t }), 'menos')], T('ui.build.move'), go);
+    if (from && T0.crop) confirm(T('ui.build.moveTitle', { building: t }), [K.row(T('ui.build.firstHarvest'), plural('ui.inSeasons', firstHarvest(t, s.market.t) - s.market.t), 'menos')], T('ui.build.move'), go);
     else go();
   };
   focus(a, b);
@@ -148,7 +148,7 @@ export function streetTap(a: number, b: number): void {
   if (from[0] !== a && from[1] !== b) { hint(T('ui.street.aligned'), 2600); return; }
   const g = store.session(), r = streets(g.s, g.w, from, [a, b]);
   if (!r.ok) hint(T(`error.${r.error}`), 2600);
-  else { store.changed(); api.Sons.toca('obra'); hint(T('ui.street.opened', { n: r.opened, cost: fmt(r.opened * STREET_COST) }), 2600); }
+  else { store.changed(); api.Sons.toca('rua'); hint(T('ui.street.opened', { n: r.opened, cost: fmt(r.opened * STREET_COST) }), 2600); }
   setMode({ build: 'street' });
   refresh(); streetSheet();
 }

@@ -16,7 +16,7 @@ U = {
   'seasons': ('Estações', 'Seasons'), 'yearN': ('ano {n}', 'year {n}'),
   'date': ('Ano {year}, {season}', 'Year {year}, {season}'),
   'perYear': ('{value} por ano', '{value} a year'), 'perYearN': ('{n} por ano', '{n} a year'), 'perYearShort': ('por ano', 'a year'),
-  'inSeasons': ('Em {n} estações', 'In {n} seasons'),
+  'inSeasons.one': ('Na próxima estação', 'Next season'), 'inSeasons.other': ('Em {n} estações', 'In {n} seasons'),
   'arrobas': ('{n} arrobas', '{n} arrobas'), 'arrobasYear': ('{n} arrobas por ano', '{n} arrobas a year'), 'arrobasSeason': ('{n} arrobas por estação', '{n} arrobas a season'),
   'requires': ('Requer {building} (nível {n})', 'Requires {building} (level {n})'),
   'districtLabel': ('{district}', '{district}'),
@@ -241,7 +241,7 @@ def main():
     used = set()
     for f in src.rglob('*.ts'):
         used |= set(re.findall(r"['`]ui\.([a-zA-Z0-9_.é]+)['`]", f.read_text(encoding='utf-8')))
-    missing = sorted(k for k in used if k not in keys and k + '.one' not in keys)
+    missing = sorted(k for k in used if k not in keys and k + '.one' not in keys and not any(x.startswith(k + '.') for x in keys))
     if missing: print('missing ui keys:', ' '.join(missing))
     for i, name in enumerate(['pt-BR', 'en']):
         p = LOC / f'{name}.json'

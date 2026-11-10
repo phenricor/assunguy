@@ -87,7 +87,7 @@ export function openBuilding(key: LotKey, tabWanted?: string, note = ''): void {
     if (team) L.push(K.row(`${D.processingCapacity ? T('ui.sel.production') : T('ui.capacity')}`, `${team.families.length}/${team.slots}, ${T('ui.sel.yields', { n: Math.round(team.efficiency * 100) })}`, team.families.length < team.slots ? 'menos' : ''));
     if (D.crop) {
       const fh = s.firstHarvest?.[key];
-      if (fh !== undefined && fh > s.market.t) L.push(K.row(T('ui.build.firstHarvest'), T('ui.inSeasons', { n: fh - s.market.t }), 'menos'));
+      if (fh !== undefined && fh > s.market.t) L.push(K.row(T('ui.build.firstHarvest'), plural('ui.inSeasons', fh - s.market.t), 'menos'));
       if (D.output) L.push(K.row(T('ui.build.soil'), `${Math.round(soilOf(w, key, D.output.good as never) * 100)}%`));
       L.push(K.row(T('ui.sel.harvest'), D.output?.season === undefined ? T('ui.sel.allYear') : T(`season.${D.output.season}`)));
     }
@@ -111,7 +111,7 @@ export function openBuilding(key: LotKey, tabWanted?: string, note = ''): void {
   sheetWith(title, T(`building.${t}.description`), `${tabs ? K.tabs(tabs, tab) : ''}${note ? K.note(esc(note)) : ''}${warn}${extra}${K.rows(L)}${upInfo}${K.actions(buttons as never)}${how}`, `building`);
   sheet().querySelectorAll<HTMLElement>('[data-aba]').forEach((b) => { b.onclick = () => openBuilding(key, b.dataset.aba); });
   const go = (id: string, f: () => void) => { const b = document.getElementById(id); if (b) b.onclick = f; };
-  go('melhorar', () => { if (store.run((x, y) => upgrade(x, y, key))) { api.efx('melhora', key, { txt: `−$ ${fmt(upCost)}` }); api.Sons.toca('obra'); refresh(); openBuilding(key); } });
+  go('melhorar', () => { if (store.run((x, y) => upgrade(x, y, key))) { api.efx('melhora', key, { txt: `−$ ${fmt(upCost)}` }); api.Sons.toca('melhora'); refresh(); openBuilding(key); } });
   go('desfazM', () => { if (store.run((x, y) => undoUpgrade(x, y, key))) { refresh(); openBuilding(key); hint(T('ui.sel.upgradeUndone', { money: fmt(up!.cost) }), 2600); } });
   go('desfazT', () => { if (store.run((x, y) => swapCrop(x, y, key, sw!.from))) { refresh(); openBuilding(key); } });
   go('trocar', () => openSwap(key));
@@ -121,7 +121,7 @@ export function openBuilding(key: LotKey, tabWanted?: string, note = ''): void {
     const lines = [refund ? K.row(T('ui.sel.refundLine'), `+$ ${fmt(refund)}`, 'mais') : K.row(T('ui.sel.noRefund'), ''), ...(D.housing && fams.length ? [K.row(T('ui.sel.familiesLeave'), fams.length, 'menos')] : [])];
     confirm(built !== undefined ? T('ui.sel.cancelWork') : T('ui.demolish'), lines, built !== undefined ? T('ui.sel.cancelWork') : T('ui.demolish'), () => {
       api.efx('demole', key, { t: (api.TIPOS ? undefined : undefined), txt: refund ? `+$ ${fmt(refund)}` : '' });
-      if (store.run((x, y) => demolish(x, y, key))) { refresh(); cancel(); }
+      if (store.run((x, y) => demolish(x, y, key))) { api.Sons.toca('demole'); refresh(); cancel(); }
     }, true);
   });
   wireTransport(key);

@@ -1286,6 +1286,8 @@
  "ui.home.upgrades": "Melhorias",
  "ui.homesN": "{n} casas",
  "ui.inSeasons": "Em {n} estações",
+ "ui.inSeasons.one": "Na próxima estação",
+ "ui.inSeasons.other": "Em {n} estações",
  "ui.info.building.body": "Serviços, comércio e oficinas são melhorados pela colônia. Casas e plantações, pelas famílias, com a poupança delas.",
  "ui.info.building.title": "Sobre o prédio",
  "ui.info.collections.body": "Vendas e embarcadouros recolhem a produção longe do comércio, com tropas, carroças ou canoas.",
