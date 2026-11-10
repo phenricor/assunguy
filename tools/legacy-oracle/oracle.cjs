@@ -24,6 +24,16 @@ function serve() {
   });
 }
 
+const SAVES = path.join(ROOT, 'legacy', 'saves');
+const saves = () => fs.readdirSync(SAVES).filter((f) => f.endsWith('.json')).sort().map((f) => [f.replace(/\.json$/, ''), fs.readFileSync(path.join(SAVES, f), 'utf8')]);
+// loads a save the way the prototype does when the player switches colony, and returns the normalized state
+const LOAD = (txt) => {
+  const novo = JSON.parse(txt);
+  geraMundo(novo.semente, novo.mapaV || 1);
+  M = garanteEstado(novo); migraNucleos(); sincronizaSaida(); C = calcula(M);
+  return JSON.parse(JSON.stringify(M));
+};
+
 const SCENARIOS = {
   // the outside market from its fixed seed, then 24 more seasons
   market: async (page) => page.evaluate(() => {
@@ -57,6 +67,19 @@ const SCENARIOS = {
       return { seed, version: v, streets: Object.keys(m.ruas), buildings: m.predios, trees: m.arv, lands: m.terras, nature: g.nat, names: g.nomes, next: [RND(), RND()] };
     });
   }),
+  // the playtester's saves: street network, linked buildings and how far each service reaches
+  network: async (page) => {
+    const out = {};
+    for (const [name, txt] of saves()) {
+      out[name] = await page.evaluate(([txt, load]) => {
+        const state = (0, eval)(load)(txt);
+        const reach = {};
+        for (const key in M.predios) if (TIPOS[M.predios[key]].serv) { const r = raioDe(M, key); reach[key] = { radius: r, dist: Object.fromEntries(alcance(M, key, r)) }; }
+        return { state, network: [...redePrincipal(M)].sort(), linked: [...ligados(M)].sort(), reach };
+      }, [txt, LOAD.toString()]);
+    }
+    return out;
+  },
 };
 
 (async () => {

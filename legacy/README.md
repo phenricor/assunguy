@@ -6,3 +6,5 @@ for the port. Its code is in Portuguese; nothing new is written here.
 - `prototype-data.json`: the prototype's content tables, dumped from the running page.
 - `id-map.json`: Portuguese prototype ids to the English ids used by the new code. Used by golden tests
   and, later, by the save migration for prototype saves.
+- `saves/`: two of the playtester's prototype saves, used as golden inputs: `canoes.json` (year 5, needing
+  a fourth canoe before the parish) and `speedrun.json` (the rush to the parish deadline).
