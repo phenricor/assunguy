@@ -588,11 +588,16 @@ export function advise(s: GameState, w: World): Advice[] {
     const pace = goalPace(s, w), left = s.deadline - s.market.t;
     // above the idle-hands investments (up to about 87), so the cash goes to the goal; more so in the last three years
     if (left <= 24 || (pace && pace.behind > 0.15)) for (const y of list) if (y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands') y.weight = Math.max(y.weight, left <= 12 ? 92 : 88);
+    // and while the goal still lacks buildings or lands, new jobs wait: they pay the families, not the purse
+    if ((left <= 24 || (pace && pace.behind > 0.15)) && list.some((y) => y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands'))
+      for (const y of list) if (y.rule === 'idle.invest' || y.rule === 'idle.jobs' || y.rule === 'chain' || y.rule === 'cropSwap') y.weight = Math.min(y.weight, 79);
     // families weigh most in the milestone and only come to empty homes: behind on them, homes come even with idle
     // hands (the prototype held huts back above 30% idle, so an advisor-led colony fell far short of its families)
     const tg = MILESTONES[s.milestone + 1] as MilestoneDef, missing = Math.round((tg.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05)) - Object.keys(s.families).length;
-    if (missing > 0 && ((pace && pace.behind > 0) || left <= 16) && emptySlots(s).length < 8 && !list.some((y) => y.rule === 'milestoneFamilies'))
-      add({ rule: 'milestoneFamilies', weight: 80, params: { milestone: tg.id, n: missing, raised: (s.extraDemand || 0) * 5, cost: costOf('hut', s.milestone) }, action: { kind: 'build', building: 'hut' }, cost: costOf('hut', s.milestone) });
+    // and when the families still missing need more than one new family a season to arrive in time
+    const needRate = missing / Math.max(1, left);
+    if (missing > 0 && ((pace && pace.behind > 0) || left <= 16 || needRate > 1) && emptySlots(s).length < 8 && !list.some((y) => y.rule === 'milestoneFamilies'))
+      add({ rule: 'milestoneFamilies', weight: needRate > 1.5 ? 87 : 80, params: { milestone: tg.id, n: missing, raised: (s.extraDemand || 0) * 5, cost: costOf('hut', s.milestone) }, action: { kind: 'build', building: 'hut' }, cost: costOf('hut', s.milestone) });
   }
   // the province: more time when the deadline is close and goals are missing; extra funds when cash runs out
   const target = MILESTONES[s.milestone + 1];
