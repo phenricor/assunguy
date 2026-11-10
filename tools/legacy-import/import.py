@@ -116,6 +116,8 @@ ORIGINS_EN = {'german': 'German', 'swedish': 'Swedish', 'swiss': 'Swiss', 'itali
 SEASONS_EN = ['Spring', 'Summer', 'Autumn', 'Winter']
 WEATHER = {'limpo': 'clear', 'nublado': 'cloudy', 'chuva': 'rain', 'temporal': 'storm', 'neblina': 'fog', 'geada': 'frost', 'cheia': 'flood'}
 WEATHER_EN = {'clear': 'clear skies', 'cloudy': 'cloudy', 'rain': 'rain', 'storm': 'storms', 'fog': 'fog', 'frost': 'frost', 'flood': 'flood'}
+NATURE = {'ribeirao': 'stream', 'corrego': 'brook', 'cachoeira': 'waterfall', 'corredeira': 'rapids', 'lagoa': 'oxbow', 'calcario': 'limestone', 'gruta': 'cave', 'dolina': 'sinkhole', 'dolinaAgua': 'wetSinkhole', 'lajedo': 'bedrock'}
+TREES = {'pin1': 'araucaria1', 'pin2': 'araucaria2', 'mat1': 'thicket1', 'mat2': 'thicket2'}
 DEPOSITS = {'cal': 'lime', 'chumbo': 'lead', 'ouro': 'gold', 'ferro': 'iron', 'erval': 'yerba'}
 SERVICE = {'Igreja': 'faith', 'Escola': 'school', 'Botica': 'health', 'Água': 'water', 'Comércio': 'commerce', 'Cultura': 'culture',
            'Ordem': 'order', 'Fogo': 'fire', 'Governo': 'government', 'Diretoria': 'government'}
@@ -331,7 +333,7 @@ def main():
     # legacy id map: lets tests compare with the prototype and lets old saves be migrated
     id_map = {'goods': GOODS, 'buildings': BUILDINGS, 'vehicles': VEHICLES, 'biomes': BIOMES, 'laws': LAWS, 'taxes': TAXES,
               'choices': CHOICES, 'collection': COLLECTION, 'destinations': DESTINATIONS, 'origins': ORIGINS,
-              'weather': WEATHER, 'deposits': DEPOSITS, 'sectors': SECTOR, 'milestones': dict(zip(range(4), milestone_ids))}
+              'weather': WEATHER, 'deposits': DEPOSITS, 'nature': NATURE, 'trees': TREES, 'sectors': SECTOR, 'milestones': dict(zip(range(4), milestone_ids))}
     json.dump(id_map, open(os.path.join(ROOT, 'legacy', 'id-map.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('wrote legacy/id-map.json')
 

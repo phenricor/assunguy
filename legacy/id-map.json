@@ -203,5 +203,23 @@
   "1": "parish",
   "2": "village",
   "3": "town"
+ },
+ "nature": {
+  "ribeirao": "stream",
+  "corrego": "brook",
+  "cachoeira": "waterfall",
+  "corredeira": "rapids",
+  "lagoa": "oxbow",
+  "calcario": "limestone",
+  "gruta": "cave",
+  "dolina": "sinkhole",
+  "dolinaAgua": "wetSinkhole",
+  "lajedo": "bedrock"
+ },
+ "trees": {
+  "pin1": "araucaria1",
+  "pin2": "araucaria2",
+  "mat1": "thicket1",
+  "mat2": "thicket2"
  }
 }

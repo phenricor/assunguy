@@ -48,6 +48,15 @@ const SCENARIOS = {
       return { seed, version: v, phases: FASES, bank: MARGEM, width: LARGURA, water: AGUA.size, lands, deposits: VEIOS, heights, next: [RND(), RND(), RND()] };
     });
   }),
+  // a new game's map: streets, buildings, trees, known lands and the nature drawn around them
+  map: async (page) => page.evaluate(() => {
+    return [[1869, 2], [42, 2], [987654321, 2], [77, 1]].map(([seed, v]) => {
+      geraMundo(seed, v);
+      const m = mapaInicial(), g = geraNatureza(m);
+      Object.keys(g.nat).forEach((key) => { delete m.arv[key]; });
+      return { seed, version: v, streets: Object.keys(m.ruas), buildings: m.predios, trees: m.arv, lands: m.terras, nature: g.nat, names: g.nomes, next: [RND(), RND()] };
+    });
+  }),
 };
 
 (async () => {
