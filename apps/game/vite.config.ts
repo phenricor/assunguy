@@ -21,7 +21,10 @@ const renderShell = (): Plugin => ({
 });
 
 // One self-contained HTML file: scripts, styles and the sprite sheets inline, so the game runs offline.
+const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version: string };
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [renderShell(), viteSingleFile()],
   build: { target: 'es2022', assetsInlineLimit: 100_000_000, cssCodeSplit: false, chunkSizeWarningLimit: 8000 },
   server: { host: true },

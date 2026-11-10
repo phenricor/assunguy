@@ -6,6 +6,8 @@ import {
   type Advice, type CommandResult, type Districts, type Economy, type GameState, type Ratings, type SeasonReport, type World,
 } from '@assunguy/sim';
 import { setContext, T } from './i18n';
+import { readSave, writeSave } from './saveFormat';
+import { APP_VERSION } from './version';
 
 export interface Meta { id: string; colony: string; advisor: string; seed: number; created: number; saved: number; t: number; milestone: number; families: number }
 export interface Session { s: GameState; w: World; meta: Meta }
@@ -80,7 +82,9 @@ async function tx<T>(store: string, mode: IDBTransactionMode, f: (o: IDBObjectSt
 export const listSaves = async (): Promise<(Meta & { save?: string })[]> => ((await tx<{ id: string; meta: Meta }[]>('colonies', 'readonly', (o) => o.getAll())) ?? []).map((x) => x.meta).sort((a, b) => b.saved - a.saved);
 export const listAutosaves = async (col: string): Promise<Autosave[]> => ((await tx<Autosave[]>('autos', 'readonly', (o) => o.getAll())) ?? []).filter((x) => x.col === col).sort((a, b) => b.t - a.t);
 
-const text = () => JSON.stringify({ v: 1, meta: session().meta, s: session().s });
+const text = () => writeSave(session().meta, session().s, APP_VERSION);
+type SaveData = { meta: Meta; s: GameState };
+const parse = (txt: string): SaveData => { const r = readSave<SaveData>(txt); if (!r.ok) throw new Error(r.reason); return r.save; };
 export async function save(yearly = false): Promise<boolean> {
   if (!game) return false;
   const m = game.meta;
@@ -112,12 +116,12 @@ export function start(o: { colony: string; advisor: string; seed?: number }): Se
 export async function load(id: string): Promise<boolean> {
   const r = await tx<{ save: string }>('colonies', 'readonly', (o) => o.get(id));
   if (!r) return false;
-  try { enter(revive(JSON.parse(r.save))); return true; } catch { return false; }
+  try { enter(revive(parse(r.save))); return true; } catch { return false; }
 }
 export async function loadAutosave(k: string): Promise<boolean> {
   const r = await tx<Autosave>('autos', 'readonly', (o) => o.get(k));
   if (!r) return false;
-  try { enter(revive(JSON.parse(r.save))); await save(); return true; } catch { return false; }
+  try { enter(revive(parse(r.save))); await save(); return true; } catch { return false; }
 }
 export async function remove(id: string): Promise<void> {
   await tx('colonies', 'readwrite', (o) => o.delete(id));
@@ -125,15 +129,16 @@ export async function remove(id: string): Promise<void> {
 }
 /** The save as a file's text, to keep or carry to another device. */
 export const exportSave = (): string => text();
-export async function importSave(txt: string): Promise<boolean> {
+/** Imports an exported file: 'newer' when it was written by a newer version of the game. */
+export async function importSave(txt: string): Promise<'ok' | 'invalid' | 'newer'> {
+  const r = readSave<SaveData>(txt);
+  if (!r.ok) return r.reason;
   try {
-    const data = JSON.parse(txt) as { meta: Meta; s: GameState };
-    if (!data?.s?.map || !data.meta?.colony) return false;
-    const g = revive(data);
+    const g = revive(r.save);
     if ((await listSaves()).some((x) => x.id === g.meta.id)) g.meta.id = `${g.meta.id}i${Date.now().toString(36)}`;
     enter(g);
     await save();
-    return true;
-  } catch { return false; }
+    return 'ok';
+  } catch { return 'invalid'; }
 }
 export const quit = async (): Promise<void> => { await save(); };

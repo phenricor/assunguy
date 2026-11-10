@@ -8,6 +8,7 @@ import { T, has, num } from '../i18n';
 import { api, vars, hooks, show, PT, EN } from '../view';
 import { syncBirds } from '../birds';
 import { $, K, X_SVG, esc, fmt, hint, popup, closePopup, sheet, sheetWith, setSheetClose } from './kit';
+import { openFeedback } from './feedback';
 
 // ---- what the player is doing on the map
 
@@ -58,7 +59,7 @@ function labelStatic(): void {
   textAfter($('sInf'), ` ${T('ui.top.influence')}`);
   ($('bObras').lastElementChild as HTMLElement).textContent = T('ui.build.title');
   $('bObras').setAttribute('aria-label', T('ui.build.title'));
-  for (const [id, key] of [['zM', 'ui.top.zoomIn'], ['zN', 'ui.top.zoomOut'], ['menu', 'ui.settings.title'], ['btSat', 'ui.layers.title'], ['bNivel', 'ui.level.title'], ['bData', 'ui.report.title']] as const) $(id).setAttribute('aria-label', T(key));
+  for (const [id, key] of [['zM', 'ui.top.zoomIn'], ['zN', 'ui.top.zoomOut'], ['menu', 'ui.settings.title'], ['btSat', 'ui.layers.title'], ['btFeed', 'ui.feedback.title'], ['bNivel', 'ui.level.title'], ['bData', 'ui.report.title']] as const) $(id).setAttribute('aria-label', T(key));
 }
 
 export function top(): void {
@@ -220,6 +221,7 @@ export function wire(): void {
   $('bObras').onclick = () => hooks.openBuildList();
   $('menu').onclick = () => hooks.openSettings();
   $('btSat').onclick = () => hooks.openLayers();
+  $('btFeed').onclick = () => openFeedback();
   document.addEventListener('click', (e) => {
     const el = e.target as HTMLElement;
     const go = el.closest<HTMLElement>('[data-acao]');
@@ -227,7 +229,7 @@ export function wire(): void {
     const info = el.closest<HTMLElement>('[data-info]');
     if (info) { e.stopPropagation(); const key = info.dataset.info as string; popup(T(`ui.info.${key}.title`), T(`ui.info.${key}.body`)); return; }
     if (el.closest('[data-graf]')) { readChart(e as MouseEvent); return; }
-    if (el.closest('#infoPop') && !el.closest('button')) closePopup();
+    if (el.closest('#infoPop') && !el.closest('button, textarea, input, select, label, a')) closePopup();
   });
   document.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') readChart(e); });
   hooks.toque = tap;

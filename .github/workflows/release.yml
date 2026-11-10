@@ -1,0 +1,33 @@
+# A tag vX.Y.Z (or vX.Y.Z-beta.N) runs the checks, builds the game and publishes a GitHub Release with the
+# game's single HTML file and the version's section of CHANGELOG.md. Versions with a suffix are pre-releases.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The tag must match the version in package.json
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter @assunguy/game build
+      - run: node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" > notes.md
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          file="assunguy-${GITHUB_REF_NAME}.html"
+          cp apps/game/dist/index.html "$file"
+          pre=""; case "$GITHUB_REF_NAME" in *-*) pre="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" "$file" --title "Assunguy ${GITHUB_REF_NAME}" --notes-file notes.md $pre

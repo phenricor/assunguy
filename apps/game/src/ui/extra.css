@@ -38,3 +38,11 @@ button.aperta { animation: aperta .12s ease-out; }
 .toque { opacity: .35; animation-duration: .25s !important; }
 #menuIni ~ .toque, .toque.no-menu { display: none; }
 @media (prefers-reduced-motion: reduce) { button.aperta { animation: none; } .toque { display: none; } }
+
+/* feedback: the message box in the popup */
+.fb-txt { display: block; width: 100%; box-sizing: border-box; min-height: 132px; margin-top: 10px; padding: 8px 10px; font: inherit; font-size: 15px; line-height: 1.4; color: #3D3126; background: #FBF7EC; border: 1px solid #BFAF90; border-radius: 3px; resize: vertical; }
+.fb-txt:focus { outline: 2px solid var(--anil); outline-offset: 1px; }
+textarea.fb-txt[readonly] { min-height: 96px; color: #5A4A3A; }
+#infoPop #fbOver { margin-top: 6px; }
+/* the version, at the foot of the start menu */
+#menuIni .mi-versao { position: absolute; left: 14px; bottom: max(10px, env(safe-area-inset-bottom, 0px)); margin: 0; font-size: 12px; letter-spacing: .02em; color: rgba(246, 239, 223, .85); text-shadow: 0 1px 2px rgba(36, 28, 20, .6); pointer-events: none; }

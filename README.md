@@ -30,6 +30,16 @@ docs/
 - The simulation never calls `Math.random`; every draw comes from a seed kept in the state.
 - Art is drawn by code, through the sprite generator.
 
+## Versions and releases
+
+Semantic versioning, one version for the whole repository (the root `package.json`). What counts as a major,
+minor or patch change is set out at the top of `CHANGELOG.md`; saves carry their own format number
+(`apps/game/src/saveFormat.ts`), with a migration for each change.
+
+To release: set the version in every `package.json`, turn `Unreleased` in `CHANGELOG.md` into the version's
+section, commit, then tag and push (`git tag -a v1.0.0-beta.2 -m "1.0.0-beta.2" && git push --follow-tags`). The
+release workflow checks, builds and publishes a GitHub Release with the game's HTML file.
+
 ## Commands
 
 ```

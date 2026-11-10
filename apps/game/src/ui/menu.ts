@@ -6,6 +6,7 @@ import { T, locale, setLocale, num } from '../i18n';
 import { api, vars, hooks } from '../view';
 import { $, K, esc, hint, sheetWith, sheet, ico } from './kit';
 import { cancel } from './app';
+import { APP_VERSION } from '../version';
 
 type Screen = 'start' | 'new' | 'load';
 let screen: Screen = 'start', openCol: string | null = null;
@@ -52,7 +53,7 @@ export async function openMenu(which: Screen = 'start'): Promise<void> {
   }
   const cv = el.querySelector('.mi-paisagem');
   const on = api.Musica.ligada || api.Sons.ligado;
-  el.innerHTML = `${brand}<div class="mi-caixa">${h}</div><div class="mi-musica"><button type="button" class="mi-som mi-nota" data-som aria-pressed="${on}" aria-label="${esc(T(on ? 'ui.menu.soundOff' : 'ui.menu.soundOn'))}">${NOTE}</button><button type="button" class="mi-lang" data-lang>${locale() === 'pt-BR' ? 'EN' : 'PT'}</button></div>`;
+  el.innerHTML = `${brand}<div class="mi-caixa">${h}</div><p class="mi-versao">v${esc(APP_VERSION)}</p><div class="mi-musica"><button type="button" class="mi-som mi-nota" data-som aria-pressed="${on}" aria-label="${esc(T(on ? 'ui.menu.soundOff' : 'ui.menu.soundOn'))}">${NOTE}</button><button type="button" class="mi-lang" data-lang>${locale() === 'pt-BR' ? 'EN' : 'PT'}</button></div>`;
   if (cv) el.insertBefore(cv, el.firstChild);
   wireMenu(el);
 }
@@ -89,7 +90,7 @@ function wireMenu(el: HTMLElement): void {
     closeMenu();
   };
   const file = el.querySelector<HTMLInputElement>('#miArq');
-  if (file) file.onchange = () => { const fl = file.files?.[0]; if (!fl) return; void fl.text().then(async (txt) => { if (await store.importSave(txt)) closeMenu(); else hint(T('ui.menu.badFile'), 3500); }); };
+  if (file) file.onchange = () => { const fl = file.files?.[0]; if (!fl) return; void fl.text().then(async (txt) => { const r = await store.importSave(txt); if (r === 'ok') closeMenu(); else hint(T(r === 'newer' ? 'ui.menu.newerFile' : 'ui.menu.badFile'), 4000); }); };
 }
 
 // ---- settings, in game: a list of buttons with icons
@@ -104,7 +105,7 @@ export function openSettings(): void {
     row('music', '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', T('ui.settings.music'), T(on ? 'ui.on' : 'ui.off')),
     row('sounds', '<path d="M4 9h4l5-4v14l-5-4H4zM17 9c1 1 1 5 0 6M19.5 6.5c2.500 3 2.500 8 0 11"/>', T('ui.settings.sounds'), T(sounds ? 'ui.on' : 'ui.off')),
     row('lang', '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>', T('ui.settings.language'), locale() === 'pt-BR' ? 'Português' : 'English'),
-  ]));
+  ]) + K.note(esc(T('ui.settings.version', { version: APP_VERSION })), 'neutra'));
   sheet().querySelectorAll<HTMLElement>('[data-set]').forEach((b) => { b.onclick = async () => {
     const a = b.dataset.set;
     if (a === 'menu') { await store.save(); cancel(); void openMenu('start'); return; }
