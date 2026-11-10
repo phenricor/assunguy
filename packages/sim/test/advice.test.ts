@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { advise, legacyAdvice, producerFix, type AdviceAction } from '../src/advisor.js';
+import { ADVICE_RULES, advise, legacyAdvice, producerFix, type AdviceAction } from '../src/advisor.js';
+import { createTranslator, LOCALES } from '@assunguy/i18n';
 import { defineEvent, resolveEvent } from '../src/events.js';
 import { passSeason } from '../src/season.js';
 import { updateRatings } from '../src/ratings.js';
@@ -97,5 +98,23 @@ describe('advisor: the November review rules', () => {
     const fix = producerFix(s, w, '32,50');
     expect(fix?.action).toMatchObject({ kind: 'swap', key: '32,50', from: 'cassavaField' });
     expect(fix!.gain).toBeGreaterThan(50);
+  });
+});
+
+describe('advisor texts', () => {
+  it('every rule has a title and a body in both languages', () => {
+    for (const lang of LOCALES) { const t = createTranslator(lang); for (const r of ADVICE_RULES) for (const part of ['title', 'body']) expect(t.has(`advice.${r}.${part}`), `${lang} advice.${r}.${part}`).toBe(true); }
+  });
+  it('every advice given on the saves and their variants is a known rule', () => {
+    const known = new Set<string>(ADVICE_RULES);
+    for (const [name, vs] of Object.entries(variants as unknown as Record<string, Record<string, { spec: { caixa?: number; nivelC?: number; add?: Record<string, string>; dizimo?: number } }>>)) {
+      for (const { spec } of Object.values(vs)) {
+        const s = legacyState((seasons as unknown as Record<string, { state: Record<string, unknown> }>)[name]!.state), w = generateWorld(s.seed, s.mapVersion);
+        if (spec.caixa !== undefined) s.cash = spec.caixa;
+        if (spec.nivelC) s.level = spec.nivelC;
+        for (const [k, t] of Object.entries(spec.add ?? {})) s.map.buildings[k as LotKey] = B[t] as never;
+        for (const a of advise(s, w)) expect(known.has(a.rule), a.rule).toBe(true);
+      }
+    }
   });
 });

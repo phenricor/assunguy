@@ -24,6 +24,11 @@ import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw } from './state.
 import { collectionState, distance, fleetOf, fleetSize, gatewayTight, geography } from './transport.js';
 import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
 
+/** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
+export const ADVICE_RULES = [
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds',
+] as const;
+
 export type AdviceAction =
   | { kind: 'screen'; screen: 'level' | 'economy' | 'direction' | 'transport'; tab?: string; law?: 'tithe'; value?: number }
   | { kind: 'build'; building: BuildingId | 'street' }
