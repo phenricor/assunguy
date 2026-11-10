@@ -33,6 +33,21 @@ const SCENARIOS = {
     for (let i = 0; i < 24; i++) { passaMercado(mc); seasons.push({ t: mc.t, seed: mc.semente, prices: Object.fromEntries(Object.keys(mc.hist).map((b) => [b, mc.hist[b][mc.hist[b].length - 1]])), shocks: mc.eventos.map((e) => ({ b: e.b, tipo: e.tipo, f: e.f, restam: e.restam })) }); }
     return { start: { t: start.t, seed: start.semente, prices: Object.fromEntries(Object.keys(start.hist).map((b) => [b, start.hist[b]])) }, seasons };
   }),
+  // the generated world for a few seeds: river, lands, deposits, sampled heights and the next draws
+  world: async (page) => page.evaluate(() => {
+    const cases = [[1, 2], [42, 2], [1869, 2], [123456789, 2], [987654321, 2], [77, 1]];
+    return cases.map(([seed, v]) => {
+      geraMundo(seed, v);
+      const lands = {};
+      for (const id of Object.keys(TERRAS)) {
+        const t = TERRAS[id], upper = t.nome.endsWith(' de Cima'), base = upper ? t.nome.slice(0, -8) : t.nome;
+        lands[id] = { biome: t.bioma, place: id === SEDE_ID ? 'seat' : BIOMAS[t.bioma].nomes.indexOf(base), upper, forest: t.mata, soil: t.solo };
+      }
+      const heights = [];
+      for (let i = 0; i <= NX; i += 7) for (let j = 0; j <= NY; j += 5) heights.push([i, j, ALT[i][j]]);
+      return { seed, version: v, phases: FASES, bank: MARGEM, width: LARGURA, water: AGUA.size, lands, deposits: VEIOS, heights, next: [RND(), RND(), RND()] };
+    });
+  }),
 };
 
 (async () => {
