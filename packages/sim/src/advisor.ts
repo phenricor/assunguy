@@ -28,7 +28,7 @@ import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from '
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -512,7 +512,7 @@ export function worstOutlets(s: GameState, c: Economy): { key: LotKey; lost: num
   }).filter((x) => x.lost > 0).sort((p, q) => q.lost - p.lost);
 }
 
-export interface FarLandPlan { land: LandId; fields: number; lostOnFoot: number; option: 'collection' | 'storePackage'; action: AdviceAction; cost: number; gain: number }
+export interface FarLandPlan { land: LandId; fields: number; lostOnFoot: number; option: 'collection' | 'storePackage' | 'store' | 'storeEarly'; action: AdviceAction; cost: number; gain: number }
 /**
  * A land whose fields walk beyond the free distance and lose on the way. Measures a collection point there
  * and a store with a waystation and mule trains (the store alone, with no gateway in reach, only sells to
@@ -544,7 +544,8 @@ export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(
       const withStore = withPlaced(s, { [storeLot]: 'store' }), G2 = geography(withStore, connected(withStore.map)), j = G2.commerce.findIndex((x) => x.key === storeLot);
       if (j >= 0 && G2.commerce[j]!.linked) {
         const gain = computeEconomy(withStore, w).incomeTotal - c.incomeTotal;
-        options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot }, cost: costOf('store', s.milestone), gain });
+        // a store with a gateway already in reach takes the produce alone; before the trading post opens, say it is coming
+        options.push({ ...base, option: unlocked(s, 'tradingPost') ? 'store' : 'storeEarly', action: { kind: 'collect', building: 'store', land, lot: storeLot }, cost: costOf('store', s.milestone), gain });
       } else if (unlocked(s, 'waystation')) {
         const wayLot = collectionLot(withStore, w, 'waystation', null, storeLot);
         if (wayLot) {

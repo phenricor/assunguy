@@ -30,6 +30,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 - News that name a good ("Procura por {good} caiu em Iguape") name it again.
 - The extra funds and more time requests are back in Direção, Província, under "Pedir à província".
 - The satisfaction and purse arrows no longer wrap under the number.
+- The build list shows each building's cost again.
+- When far fields lose on foot and the advisor suggests a store alone, it no longer says it comes with a
+  waystation and mule trains; before level 4 it adds that the trading post, which collects from far fields,
+  opens then.
 
 ## [1.0.0-beta.3] - 2026-11-10
 
