@@ -12,8 +12,13 @@ export type Params = Record<string, string | number>;
 
 export interface Translator {
   readonly locale: Locale;
-  /** Looks a key up and fills {name} placeholders. A missing key returns the key itself, in brackets. */
+  /**
+   * Looks a key up and fills {name} placeholders. A missing key returns the key itself, in brackets. A placeholder
+   * with no value is never shown as is: a count or amount becomes 0, a name becomes an ellipsis (see `fallback`).
+   */
   t(key: string, params?: Params): string;
+  /** The text as written in the catalog, placeholders untouched (for checks). */
+  raw(key: string): string | undefined;
   /** Picks `${key}.one` or `${key}.other` by count, and passes {count} along. */
   plural(key: string, count: number, params?: Params): string;
   has(key: string): boolean;
@@ -21,8 +26,27 @@ export interface Translator {
   money(value: number): string;
 }
 
-const fill = (text: string, params?: Params): string =>
-  params ? text.replace(/\{(\w+)\}/g, (whole, name: string) => (name in params ? String(params[name]) : whole)) : text;
+/** Placeholders that hold a name or a phrase; every other placeholder holds a number or an amount. */
+const TEXT_HOLES = new Set(['a', 'aEffect', 'advisor', 'at', 'b', 'bEffect', 'building', 'cause', 'cave', 'chain', 'colony', 'crisis', 'custom', 'date', 'destination', 'disease', 'district', 'email', 'family', 'from', 'good', 'item', 'label', 'land', 'lang', 'law', 'list', 'milestone', 'name', 'names', 'origin', 'place', 'reason', 'season', 'service', 'title', 'to', 'vehicle', 'version', 'what', 'work']);
+/** What a placeholder with no value shows: 0 for a number, an ellipsis for a name. */
+export const fallback = (name: string): string => (TEXT_HOLES.has(name) ? '…' : '0');
+/** The placeholders of a text. */
+export const holes = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1] as string);
+/** The placeholders of a text that these params leave empty. */
+export const unfilled = (text: string, params?: Params): string[] => holes(text).filter((h) => !params || !(h in params) || params[h] === undefined);
+
+type Missing = (key: string, hole: string) => void;
+let onMissing: Missing | null = null;
+/** Called whenever a placeholder is left without a value (the game logs it; tests collect it). */
+export const setMissingHandler = (f: Missing | null): void => { onMissing = f; };
+
+const fill = (key: string, text: string, params?: Params): string =>
+  text.indexOf('{') < 0 ? text : text.replace(/\{(\w+)\}/g, (_whole, name: string) => {
+    const v = params?.[name];
+    if (v !== undefined && v !== null) return String(v);
+    onMissing?.(key, name);
+    return fallback(name);
+  });
 
 export function createTranslator(locale: Locale): Translator {
   const catalog = CATALOGS[locale];
@@ -32,8 +56,9 @@ export function createTranslator(locale: Locale): Translator {
     has: (key) => key in catalog,
     t: (key, params) => {
       const text = catalog[key];
-      return text === undefined ? `[${key}]` : fill(text, params);
+      return text === undefined ? `[${key}]` : fill(key, text, params);
     },
+    raw: (key) => catalog[key],
     plural: (key, count, params) => self.t(`${key}.${count === 1 ? 'one' : 'other'}`, { count, ...params }),
     number: (value, digits = 0) => new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value),
     money: (value) => `${value < 0 ? '−' : ''}$ ${numbers.format(Math.abs(Math.round(value)))}`,

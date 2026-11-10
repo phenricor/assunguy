@@ -174,7 +174,7 @@ export function resolveEvent(s: GameState, w: World, option: number): void {
   if (d.changesGame) { op.apply(s, w); if (ev.kind !== 'intro') { syncFamilies(s); updateRatings(s, w); } return; }
   // the prototype measured the colony before and after (re-rating it both times), then re-rated once more
   updateRatings(s, w); const before = snapshot(s, w); op.apply(s, w); syncFamilies(s); updateRatings(s, w);
-  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option, ...(d.params ? { params: d.params } : {}), change: change(before, snapshot(s, w)) });
+  s.log.push({ t: s.market.t, kind: 'decision', event: eventKey(ev), option, ...(d.params || op.params ? { params: { ...d.params, ...op.params } } : {}), change: change(before, snapshot(s, w)) });
   updateRatings(s, w);
 }
 

@@ -90,13 +90,14 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
 }
 
 /** Resolves the queued events: the first option the colony can take. Returns how the game ended, if it did. */
-function events(s: GameState, w: World): 'victory' | 'end' | null {
+function events(s: GameState, w: World, o?: Observer): 'victory' | 'end' | null {
   let guard = 0;
   while (s.queue.length && guard++ < 30) {
     const ev = s.queue[0]!;
     if (ev.kind === 'end') return 'end';
     if (ev.kind === 'victory') return 'victory';
     const d = defineEvent(s, ev);
+    o?.event?.(d, s);
     resolveEvent(s, w, Math.max(0, d.options.findIndex((o) => !o.can || o.can(s))));
   }
   return null;
@@ -106,14 +107,17 @@ function events(s: GameState, w: World): 'victory' | 'end' | null {
  * greedy: takes the heaviest advice it can pay for, even when a heavier one is waiting for money.
  * patient: when the heaviest advice is blocked by cash, it saves for it instead of spending on the next one.
  */
-export interface BotOptions { seasons?: number; actionsPerSeason?: number; reserve?: number; policy?: 'greedy' | 'patient'; /** Keep the final state on the run. */ keep?: boolean }
+/** Sees what the game shows the player along the way: the advice, each event and each report (for text checks). */
+export interface Observer { advice?: (list: Advice[], s: GameState) => void; event?: (d: ReturnType<typeof defineEvent>, s: GameState) => void; report?: (r: SeasonReport, s: GameState) => void }
+export interface BotOptions { seasons?: number; actionsPerSeason?: number; reserve?: number; policy?: 'greedy' | 'patient'; /** Keep the final state on the run. */ keep?: boolean; observe?: Observer }
 /** Plays a new game from a seed. Deterministic: the same seed and options give the same run. */
 export function play(seed: number, o: BotOptions = {}): Run {
   const { s, w } = newGame(seed);
   const limit = o.seasons ?? 96, per = o.actionsPerSeason ?? 4, reserve = o.reserve ?? 0;
   const run: Run = { policy: o.policy ?? 'greedy', seed, seasons: [], milestones: [], ended: 'limit', missed: 0 };
-  let ended = events(s, w);
+  let ended = events(s, w, o.observe);
   for (let i = 0; i < limit && !ended; i++) {
+    if (o.observe?.advice) o.observe.advice(advise(s, w), s);
     const actions: string[] = [], tried = new Set<string>();
     for (let n = 0; n < per; n++) {
       const list = advise(s, w).filter((x: Advice) => x.action && !tried.has(JSON.stringify(x.action)) && x.action.kind !== 'screen' || (x.action?.kind === 'screen' && x.action.law));
@@ -132,7 +136,8 @@ export function play(seed: number, o: BotOptions = {}): Run {
     const r: SeasonReport = passSeason(s, w);
     if (s.milestone > before) run.milestones.push({ milestone: s.milestone, t: s.market.t, deadline: due });
     if (r.goal?.missed) run.missed += 1;
-    ended = events(s, w);
+    o.observe?.report?.(r, s);
+    ended = events(s, w, o.observe);
     const c = computeEconomy(s, w), target = MILESTONES[s.milestone + 1];
     run.seasons.push({
       t: s.market.t, level: s.level, milestone: s.milestone, deadlineLeft: target ? s.deadline - s.market.t : null, cash: Math.round(s.cash),

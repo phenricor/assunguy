@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BUILDING_IDS, GOOD_IDS, VEHICLE_IDS } from '@assunguy/data';
-import { catalogKeys, createTranslator } from '../src/index.js';
+import { catalogKeys, createTranslator, holes } from '../src/index.js';
 
 describe('locale catalogs', () => {
   it('Portuguese and English have exactly the same keys', () => {
@@ -22,8 +22,8 @@ describe('locale catalogs', () => {
   it('placeholders in both languages match', () => {
     const pt = createTranslator('pt-BR');
     const en = createTranslator('en');
-    const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
-    for (const key of catalogKeys('pt-BR')) expect(holes(en.t(key)), key).toBe(holes(pt.t(key)));
+    const set = (s?: string) => holes(s ?? '').sort().join(',');
+    for (const key of catalogKeys('pt-BR')) expect(set(en.raw(key)), key).toBe(set(pt.raw(key)));
   });
 
   it('display text avoids em dashes', () => {
@@ -31,6 +31,13 @@ describe('locale catalogs', () => {
       const tr = createTranslator(locale);
       for (const key of catalogKeys(locale)) expect(tr.t(key).includes('—'), `${locale} ${key}`).toBe(false);
     }
+  });
+
+  it('a placeholder with no value shows 0 for a number and an ellipsis for a name, never the braces', () => {
+    const tr = createTranslator('pt-BR');
+    expect(tr.t('event.immigrants.title')).toBe('Leva de 0 famílias');
+    expect(tr.t('event.immigrants.title', { n: 6 })).toBe('Leva de 6 famílias');
+    expect(tr.t('shock.demandDrop')).toBe('Procura por … caiu em Iguape');
   });
 
   it('formats money in each language', () => {

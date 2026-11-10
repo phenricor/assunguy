@@ -569,7 +569,7 @@ export function advise(s: GameState, w: World): Advice[] {
   const far = farLandPlan(s, w, c);
   if (far) {
     list = list.filter((y) => !(y.rule === 'noCollection' && y.params.land === far.land));
-    add({ rule: `farLand.${far.option}`, weight: workWeight(far.cost, far.gain), params: { land: far.land, fields: far.fields, lost: Math.round(far.lostOnFoot), cost: far.cost, gain: Math.round(far.gain) }, action: far.action, cost: far.cost });
+    add({ rule: `farLand.${far.option}`, weight: workWeight(far.cost, far.gain), params: { land: far.land, fields: far.fields, lost: Math.round(far.lostOnFoot), cost: far.cost, gain: Math.round(far.gain), ...(far.action.kind === 'collect' ? { building: far.action.building } : {}) }, action: far.action, cost: far.cost });
   }
   // the producer losing the most on the way, and what fixes it
   // only producers losing a real share, and not a field replanted in the last year (no churning back and forth)

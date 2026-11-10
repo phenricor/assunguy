@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@assunguy/data": "workspace:*",
+    "@assunguy/i18n": "workspace:*",
     "@assunguy/sim": "workspace:*"
   }
 }

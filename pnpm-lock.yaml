@@ -63,6 +63,9 @@ importers:
       '@assunguy/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@assunguy/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@assunguy/sim':
         specifier: workspace:*
         version: link:../../packages/sim

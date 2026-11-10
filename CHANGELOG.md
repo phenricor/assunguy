@@ -11,6 +11,16 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Fixed
+
+- A text never shows an empty placeholder such as "{n}" again: a missing count or amount shows 0 and a
+  missing name an ellipsis, and the game notes it in the console.
+- Events in the season report keep their numbers and names ("Leva de 6 famílias"), including what each
+  option chose.
+- The far-fields advice names the collection point it suggests.
+- Tests now check that every text fills all its placeholders: the interface's and the advisor's calls in the
+  code, every event, and everything the robot player sees over a few colonies.
+
 ## [1.0.0-beta.4] - 2026-11-10
 
 ### Fixed

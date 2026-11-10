@@ -1,5 +1,9 @@
 // The interface's words: the shared catalogs (pt-BR and en), plus how names inside parameters are written out.
-import { createTranslator, landName, districtName, type Locale, type Params, type Translator } from '@assunguy/i18n';
+import { createTranslator, landName, districtName, setMissingHandler, type Locale, type Params, type Translator } from '@assunguy/i18n';
+
+// a placeholder left empty shows a fallback (0 or an ellipsis); say which one, once, so it gets fixed
+const warned = new Set<string>();
+setMissingHandler((key, hole) => { const k = `${key}:${hole}`; if (!warned.has(k)) { warned.add(k); console.warn(`[i18n] ${key} has no value for {${hole}}`); } });
 import type { GameState, World, LotKey, LandId } from '@assunguy/sim';
 
 let tr: Translator = createTranslator(pickLocale());
@@ -44,7 +48,7 @@ export function nameOf(k: string, v: string | number, rest?: Record<string, stri
 export function fmtParams(p?: Record<string, string | number>): Params | undefined {
   if (!p) return p;
   const out: Params = {};
-  for (const [k, v] of Object.entries(p)) out[k] = nameOf(k, v, p);
+  for (const [k, v] of Object.entries(p)) if (v !== undefined && v !== null) out[k] = nameOf(k, v, p);
   return out;
 }
 

@@ -185,9 +185,9 @@ function openAsset(p: AssetReturn): void {
 /** "Contas da estação": the largest income and expense, how satisfaction moved and the year's change. */
 function seasonSummary(r: SeasonReport, list: SeasonReport[], i: number): string {
   const c = r.cash, L: string[] = [];
-  const ins = ([['report.grant', c.grant], ['report.taxes', c.taxes], ['report.instalments', r.instalments ?? 0], ['report.share', c.share], ['report.tariffs', c.tariffs ?? 0]] as [string, number][]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
-  const outs = ([['report.works', c.works], ['report.upkeep', c.upkeep], ['report.arrivals', c.arrivals], ['report.wages', c.wages], ['report.relief', c.relief], ['report.fleet', c.fleet], ['report.agent', c.agent], ['report.greatWorks', c.greatWorks]] as [string, number][]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
-  if (ins && outs) L.push(T('ui.report.biggest', { a: lower(T(`ui.${ins[0]}`)), x: fmt(ins[1]), b: lower(T(`ui.${outs[0]}`)), y: fmt(outs[1]) }));
+  const ins = ([['ui.report.grant', c.grant], ['ui.report.taxes', c.taxes], ['ui.report.instalments', r.instalments ?? 0], ['ui.report.share', c.share], ['ui.report.tariffs', c.tariffs ?? 0]] as [string, number][]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+  const outs = ([['ui.report.works', c.works], ['ui.report.upkeep', c.upkeep], ['ui.report.arrivals', c.arrivals], ['ui.report.wages', c.wages], ['ui.report.relief', c.relief], ['ui.report.fleet', c.fleet], ['ui.report.agent', c.agent], ['ui.report.greatWorks', c.greatWorks]] as [string, number][]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+  if (ins && outs) L.push(T('ui.report.biggest', { a: lower(T(ins[0])), x: fmt(ins[1]), b: lower(T(outs[0])), y: fmt(outs[1]) }));
   const ds = Math.round(r.satisfaction.after) - Math.round(r.satisfaction.before);
   if (ds) L.push(T(ds > 0 ? 'ui.report.satUp' : 'ui.report.satDown', { n: Math.abs(ds) }));
   const ago = list[i - 4];
