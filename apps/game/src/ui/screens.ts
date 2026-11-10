@@ -3,7 +3,7 @@
 import { GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, currentPrice, def, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
-  proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked,
+  proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
   type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
 import * as store from '../store';
@@ -172,8 +172,22 @@ export function openTransport(): void {
   if (R.gateways.length) body += K.section(T('ui.tr.gateways'), 'gateways') + K.cards(R.gateways.map((g) => card(g.key, T('ui.tr.gatewayLine', { n: fmt(g.capacity), v: Object.values(g.fleet).reduce((x, y) => x + (y ?? 0), 0) }), g.occupancy, g.occupancy >= 0.85 ? 'ruim' : '')));
   if (R.collections.length) body += K.section(T('ui.tr.collections'), 'collections') + K.cards(R.collections.map((g) => card(g.key, T('ui.tr.collectionLine', { n: fmt(g.capacity), v: Object.values(g.fleet).reduce((x, y) => x + (y ?? 0), 0) }), g.peak, g.peak >= 0.9 ? 'ruim' : '')));
   if (R.commerce.length) body += K.section(T('ui.tr.commerce')) + K.cards(R.commerce.filter((x) => x.type).map((x) => K.card({ title: T(`building.${x.type}`), sub: T('ui.tr.commerceLine', { n: fmt(x.in), f: fmt(x.families) }), right: x.linked ? T('ui.tr.linked') : T('ui.tr.noGatewayShort'), tone: x.linked ? 'bom' : 'ruim', attrs: `data-key="${x.key}"` })));
+  if (s.race) body = raceBlock(s) + body;
   const p = screen({ id: 'transport', title: T('ui.bar.transport'), sub: T('ui.tr.sub'), body, button: 'bTransp' });
   p.querySelectorAll<HTMLElement>('[data-key]').forEach((b) => { b.onclick = () => { const key = b.dataset.key as LotKey; closeScreen(); const [x, y] = key.split(',').map(Number) as [number, number]; api.vaiPara(x, y); hooks.openBuilding(key); }; });
+}
+
+/** The race in one block: each market's rival against our cheapest delivery, the next advance, decline. */
+function raceBlock(s: GameState): string {
+  const c = store.economy(), R = s.race!, comp = c.transport.competitiveness;
+  const cards = (['iguape', 'curitiba', 'paranagua', 'saoPaulo'] as const).map((d) => {
+    const costs = c.transport.gateways.filter((g) => g.capacity > 0).flatMap((g) => g.dests.filter((x) => x.d === d).map((x) => x.full));
+    const ours = costs.length ? Math.min(...costs) : null, cp = comp[d] ?? 0;
+    return K.card({ title: T(`ui.race.dest.${d}`), sub: `${T('ui.race.rival', { cost: num(rivalCost(s, d), 2) })}; ${ours === null ? T('ui.race.none') : T('ui.race.ours', { cost: num(ours, 2) })}`, right: ours === null ? '-' : `${Math.round(cp * 100)}%`, rightSub: T('ui.race.comp'), tone: ours === null ? '' : cp >= 1 ? 'bom' : cp < 0.8 ? 'ruim' : '' });
+  });
+  const nx = nextAdvance(s);
+  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning }))) : ''].join('');
+  return K.section(T('ui.race.title'), 'race') + K.cards(cards) + notes;
 }
 
 // ---- Nível: the next level, the next milestone and the path choices

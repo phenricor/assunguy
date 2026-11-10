@@ -22,11 +22,14 @@ generator, vendored unchanged; only the state they read comes from the new simul
 
 ## Status
 
-- [ ] extraction script and vendored renderer running with the adapter
-- [ ] interface: top bar, guide, build sheet, selection, lands, season report, events, toasts, confirms
-- [ ] screens: Colônia, Governo, Economia, Transporte, Nível, Conselheiro
-- [ ] layers: Satisfação, services, soil, resources, Escoamento, Bairros
-- [ ] menu, new game with names, saves (one per colony, yearly autosave, export, import)
-- [ ] pt-BR / en toggle (ui.* keys from tools/text/ui_text.py)
+- [x] extraction script and vendored renderer running with the adapter
+- [x] interface: top bar, guide, build sheet, selection, lands, season report, events, toasts, confirms
+- [x] screens: Colônia, Governo (Direção tabs), Economia, Transporte, Nível, Conselheiro
+- [x] layers: Satisfação, services, soil, resources, Escoamento, Bairros
+- [x] menu, new game with names, saves (IndexedDB, one per colony, 5 yearly autosaves, export, import)
+- [x] pt-BR / en toggle (ui.* keys from tools/text/ui_text.py)
+
+Testing: `apps/game` builds with `npx vite build`; Playwright flows live in the session scratchpad
+(serve `dist/`, click through the menu, a build, a season and every panel at 390 px).
 - [ ] late-game race in the sim and its screens
 - [ ] bot re-balance, single-file build, Playwright check at 390 px and desktop, publish

@@ -2,7 +2,7 @@
 // moving. Previews run the command on a copy of the state, so what they show is what the game will do.
 import { BUILDINGS, type BuildingId } from '@assunguy/data';
 import {
-  build, move, streets, measure, undoStreet, demolishStreet, canPlace, computeEconomy, rateHomes, reach, serviceRadius, connected,
+  build, move, streets, measure, rails, undoStreet, demolishStreet, canPlace, computeEconomy, rateHomes, reach, serviceRadius, connected,
   costOf, upkeepOf, def, soilOf, firstHarvest, allocate, streetLimit, streetsThisSeason, STREET_COST,
   type CommandResult, type GameState, type LotKey, type World,
 } from '@assunguy/sim';
@@ -16,12 +16,12 @@ import { ui, setMode, setPreview, select, cancel, refresh, keepOpen, focus } fro
 
 const ALL = Object.keys(BUILDINGS) as BuildingId[];
 const byCat = (c: string) => ALL.filter((t) => (BUILDINGS[t] as { category: string }).category === c);
-export const TABS: [string, (BuildingId | 'street')[]][] = [
+export const TABS: [string, (BuildingId | 'street' | 'rail')[]][] = [
   ['streets', ['street']],
   ['housing', byCat('housing')],
   ['services', byCat('services')],
   ['commerce', ['store', 'market']],
-  ['transport', ['tradingPost', 'landing', 'riverPort', 'waystation', 'steamPier', 'woodYard', 'railStop', 'trainStation']],
+  ['transport', ['tradingPost', 'landing', 'riverPort', 'waystation', 'steamPier', 'woodYard', 'trainStation', 'railStop', 'rail']],
   ['crops', byCat('crops')],
   ['livestock', byCat('livestock')],
   ['extraction', byCat('extraction')],
@@ -36,8 +36,9 @@ export function openBuildList(): void {
   const { s } = store.session();
   select(null); setMode({}); setPreview(null); keepOpen(null);
   const tabs = TABS.map(([id]) => [id, id === 'streets' ? T('ui.build.streets') : T(`category.${id}`)] as [string, string]);
-  const list = (TABS.find(([id]) => id === ui.category) ?? TABS[1]!)[1].filter((t) => t === 'street' || !late(t) || raceOn(s));
+  const list = (TABS.find(([id]) => id === ui.category) ?? TABS[1]!)[1].filter((t) => t === 'street' || (t === 'rail' ? raceOn(s) : !late(t) || raceOn(s)));
   const cards = list.map((t) => {
+    if (t === 'rail') return `<button type="button" data-t="rail"><i style="background:repeating-linear-gradient(90deg,#5A4330 0 3px,#B9AE98 3px 7px);clip-path:polygon(50% 26%,100% 60%,50% 94%,0 60%)"></i>${esc(T('ui.race.rail'))}<small>${esc(T('ui.race.railDesc'))}</small></button>`;
     if (t === 'street') return `<button type="button" data-t="street"><i style="background:#C9A26E;clip-path:polygon(50% 26%,100% 60%,50% 94%,0 60%)"></i>${esc(T('ui.build.street'))}<small>${esc(T('ui.build.streetDesc'))}</small></button>`;
     const locked = level(t) > s.level;
     const mini = api.miniatura(PT.building[t]) as string;
@@ -47,13 +48,14 @@ export function openBuildList(): void {
   const strip = sheet().querySelector('.abas') as HTMLElement;
   strip.scrollLeft = stripScroll;
   sheet().querySelectorAll<HTMLElement>('[data-cat]').forEach((b) => { b.onclick = () => { stripScroll = strip.scrollLeft; ui.category = b.dataset.cat as string; openBuildList(); }; });
-  sheet().querySelectorAll<HTMLElement>('[data-t]').forEach((b) => { b.onclick = () => chooseBuild(b.dataset.t as BuildingId | 'street'); });
+  sheet().querySelectorAll<HTMLElement>('[data-t]').forEach((b) => { b.onclick = () => chooseBuild(b.dataset.t as BuildingId | 'street' | 'rail'); });
 }
 
-export function chooseBuild(t: BuildingId | 'street'): void {
+export function chooseBuild(t: BuildingId | 'street' | 'rail'): void {
   select(null); setPreview(null);
   setMode({ build: t });
   if (t === 'street') { streetSheet(); return; }
+  if (t === 'rail') { first = null; sheetWith(T('ui.race.rail'), T('ui.race.railHow'), K.actions([{ id: 'fimR', kind: 'pri', text: T('ui.street.done') }])); $('fimR').onclick = () => { first = null; cancel(); }; return; }
   sheetWith(building(t), T('ui.build.pickLot'), '');
 }
 
@@ -149,6 +151,16 @@ export function streetTap(a: number, b: number): void {
   else { store.changed(); api.Sons.toca('obra'); hint(T('ui.street.opened', { n: r.opened, cost: fmt(r.opened * STREET_COST) }), 2600); }
   setMode({ build: 'street' });
   refresh(); streetSheet();
+}
+
+export function railTap(a: number, b: number): void {
+  if (!first) { first = [a, b]; setMode({ build: 'rail', target: [a, b] }); hint(T('ui.street.second'), 2600); return; }
+  const from = first; first = null;
+  if (from[0] !== a && from[1] !== b) { hint(T('ui.street.aligned'), 2600); return; }
+  const g = store.session(), r = rails(g.s, g.w, from, [a, b]);
+  if (!r.ok) hint(T(`error.${r.error}`), 2600);
+  else { store.changed(); api.Sons.toca('obra'); hint(T('ui.race.laid', { n: r.laid, cost: fmt(r.cost) }), 2600); }
+  setMode({ build: 'rail' }); refresh();
 }
 
 /** A street lot: undo it (money back) if opened this season, or demolish it. */

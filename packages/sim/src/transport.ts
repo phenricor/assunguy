@@ -2,6 +2,7 @@
 // commerce on foot, or to a collection point (landing, trading post) that hauls it for a tariff. Commerce
 // sells to families and sends the rest through the gateways (river port, waystation, pier) to the outside
 // markets, each paying what it pays. Everything here runs inside one economy computation.
+import { acceptance, competitivenessOf, railExits, rivalCost, TOLL, TRAIN_TRIP } from './race.js';
 import { BALANCE, TRANSPORT_ROLES, VEHICLES, WORLD, type BuildingId, type GoodId, type TransportRoleDef, type VehicleDef, type VehicleId } from '@assunguy/data';
 import { currentPrice, shockFactor } from './market.js';
 import { rapidsLimit } from './map.js';
@@ -42,6 +43,19 @@ interface Gateway { key: LotKey; type: BuildingId; mode: Mode }
 interface Producer { carry: number; carryTo: number; collections: number[]; land: LandId }
 export interface Geography { commerce: Commerce[]; collections: Collection[]; gateways: Gateway[]; producers: Record<LotKey, Producer> }
 
+/** A rail stop works when its rails lead to a train station. */
+function railStopLinked(s: GameState, key: LotKey): boolean {
+  const rails = s.race?.rails; if (!rails) return false;
+  const stations = new Set((Object.keys(s.map.buildings) as LotKey[]).filter((k) => s.map.buildings[k] === 'trainStation'));
+  const [a, b] = parseKey(key), seen = new Set<LotKey>(), queue = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([x, y]) => lotKey(a + x, b + y)).filter((q) => rails[q]);
+  queue.forEach((q) => seen.add(q));
+  while (queue.length) {
+    const q = queue.shift() as LotKey, [p, r] = parseKey(q);
+    for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) { const z = lotKey(p + x, r + y); if (stations.has(z)) return true; if (rails[z] && !seen.has(z)) { seen.add(z); queue.push(z); } }
+  }
+  return false;
+}
+
 /** Who covers whom. Depends only on buildings, streets and families. */
 export function geography(s: GameState, linked: Set<LotKey>): Geography {
   const keys = (Object.keys(s.map.buildings) as LotKey[]).filter((x) => linked.has(x));
@@ -50,7 +64,7 @@ export function geography(s: GameState, linked: Set<LotKey>): Geography {
     const t = s.map.buildings[key] as BuildingId, R = role(t);
     if (!R) continue;
     if (R.role === 'commerce') commerce.push({ key, type: t, reach: R.reach as number, linked: false, families: 0 });
-    else if (R.role === 'collection') { if (t !== 'railStop') cols.push({ key, type: t, mode: R.mode as Mode, reach: R.reach as number }); } // rail stops need the late-game rails
+    else if (R.role === 'collection') { if (t !== 'railStop' || railStopLinked(s, key)) cols.push({ key, type: t, mode: R.mode as Mode, reach: R.reach as number }); } // rail stops need rails to a station
     else gateways.push({ key, type: t, mode: R.mode as Mode });
   }
   if (!commerce.length) commerce.push({ key: lotKey(WORLD.startColumn, WORLD.startRow + 6), type: null, reach: 0, virtual: true, linked: false, families: 0 });
@@ -97,7 +111,14 @@ function destinationsOf(s: GameState, key: LotKey, road: boolean, rapids: number
   if (t === 'riverPort') return [{ d: 'iguape', trip: (TRAVEL.canoe as number) * (rapids >= 0 && parseKey(key)[0] <= rapids ? 1.3 : 1) }];
   if (t === 'steamPier') return [{ d: 'iguape', trip: TRAVEL.steamboat as number }];
   if (t === 'waystation') { const v = cargo > 0 && fleetSize(s, key) ? mean(['muleTrain', 'wagon']) : (TRAVEL.muleTrain as number); return [{ d: 'curitiba', trip: v * (road ? 0.65 : 1) }]; }
-  return []; // the train station belongs to the late-game race
+  if (t === 'trainStation') {
+    const ex = railExits(s, key), out: { d: DestinationId; trip: number }[] = [];
+    if (ex.south !== undefined) out.push({ d: 'curitiba', trip: TRAIN_TRIP.curitiba as number }, { d: 'paranagua', trip: (TRAIN_TRIP.paranagua as number) + (TOLL.south.paranagua as number) });
+    if (ex.east !== undefined) out.push({ d: 'paranagua', trip: (TRAIN_TRIP.paranagua as number) + (TOLL.east.paranagua as number) });
+    if (ex.north !== undefined) out.push({ d: 'saoPaulo', trip: (TRAIN_TRIP.saoPaulo as number) + (TOLL.north.saoPaulo as number) });
+    return out.filter((x, i) => out.findIndex((y) => y.d === x.d) === i);
+  }
+  return [];
 }
 
 interface Accumulators {
@@ -144,8 +165,13 @@ export function startTransport(s: GameState, w: World, e: Counts): TransportRun 
     const capacity = capKey(p.key), tariff = tariffOf(p.key, p.type, capacity), full = capacity > 0 ? fleetUpkeep(s, p.key) / capacity : 0;
     return { ...p, capacity, tariff, margin: marginOf(s, p.key), dests: destinationsOf(s, p.key, road, rapids).map((d) => ({ ...d, full: d.trip + full })) };
   });
-  // competitiveness against rivals only matters in the late-game race
-  const competitiveness = Object.fromEntries(DEST_IDS.map((d) => [d, 1])) as Record<DestinationId, number>;
+  // competitiveness against rivals only matters in the late-game race: the rival's cost over our cheapest
+  // full-gateway cost per arroba to that market, 0 where no gateway reaches it
+  const competitiveness = Object.fromEntries(DEST_IDS.map((d) => {
+    if (!s.race) return [d, 1];
+    const cs = gateways.filter((p) => p.capacity > 0).flatMap((p) => p.dests.filter((x) => x.d === d).map((x) => x.full));
+    return [d, cs.length ? competitivenessOf(rivalCost(s, d), Math.min(...cs)) : 0];
+  })) as Record<DestinationId, number>;
   // each building's share of its type's production
   const shares: Record<string, { key: LotKey; f: number }[]> = {}, depositSum: Record<string, number> = {};
   for (const key of Object.keys(e.factor) as LotKey[]) {
@@ -285,7 +311,7 @@ export function exportThroughGateways(TR: TransportRun, o: { s: GameState; avail
       const ws = ops.map((x) => Math.exp((K * x.v) / P0)), sw = ws.reduce((x, y) => x + y, 0);
       let out = 0;
       ops.forEach((x, n) => {
-        const load = Math.min((want * (ws[n] as number)) / sw, capLeft[x.i] as number);
+        const load = Math.min((want * (ws[n] as number)) / sw, capLeft[x.i] as number) * (s.race ? acceptance(TR.competitiveness[x.dd.d]) : 1);
         if (load <= 0) return;
         capLeft[x.i] = (capLeft[x.i] as number) - load; out += load;
         const ad = (yearByDest[x.dd.d] ??= {}); ad[g] = (ad[g] ?? 0) + load;

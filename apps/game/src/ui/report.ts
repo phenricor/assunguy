@@ -68,7 +68,7 @@ function openReportAt(i: number): void {
   }
   if (r.goal?.missed) notes.push(K.note(esc(T('ui.report.missed', { milestone: r.goal.missed })), 'ruim'));
   if (r.province) notes.push(K.note(esc([T(`ui.province.factor.${r.province.factor > 1 ? 'up' : r.province.factor < 1 ? 'down' : 'same'}`), ...r.province.reasons.map((x) => T(`ui.province.${x.reason}`, x.params))].join(' ')), r.province.factor < 1 ? 'ruim' : r.province.factor > 1 ? '' : 'neutra'));
-  for (const n of r.news) notes.push(K.note(esc(T(n.key, n.params)), 'neutra'));
+  for (const n of r.news) notes.push(K.note(esc(T(n.key, { advisor: g.meta.advisor, colony: g.meta.colony, ...n.params })), 'neutra'));
   const inv = Object.values(r.invested.homes).reduce((x, y) => x + (y ?? 0), 0);
   if (inv || r.invested.fields) notes.push(K.note(esc(T('ui.report.invested', { homes: inv, fields: r.invested.fields })), 'neutra'));
   const satD = prev ? r.satisfaction.after - prev.satisfaction.after : r.satisfaction.after - r.satisfaction.before;

@@ -6,6 +6,7 @@ import type { MapState } from './map.js';
 import type { MarketState } from './market.js';
 import type { LandId, LotKey } from './world.js';
 import type { DilemmaId, LongCrisisId, QueuedEvent } from './events.js';
+import type { RaceState } from './race.js';
 
 /** A home slot: the house's anchor lot and the family's place in it. */
 export type FamilyId = `${LotKey}#${number}`;
@@ -156,8 +157,8 @@ export interface GameState {
   series?: SeriesPoint[];
   /** Districts remembered between seasons (from the village on). */
   districts?: DistrictMemory;
-  /** The late-game transport race; not ported yet. */
-  race: null;
+  /** The late-game transport race, from the season after the colony becomes a Town. */
+  race: RaceState | null;
 }
 
 export const upgradeOf = (s: Pick<GameState, 'upgrades'>, key: LotKey): number => s.upgrades[key] ?? 0;

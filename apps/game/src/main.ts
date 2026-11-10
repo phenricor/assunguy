@@ -9,7 +9,7 @@ import * as store from './store';
 import { setErrorSink } from './store';
 import { hint } from './ui/kit';
 import { bar, nextEvent, refresh, wire, cancel } from './ui/app';
-import { chooseBuild, openBuildList, previewAt, previewMove, streetTap, openStreet } from './ui/build';
+import { chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet } from './ui/build';
 import { openBuilding, openLand } from './ui/select';
 import { openReport, openReports } from './ui/report';
 import { openAdvisor, runAction } from './ui/advisor';
@@ -28,7 +28,7 @@ hooks.CONS = () => (store.hasGame() ? store.session().meta.advisor : 'Inácio');
 hooks.NOMEC = () => (store.hasGame() ? store.session().meta.colony : 'Assunguy');
 hooks.menuAberto = () => menuOpen();
 Object.assign(hooks, {
-  chooseBuild, openBuildList, previewAt, previewMove, streetTap, openStreet, openBuilding, openLand,
+  chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet, openBuilding, openLand,
   defineEvent: (ev: QueuedEvent) => defineEvent(store.session().s, ev),
   openReport, openReports, openAdvisor, runAction, openColony, openGovernment, openTransport, openLevel, openDistrict,
   openLayers, abreCamadas: openLayers, openMenu, openSettings, abreMenu: openSettings,

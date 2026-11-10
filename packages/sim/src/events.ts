@@ -25,7 +25,8 @@ export type QueuedEvent =
   | { kind: 'pathChoice'; level: number }
   | { kind: 'intro' } | { kind: 'decree'; milestone: string } | { kind: 'victory' }
   | { kind: 'inspector'; milestone: string } | { kind: 'end'; milestone: string }
-  | { kind: 'requisition' };
+  | { kind: 'requisition' }
+  | { kind: 'raceIntro' } | { kind: 'raceLost' } | { kind: 'raceWon' };
 
 /** The colony-wide effects an option can have; the prototype's `soma`. */
 export interface Effects { cash?: number; influence?: number; satisfaction?: number; seasons?: number; reason?: string; extraDemand?: number; lose?: number; receive?: number; origin?: string; training?: number }
@@ -151,6 +152,9 @@ export function defineEvent(s: GameState, ev: QueuedEvent): Defined {
       { apply: (s2) => { s2.intervention = true; s2.extraDemand += 2; s2.deadline = s2.market.t + 8; s2.warned = false; applyEffects(s2, { influence: -3, satisfaction: -5, seasons: 4, reason: 'mood.inspector' }); } },
       { can: (s2) => s2.influence >= 6 && s2.cash >= 500, apply: (s2) => { s2.extraDemand += 2; s2.deadline = s2.market.t + 8; s2.warned = false; applyEffects(s2, { influence: -6, cash: -500 }); } }] };
     case 'end': return { id: 'end', params: { milestone: ev.milestone }, options: [{ apply: () => {} }, { apply: () => {} }], changesGame: true };
+    case 'raceIntro': return { id: 'raceIntro', options: [{ apply: () => {} }] };
+    case 'raceLost': return { id: 'raceLost', options: [{ apply: () => {} }, { apply: () => {} }], changesGame: true };
+    case 'raceWon': return { id: 'raceWon', options: [{ apply: () => {} }] };
     case 'requisition': return { id: 'requisition', options: [
       { can: pay(1500), apply: (s2) => applyEffects(s2, { cash: -1500 }) },
       { apply: (s2) => { const all = Object.values(s2.families); for (const f of [...new Set([...all.filter((x) => !x.trade), ...all])].slice(0, 6)) delete s2.families[f.id]; } },

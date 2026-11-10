@@ -10,13 +10,13 @@ import { $, K, X_SVG, esc, fmt, hint, popup, closePopup, sheet, sheetWith, setSh
 
 // ---- what the player is doing on the map
 
-export interface Mode { build?: BuildingId | 'street'; move?: LotKey; target?: [number, number]; error?: string; undo?: boolean }
+export interface Mode { build?: BuildingId | 'street' | 'rail'; move?: LotKey; target?: [number, number]; error?: string; undo?: boolean }
 export const ui = { mode: {} as Mode, selection: null as LotKey | null, category: 'housing', screenOpen: false };
 
 /** Hands the renderer the mode in its own ids. */
 export function setMode(m: Mode): void {
   ui.mode = m;
-  const tipo = m.build === 'street' ? 'rua' : m.build ? PT.building[m.build] : undefined;
+  const tipo = m.build === 'street' ? 'rua' : m.build === 'rail' ? 'trilho' : m.build ? PT.building[m.build] : undefined;
   vars.modo = { ...(tipo ? { tipo } : {}), ...(m.move ? { mover: m.move } : {}), ...(m.target ? { alvo: m.target } : {}), ...(m.error ? { erro: m.error } : {}) };
   guide();
 }
@@ -126,6 +126,7 @@ export function tap(px: number, py: number): void {
   vars.camAlvo = null;
   const [a, b] = api.loteDaTela(px, py) as [number, number];
   if (ui.mode.build === 'street') { hooks.streetTap(a, b); return; }
+  if (ui.mode.build === 'rail') { hooks.railTap(a, b); return; }
   if (ui.mode.build) { hooks.previewAt(ui.mode.build, a, b); return; }
   if (ui.mode.move) { hooks.previewMove(ui.mode.move, a, b); return; }
   const district = api.bairroNaTela(px, py);
@@ -177,6 +178,7 @@ export function nextEvent(): void {
     store.choose(option); box.hidden = true;
     if (kind === 'victory' && option === 1) { hooks.openMenu(); return; }
     if (kind === 'end') { hooks.openMenu(); return; }
+    if (kind === 'raceLost') { if (option === 0) void store.restartRace().then((ok) => { if (ok) hooks.enter(); else hooks.openMenu(); }); else hooks.openMenu(); return; }
     refresh(); if (reopen) reopen(); nextEvent();
   }; });
 }

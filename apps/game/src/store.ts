@@ -44,12 +44,15 @@ export function run(fn: (s: GameState, w: World) => CommandResult, why = 'comman
 // ---- seasons and events
 
 export function nextSeason(): SeasonReport {
-  const g = session();
+  const g = session(), racing = !!g.s.race;
   const r = passSeason(g.s, g.w);
   changed('season');
   void save(g.s.market.t % 4 === 0);
+  // the day the race starts is kept, so a colony that withers can start the race again
+  if (!racing && g.s.race) void tx('autos', 'readwrite', (o) => o.put({ k: `${g.meta.id}|race`, col: `${g.meta.id}|race`, t: g.s.market.t, saved: Date.now(), meta: { ...g.meta }, save: text() }));
   return r;
 }
+export const restartRace = async (): Promise<boolean> => loadAutosave(`${session().meta.id}|race`);
 export function choose(option: number): void {
   const g = session();
   resolveEvent(g.s, g.w, option);

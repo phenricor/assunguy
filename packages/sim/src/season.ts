@@ -11,6 +11,7 @@ import { taxEffect, updateRatings } from './ratings.js';
 import { settle, storedMean } from './settle.js';
 import { nameId, rememberDistricts } from './districts.js';
 import { collectInstalments } from './installments.js';
+import { advanceRace, startRace } from './race.js';
 import { change, goodReturns, seasonDecisions, seriesPoint, snapshot, type Change, type Decisions, type GoodReturn } from './report.js';
 import { hasChoice, hasLaw, type GameState } from './state.js';
 import { landOf, parseKey, type LotKey, type World } from './world.js';
@@ -113,6 +114,8 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   advanceProblems(s, w, ratings, news);
   advanceLongCrises(s, news);
   const tr = advanceTransport(s, computeEconomy(s, w));
+  if (s.milestone >= 3 && !s.race) startRace(s, news);
+  else if (s.race) advanceRace(s, computeEconomy(s, w), news);
   if (tr.firewoodShortageStarted) news.push({ key: 'news.firewoodShortage' });
   for (const k of tr.fullCollections) news.push({ key: 'news.collectionFull', params: { building: s.map.buildings[k] as string } });
   // caves on our lands: settlers explore one now and then, and the province hears of it

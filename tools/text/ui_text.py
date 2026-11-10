@@ -231,7 +231,7 @@ U = {
 }
 
 def main():
-    keys = set(U)
+    keys = set(U) | {k[3:] for k in json.loads((LOC / 'pt-BR.json').read_text(encoding='utf-8')) if k.startswith('ui.')}
     src = ROOT / 'apps' / 'game' / 'src'
     used = set()
     for f in src.rglob('*.ts'):
@@ -241,7 +241,6 @@ def main():
     for i, name in enumerate(['pt-BR', 'en']):
         p = LOC / f'{name}.json'
         data = json.loads(p.read_text(encoding='utf-8'))
-        data = {k: v for k, v in data.items() if not k.startswith('ui.')}
         for k, v in U.items(): data['ui.' + k] = v[i]
         p.write_text(json.dumps(dict(sorted(data.items())), ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     print(f'{len(U)} ui keys written')

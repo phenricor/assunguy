@@ -15,6 +15,8 @@ import { updateRatings } from './ratings.js';
 import { measuredChange, settle } from './settle.js';
 import { change, snapshot } from './report.js';
 import { AGENT_COST } from './season.js';
+import { opened, raceBuilding, railBlocked, railCost } from './race.js';
+import { occupancy } from './map.js';
 import { upgradeOf, type FamilyId, type GameState, type TaxId, type TaxLaw } from './state.js';
 import { fleetOf, fleetSize, fleetSlots } from './transport.js';
 import { lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
@@ -29,7 +31,8 @@ const fail = (error: CommandError): CommandResult => ({ ok: false, error });
 
 export const STREET_COST = 5;
 export const EXPEDITION_COST = 60;
-const unlocked = (s: GameState, t: BuildingId) => !def(t).lateGame && (def(t).minLevel || 1) <= (s.level || 1);
+const unlocked = (s: GameState, t: BuildingId) => (!def(t).lateGame || raceBuilding(s, t)) && (def(t).minLevel || 1) <= (s.level || 1);
+const onRails = (s: GameState, cells: [number, number][]) => !!s.race && cells.some(([x, y]) => s.race!.rails[lotKey(x, y)]);
 const roleOf = (t: BuildingId) => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
 const log = (s: GameState, kind: string, extra: Record<string, unknown> = {}) => { s.log.push({ t: s.market.t, kind, ...extra }); if (s.log.length > 600) s.log.splice(0, 100); };
 
@@ -43,6 +46,7 @@ export function build(s: GameState, w: World, type: BuildingId, a: number, b: nu
   if (!unlocked(s, type)) return fail('locked');
   const er = canPlace(s.map, w, type, a, b);
   if (er) return fail(er);
+  if (onRails(s, cellsOf(a, b, type))) return fail('buildingHere');
   const cost = costOf(type, s.milestone);
   if (s.cash < cost) return fail('noCash');
   const key = lotKey(a, b);
@@ -170,6 +174,27 @@ export function demolishStreet(s: GameState, w: World, key: LotKey): CommandResu
   return ok();
 }
 
+/** Lays rails in a straight line, lot by lot, while the cash and the ground allow (the race only). */
+export function rails(s: GameState, w: World, from: [number, number], to: [number, number]): CommandResult & { laid: number; cost: number } {
+  if (!s.race) return { ...fail('locked'), laid: 0, cost: 0 };
+  const [x0, y0] = from, [x1, y1] = to;
+  if (x0 !== x1 && y0 !== y1) return { ...fail('notHere'), laid: 0, cost: 0 };
+  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)), occ = occupancy(s.map);
+  let laid = 0, spent = 0, error: CommandError | null = null;
+  for (let i = 0; i <= steps; i++) {
+    const p = x0 + Math.sign(x1 - x0) * i, q = y0 + Math.sign(y1 - y0) * i, key = lotKey(p, q);
+    if (s.race.rails[key]) continue;
+    const why = railBlocked(s, w, p, q, occ);
+    if (why) { error = why === 'unknownLand' ? 'unknownLand' : 'buildingHere'; break; }
+    const c = railCost(s, w, p, q);
+    if (s.cash < c) { error = 'noCash'; break; }
+    s.race.rails[key] = true; delete s.map.trees[key];
+    s.cash -= c; s.buildCosts += c; spent += c; laid++;
+  }
+  if (laid) { log(s, 'built', { building: 'rail', n: laid, cost: spent }); settle(s, w); }
+  return error && !laid ? { ...fail(error), laid, cost: spent } : { ok: true, laid, cost: spent };
+}
+
 const neighbourOfOurs = (s: GameState, id: LandId) => { const [c, l] = parseKey(id); return ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).some(([x, y]) => s.map.lands[`${c + x},${l + y}` as LandId] === 'ours'); };
 
 /** An expedition maps a neighbouring land in the same season (the review dropped the wait). */
@@ -204,7 +229,7 @@ export function annex(s: GameState, w: World, id: LandId): CommandResult {
 export function buyVehicle(s: GameState, w: World, key: LotKey, v: VehicleId): CommandResult {
   const t = s.map.buildings[key] as BuildingId | undefined, V = VEHICLES[v] as VehicleDef | undefined;
   if (!t || !V || !(roleOf(t)?.vehicles ?? []).includes(v)) return fail('wrongVehicle');
-  if (V.lateGame || (s.level || 1) < (V.minLevel || 1)) return fail('locked');
+  if ((V.lateGame && !(s.race && (v === 'railcar' || v === 'lightTrain' || opened(s, v)))) || (s.level || 1) < (V.minLevel || 1)) return fail('locked');
   if (fleetSize(s, key) >= fleetSlots(s, key)) return fail('noSlot');
   if (s.cash < V.price) return fail('noCash');
   s.cash -= V.price; s.buildCosts += V.price;

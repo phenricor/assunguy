@@ -4,7 +4,7 @@
 // so the static map (river, lands, relief, deposits) is the one the simulation also generated.
 import { BUILDINGS, type BuildingId } from '@assunguy/data';
 import {
-  computeEconomy, connected, reach, serviceOf, serviceRadius,
+  computeEconomy, connected, reach, serviceOf, serviceRadius, railExits, railPath,
   type GameState, type LotKey, type Ratings, type World,
 } from '@assunguy/sim';
 import idMap from '../../../legacy/id-map.json';
@@ -50,10 +50,29 @@ export function protoState(s: GameState, w: World): Record<string, unknown> {
     plantio: s.firstHarvest ? { ...s.firstHarvest } : null,
     escolhas: remap(s.choices as Record<string, string>, PT.choice),
     veic: Object.fromEntries(Object.entries(s.fleet).map(([k, f]) => [k, Object.fromEntries(Object.entries(f).map(([v, n]) => [PT.vehicle[v] ?? v, n]))])),
-    nucleos: [], trilhos: {}, corrida: null, frenteIds: { ...s.reliefWorkers }, frenteFrete: s.freightRelief, frenteCusto: s.reliefCost,
-    efeitos: [], fila: [], leis: {}, leisC: {}, w: undefined, _w: w,
+    nucleos: [], trilhos: Object.fromEntries(Object.keys(s.race?.rails ?? {}).map((k) => [k, 1])), corrida: raceView(s), frenteIds: { ...s.reliefWorkers }, frenteFrete: s.freightRelief, frenteCusto: s.reliefCost,
+    efeitos: [], fila: [], leis: {}, leisC: {}, w: undefined, _w: w, _s: s,
   };
 }
+
+const EDGE: Record<string, string> = { south: 'sul', east: 'leste', north: 'norte' };
+/** The race as the renderer animates it: one train line per station and edge its rails reach. */
+function raceView(s: GameState): Record<string, unknown> | null {
+  if (!s.race) return null;
+  const linhas: Record<string, unknown>[] = [];
+  for (const [k, t] of Object.entries(s.map.buildings)) {
+    if (t !== 'trainStation') continue;
+    const ex = railExits(s, k as LotKey), v = Object.values(s.fleet[k as LotKey] ?? {}).reduce((x, n) => x + (n ?? 0), 0);
+    if (!v) continue;
+    for (const e of Object.keys(ex)) linhas.push({ id: `${k}|${e}`, est: k, modo: 'trem', dest: e === 'north' ? 'saopaulo' : e === 'east' ? 'paranagua' : 'curitiba', saida: EDGE[e], v: Array.from({ length: v }, () => 1) });
+  }
+  return { t0: s.race.t0, linhas };
+}
+hooks.caminhoTrilho = (_m: unknown, est: LotKey, edge: string) => {
+  const s = (vars.M as { _s?: GameState })._s;
+  const e = Object.entries(EDGE).find(([, pt]) => pt === edge)?.[0] as 'south' | 'east' | 'north' | undefined;
+  return s && e ? railPath(s, est, e) : null;
+};
 
 /** The prototype's `C`: which lots reach the street network, each service's reach, and the home ratings. */
 export function protoCalc(s: GameState, r: Ratings): Record<string, unknown> {

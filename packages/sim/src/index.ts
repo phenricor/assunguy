@@ -21,3 +21,4 @@ export * from './game.js';
 export * from './districts.js';
 export * from './report.js';
 export * from './installments.js';
+export * from './race.js';
