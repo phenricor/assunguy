@@ -8,6 +8,7 @@ import { hooks, api, vars, show } from './view';
 import * as store from './store';
 import { setErrorSink } from './store';
 import { hint } from './ui/kit';
+import { T, has, onLocale } from './i18n';
 import { bar, nextEvent, refresh, wire, cancel } from './ui/app';
 import { chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet } from './ui/build';
 import { openBuilding, openLand } from './ui/select';
@@ -27,6 +28,13 @@ hooks.SHEETS = SHEETS;
 hooks.CONS = () => (store.hasGame() ? store.session().meta.advisor : 'Inácio');
 hooks.NOMEC = () => (store.hasGame() ? store.session().meta.colony : 'Assunguy');
 hooks.menuAberto = () => menuOpen();
+hooks.saying = (i: number, pt: string) => (has(`ui.map.saying.${i}`) ? T(`ui.map.saying.${i}`) : pt);
+hooks.word = (k: string, pt: string) => (has(`ui.map.${k}`) ? T(`ui.map.${k}`) : pt);
+/** After a language change: redraw what carries words (the map's cartouche and sayings, the bars). */
+hooks.relabel = () => {
+  vars.cartelaTitulo = null; vars.escalaLegua = null; api.limpaPedacos?.(); vars.chaoSujo = true;
+  if (store.hasGame()) { refresh(); cancel(); }
+};
 Object.assign(hooks, {
   chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet, openBuilding, openLand,
   defineEvent: (ev: QueuedEvent) => defineEvent(store.session().s, ev),
@@ -35,6 +43,7 @@ Object.assign(hooks, {
 });
 setErrorSink((msg) => { api.Sons.toca('erro', 300); hint(msg, 2600); });
 wire();
+onLocale(() => hooks.relabel());
 
 /** Puts a session on the map: view, camera, people, and the first event. */
 export function enter(): void {

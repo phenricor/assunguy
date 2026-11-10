@@ -29,7 +29,23 @@ generator, vendored unchanged; only the state they read comes from the new simul
 - [x] menu, new game with names, saves (IndexedDB, one per colony, 5 yearly autosaves, export, import)
 - [x] pt-BR / en toggle (ui.* keys from tools/text/ui_text.py)
 
-Testing: `apps/game` builds with `npx vite build`; Playwright flows live in the session scratchpad
-(serve `dist/`, click through the menu, a build, a season and every panel at 390 px).
-- [ ] late-game race in the sim and its screens
-- [ ] bot re-balance, single-file build, Playwright check at 390 px and desktop, publish
+- [x] late-game race: `sim/race.ts` (rivals, competitiveness, rails, decline and victory), the Transport
+      panel's race block, rail building, train animation, restart from the day the race began
+- [x] review texts: building descriptions without family counts, the store without the land rule
+      (`tools/text/review_text.py`, run after the legacy import)
+
+Testing: `apps/game` builds with `npx vite build` into one HTML file; Playwright flows (served `dist/`)
+click through the menu, a build, a season, every panel, the layers and the race, at 390 px and 1280 px.
+
+## Texts
+
+- `tools/text/ui_text.py`: every `ui.*` key, both languages; warns about keys the code uses but lacks.
+- `tools/text/race_text.py`: the race's news, chronicle, events, advice and panel.
+- Words the vendored renderer draws (the map's cartouche and sayings) go through `hooks.word` and
+  `hooks.saying`, replaced at extraction (`render.json` "replace").
+
+## Not carried over from the prototype
+
+- Loans in the race (the prototype's credit screen), the network lines editor and the old Rede screens:
+  the race runs on the reviewed transport model, with stations, rails and vehicles at gateways.
+- Núcleos (satellite settlements) and the prototype's cloud save.

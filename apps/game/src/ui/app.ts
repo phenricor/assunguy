@@ -47,7 +47,20 @@ export function focus(a: number, b: number): void {
 // ---- the top bar
 
 const dateText = (s: GameState) => T('ui.date', { year: yearOf(s.market.t), season: T(`season.${seasonOf(s.market.t)}`) });
+/** The words in the prototype's static markup, in the current language. */
+function labelStatic(): void {
+  const textAfter = (el: Element | null, txt: string) => { if (!el) return; let n = el.nextSibling; while (n && n.nodeType !== 3) n = n.nextSibling; if (n) n.textContent = txt; };
+  textAfter($('sNivel'), T('ui.level.level'));
+  const sat = document.querySelector('#hud .sat small'); if (sat) sat.textContent = T('ui.satisfaction');
+  textAfter($('sFam'), ` ${T('ui.top.families')}`);
+  textAfter($('sInf'), ` ${T('ui.top.influence')}`);
+  ($('bObras').lastElementChild as HTMLElement).textContent = T('ui.build.title');
+  $('bObras').setAttribute('aria-label', T('ui.build.title'));
+  for (const [id, key] of [['zM', 'ui.top.zoomIn'], ['zN', 'ui.top.zoomOut'], ['menu', 'ui.settings.title'], ['btSat', 'ui.layers.title'], ['bNivel', 'ui.level.title'], ['bData', 'ui.report.title']] as const) $(id).setAttribute('aria-label', T(key));
+}
+
 export function top(): void {
+  labelStatic();
   const { s } = store.session(), r = store.ratings();
   $('numero').textContent = String(Math.round(r.mean));
   $('sNivel').textContent = String(s.level);

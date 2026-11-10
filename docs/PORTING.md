@@ -32,8 +32,8 @@ playtester's saves in `legacy/saves`.
 
 ## Next
 
-The simulation is ported. What is left is the late-game transport race (`corrida`), kept for later as
-planned, and the new interface (`packages/ui`) built on these modules and the catalog decisions.
+The simulation is ported, the late-game race included (`sim/race.ts`, on the reviewed transport model).
+The game itself is `apps/game`: see `docs/GAME.md`.
 
 ## Re-rating the live colony
 

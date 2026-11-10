@@ -8,6 +8,7 @@
 // advice the colony cannot pay for is blocked, the province's extra funds and time are offered here, a
 // far land gets a measured package (store + waystation + mule trains, or a collection point) instead of a
 // lone store, and each producer's outlet feeds a "what fixes it" advice.
+import { railExits } from './race.js';
 import {
   BUILDINGS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LEVELS, MILESTONES, TRANSPORT_ROLES, VEHICLES,
   type BuildingId, type GoodId, type GreatWorkId, type MilestoneDef, type TransportRoleDef, type VehicleDef, type VehicleId,
@@ -21,7 +22,7 @@ import { connected, mainNetwork } from './network.js';
 import { canPlace, canPlaceStreet } from './placement.js';
 import { goalPace, greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
 import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
-import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw } from './state.js';
+import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw, type DestinationId } from './state.js';
 import { collectionState, distance, fleetOf, fleetSize, gatewayTight, geography } from './transport.js';
 import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
 
@@ -596,6 +597,16 @@ export function advise(s: GameState, w: World): Advice[] {
     add({ rule: 'province.extraTime', weight: 99, params: { influence: 6, seasons: 4, milestone: target.id }, action: { kind: 'province', request: 'extraTime' }, cost: 0 });
   if (s.influence >= 4 && list.some((y) => y.rule === 'cash.negative' || y.rule === 'cash.runningOut'))
     add({ rule: 'province.extraFunds', weight: 89, params: { influence: 4, cash: 400, demand: ((s.extraDemand || 0) + 1) * 5 }, action: { kind: 'province', request: 'extraFunds' }, cost: 0 });
+  // the race: a train station first, then the markets falling behind the rivals
+  if (s.race) {
+    const stations = (Object.keys(s.map.buildings) as LotKey[]).filter((k) => s.map.buildings[k] === 'trainStation');
+    const comp = c.transport.competitiveness, vol = c.transport.destVolume;
+    if (!stations.length) add({ rule: 'race.station', weight: 78, params: { cost: costOf('trainStation', s.milestone) }, action: { kind: 'build', building: 'trainStation' }, cost: costOf('trainStation', s.milestone) });
+    else if (stations.every((k) => !Object.keys(railExits(s, k)).length)) add({ rule: 'race.rails', weight: 76, params: {}, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
+    const behind = (Object.keys(comp) as DestinationId[]).filter((d) => (vol[d] ?? 0) > 0 && comp[d] < 0.8).sort((a, b) => comp[a] - comp[b])[0];
+    if (behind) add({ rule: 'race.behind', weight: 82, params: { destination: behind, share: Math.round(comp[behind] * 100) }, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
+    if (s.race.decline) add({ rule: 'race.decline', weight: 98, params: { n: s.race.decline.left }, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
+  }
   for (const y of list) { if (!y.cost) y.cost = actionCost(s, y.action); y.blocked = y.cost > Math.max(0, s.cash); }
   return list.sort((p, q) => q.weight - p.weight);
 }

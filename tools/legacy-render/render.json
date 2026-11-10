@@ -111,6 +111,22 @@
   [
    "letreiro(px, py + 22, `${BENS[bem].nome}: ${Math.round(f * 100)}%`, 17);",
    "letreiro(px, py + 22, `${hook('goodName')(bem)}: ${Math.round(f * 100)}%`, 17);"
+  ],
+  [
+   "const DIZERES = [",
+   "const DIZERES_PT = ["
+  ],
+  [
+   "'Aqui ningu\u00e9m mediu'];",
+   "'Aqui ningu\u00e9m mediu'];\nconst DIZERES = new Proxy(DIZERES_PT, { get: (t, p) => (typeof p === 'string' && /^\\d+$/.test(p) && hooks.saying ? hooks.saying(+p, t[p]) : t[p]) });"
+  ],
+  [
+   "'Prov\u00edncia do Paran\u00e1'",
+   "(hooks.word ? hooks.word('province', 'Prov\u00edncia do Paran\u00e1') : 'Prov\u00edncia do Paran\u00e1')"
+  ],
+  [
+   "'l\u00e9guas'",
+   "(hooks.word ? hooks.word('leagues', 'l\u00e9guas') : 'l\u00e9guas')"
   ]
  ],
  "declare": {

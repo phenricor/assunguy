@@ -22,7 +22,7 @@ U = {
   'districtLabel': ('{district}', '{district}'),
   'kit.more': ('Saiba mais', 'Learn more'), 'kit.what': ('O que é', 'What it is'), 'kit.improve': ('O que resolve', 'What solves it'),
   # top bar and first steps
-  'top.idle': ('desempregadas', 'out of work'), 'top.deadline': ('{n} estações para {milestone}', '{n} seasons to {milestone}'), 'top.noDeadline': ('Sem prazo', 'No deadline'),
+  'top.idle': ('desempregadas', 'out of work'), 'top.families': ('famílias', 'families'), 'top.influence': ('influência', 'influence'), 'top.zoomIn': ('Aproximar', 'Zoom in'), 'top.zoomOut': ('Afastar', 'Zoom out'), 'top.deadline': ('{n} estações para {milestone}', '{n} seasons to {milestone}'), 'top.noDeadline': ('Sem prazo', 'No deadline'),
   'guide.count': ('Primeiros passos {n} de {of}', 'First steps {n} of {of}'),
   'guide.jobs.title': ('Dê trabalho a quem está parado', 'Give work to the idle'), 'guide.jobs.body': ('Construa uma plantação. Feijão colhe no verão.', 'Build a field. Beans are harvested in summer.'),
   'guide.homes.title': ('Abra espaço para mais gente', 'Make room for more people'), 'guide.homes.body': ('Leva só vem para casa vazia. Construa ranchos.', 'Newcomers only come to empty homes. Build huts.'),
@@ -197,6 +197,11 @@ U = {
   'info.layer_health.title': ('Botica', 'Apothecary'), 'info.layer_health.body': ('Construa uma botica perto das casas sem saúde.', 'Build an apothecary near the homes without health care.'),
   'info.layer_commerce.title': ('Comércio', 'Commerce'), 'info.layer_commerce.body': ('Um armazém ou um mercado perto das casas leva o comércio até elas.', 'A store or a market near the homes brings commerce to them.'),
   'info.layer_culture.title': ('Cultura', 'Culture'), 'info.layer_culture.body': ('O teatro leva cultura às casas em volta.', 'The theatre brings culture to the homes around it.'),
+  # words drawn on the map
+  'map.province': ('Província do Paraná', 'Province of Paraná'), 'map.leagues': ('léguas', 'leagues'),
+  'map.saying.0': ('Sertão por explorar', 'Backlands to explore'), 'map.saying.1': ('Sem caminho conhecido', 'No known path'), 'map.saying.2': ('Campos e matas sem mapa', 'Unmapped fields and forests'),
+  'map.saying.3': ('Pinhais, segundo os tropeiros', 'Pine woods, say the muleteers'), 'map.saying.4': ('Serras altas, dizem', 'High hills, they say'), 'map.saying.5': ('Rios sem nome', 'Nameless rivers'),
+  'map.saying.6': ('Terras por medir', 'Lands not yet measured'), 'map.saying.7': ('Aqui ninguém mediu', 'Nobody measured here'),
   # menu and settings
   'menu.tagline': ('Uma colônia no Paraná do século XIX', 'A colony in 19th-century Paraná'), 'menu.continue': ('Continuar', 'Continue'),
   'menu.saveLine': ('{name}, ano {year}, {n} famílias', '{name}, year {year}, {n} families'),

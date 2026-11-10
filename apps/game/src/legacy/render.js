@@ -3212,7 +3212,8 @@ function cartelaV(g, x, y, txt, tam) {
   g.beginPath(); g.moveTo(x - w / 2, y - h / 2); g.quadraticCurveTo(x, y - h / 2 - tam * .3, x + w / 2, y - h / 2); g.quadraticCurveTo(x + w / 2 + tam * .4, y, x + w / 2, y + h / 2); g.quadraticCurveTo(x, y + h / 2 + tam * .3, x - w / 2, y + h / 2); g.quadraticCurveTo(x - w / 2 - tam * .4, y, x - w / 2, y - h / 2); g.closePath(); g.fill(); g.stroke();
   g.fillStyle = NANQUIM; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y + 1);
 }
-const DIZERES = ['Sertão por explorar', 'Sem caminho conhecido', 'Campos e matas sem mapa', 'Pinhais, segundo os tropeiros', 'Serras altas, dizem', 'Rios sem nome', 'Terras por medir', 'Aqui ninguém mediu'];
+const DIZERES_PT = ['Sertão por explorar', 'Sem caminho conhecido', 'Campos e matas sem mapa', 'Pinhais, segundo os tropeiros', 'Serras altas, dizem', 'Rios sem nome', 'Terras por medir', 'Aqui ninguém mediu'];
+const DIZERES = new Proxy(DIZERES_PT, { get: (t, p) => (typeof p === 'string' && /^\d+$/.test(p) && hooks.saying ? hooks.saying(+p, t[p]) : t[p]) });
 function pintaOculta(id) {
   const [c0, l0] = par(id);
   const r = acaso((SEMENTE ^ hashDe('oculta' + id)) | 0);
@@ -3286,8 +3287,8 @@ function ornamentos(c) {
     cartelaTitulo = document.createElement('canvas'); cartelaTitulo.width = 520; cartelaTitulo.height = 170;
     const g = cartelaTitulo.getContext('2d');
     cartelaV(g, 260, 62, '' + NOMEC() + '', 34);
-    g.fillStyle = NANQUIM; g.textAlign = 'center'; g.font = 'italic 500 22px Besley,Georgia,serif'; g.fillText('Província do Paraná', 260, 128);
-    g.fillRect(150, 148, 44, 5); g.strokeStyle = NANQUIM; g.strokeRect(194, 148, 44, 5); g.fillRect(238, 148, 44, 5); g.strokeRect(282, 148, 44, 5); g.font = 'italic 500 14px Besley,Georgia,serif'; g.fillText('léguas', 340 + 12, 155);
+    g.fillStyle = NANQUIM; g.textAlign = 'center'; g.font = 'italic 500 22px Besley,Georgia,serif'; g.fillText((hooks.word ? hooks.word('province', 'Província do Paraná') : 'Província do Paraná'), 260, 128);
+    g.fillRect(150, 148, 44, 5); g.strokeStyle = NANQUIM; g.strokeRect(194, 148, 44, 5); g.fillRect(238, 148, 44, 5); g.strokeRect(282, 148, 44, 5); g.font = 'italic 500 14px Besley,Georgia,serif'; g.fillText((hooks.word ? hooks.word('leagues', 'léguas') : 'léguas'), 340 + 12, 155);
   }
   const p = proj(...paraVista(NX / 2, -7));
   const w = 260 * z * 2, h = 85 * z * 2;
