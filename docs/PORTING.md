@@ -163,3 +163,17 @@ same rules off in the prototype before recording (see the patches at the top of 
 - The world's running random source (`RND`) is not saved by the prototype, so a reloaded game draws
   differently from one played straight through. The port keeps the source in the state; golden tests
   compare fresh games only.
+
+## Robot after the game (November 2026, 130 seasons)
+
+| Seed | Greedy: parish / village | Patient: parish / village |
+|---|---|---|
+| 1869 | 50 / not reached | 52 / not reached |
+| 4242 | 50 / not reached | 50 / 99 (with extra time) |
+| 777 | 49 / not reached | 51 / not reached |
+
+The parish is on time. The village (180 families, 40 seasons after the parish) is mostly missed: the robot
+reaches 165 to 175 families before the deadline. The fixes so far are in the advisor and the robot (street
+lines from any free stretch, homes when families lag, the goal before new jobs near the deadline); the goal's
+numbers are unchanged. Candidates if the village should be reachable by following the advisor: a 48-season
+deadline, or 160 families. That needs the oracle patched like the settlement grant.
