@@ -11,6 +11,12 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Fixed
+
+- A steamboat bought at the pier never showed on the river; it now steams down to Iguape like the canoes.
+- Trains stopped at the end of the rails, on the map's edge, and vanished there; they now run on past the edge and
+  fade out, like the convoys on the road, and come back the same way.
+
 ## [1.0.0-beta.8] - 2026-11-11
 
 Trains for the race, a milonga, and texts that read right.

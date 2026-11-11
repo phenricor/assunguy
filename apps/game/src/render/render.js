@@ -3025,7 +3025,7 @@ function desenha(agora) {
       if (px < -40 || px > W + 40 || py < -40 || py > H + 60) return;
       if (!tr.tela) tr.tela = [px, py];
       const dir = direcaoDe(di, dj), p1 = naRota(tr.pts, d - 1), p2 = naRota(tr.pts, d + 1), ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]);
-      const alfa = Math.max(i, j - NY + NX) > NX + 6 ? Math.max(0, (NX + 9 - Math.max(i, j - NY + NX)) / 3) : 1;
+      const fora = Math.max(i - NX, j - NY, -1 - j), alfa = fora > 6 ? Math.max(0, (9 - fora) / 3) : 1;
       add(Math.floor(u) + Math.floor(v) + (nome === 'carroca' || nome === 'carrov' ? .1 : 0), () => anim(nome, dir, Math.floor(tr.fase + n) % 2, px, py, alfa, ang));
     });
   });
@@ -3519,14 +3519,21 @@ FILAS.trem = (n) => [['loco', 0], ...Array.from({ length: Math.max(2, Math.min(5
 FILAS.vapor = () => [['vapor', 0]];
 FILAS.carrocao = () => [['tropeiro', 0], ['mula', .45], ['mula', .85], ['carroca', 1.6]];
 let esperaRede = 2;
+// o trilho termina na borda; o trem segue por fora do mapa, sumindo aos poucos, como as tropas na estrada
+function foraDoMapa(pts, saida) {
+  if (!pts || !pts.length) return pts;
+  const [x, y] = pts[pts.length - 1], d = saida === 'leste' ? [1, 0] : saida === 'norte' ? [0, -1] : [0, 1];
+  return pts.concat(Array.from({ length: 10 }, (_, n) => [x + d[0] * (n + 1), y + d[1] * (n + 1)]));
+}
 function atualizaRedeAnim(dt) {
-  if (!M.corrida || !M.corrida.linhas.length) return;
+  const linhas = M.linhas || (M.corrida && M.corrida.linhas) || [];
+  if (!linhas.length) return;
   esperaRede -= dt; if (esperaRede > 0) return; esperaRede = 4 + Math.random() * 5;
-  const L = M.corrida.linhas[Math.floor(Math.random() * M.corrida.linhas.length)]; if (!M.predios[L.est]) return;
+  const L = linhas[Math.floor(Math.random() * linhas.length)]; if (!M.predios[L.est]) return;
   const ja = tropas.filter((t) => t.linhaId === L.id).length; if (ja >= Math.min(2, Math.ceil(L.v.length / 2))) return;
   const Mo = MODOS[L.modo], dest = DESTINOS[L.dest].nome, carga = cargaDaVenda();
   let t = null;
-  if (Mo.meio === 'trilho') { const pts = caminhoTrilho(M, L.est, L.saida || 'sul'); if (pts) { t = comboio('trem', pts, { destino: dest, carga, arrobas: 80 + Math.floor(Math.random() * 120), linhaId: L.id }); t.vel = 1.7; } }
+  if (Mo.meio === 'trilho') { const pts = foraDoMapa(caminhoTrilho(M, L.est, L.saida || 'sul'), L.saida || 'sul'); if (pts) { t = comboio('trem', pts, { destino: dest, carga, arrobas: 80 + Math.floor(Math.random() * 120), linhaId: L.id }); t.vel = 1.7; } }
   else if (Mo.meio === 'rio') { t = comboio(L.modo === 'vapor' ? 'vapor' : 'canoa', rotaDoRio(L.est), { destino: dest, carga, arrobas: L.modo === 'vapor' ? 60 + Math.floor(Math.random() * 60) : 8 + Math.floor(Math.random() * 8), linhaId: L.id }); t.vel = L.modo === 'vapor' ? 1.2 : .85; }
   else { const ida = rota(L.est, k(SAIDA[0], NY - 1)); if (ida && ida.length > 2) { for (let b = NY; b < NY + 10; b++) ida.push([SAIDA[0] + .5, b + .5]); t = comboio(L.modo === 'carroca' ? 'carrocao' : 'tropa', ida, { destino: dest, carga, linhaId: L.id }); } }
   if (t) tropas.push(t);
