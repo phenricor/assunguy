@@ -11,6 +11,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.8] - 2026-11-11
+
+Trains for the race, a milonga, and texts that read right.
+
 ### Added
 
 - A sixth piece of music, "Milonga do Tropeiro": a milonga in D minor led by a three-reed accordion, which sings
@@ -167,7 +171,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...HEAD
+[1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [1.0.0-beta.6]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.5...v1.0.0-beta.6
 [1.0.0-beta.5]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.4...v1.0.0-beta.5
