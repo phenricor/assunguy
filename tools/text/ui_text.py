@@ -63,7 +63,7 @@ U = {
   'street.loseNone': ('Sem este trecho, nenhum prédio perde a ligação.', 'Without this lot, no building loses its link.'),
   'street.newThisSeason': ('Aberto nesta estação. Desfazer devolve $ {money}.', 'Opened this season. Undoing gives back $ {money}.'), 'street.undoOne': ('Desfazer trecho', 'Undo'),
   # selection
-  'home.of': ('{building} da família {family}', '{building} of the {family} family'), 'home.empty': ('{building} vazio', 'Empty {building}'),
+  'home.of': ('{building} da família {family}', '{building} of the {family} family'), 'home.empty': ('{building} sem moradores', 'Empty {building}'),
   'home.upgrades': ('Melhorias', 'Upgrades'), 'home.max': ('Sobrado é o máximo.', 'A townhouse is the largest home.'), 'home.next': ('Próximo: {building}', 'Next: {building}'),
   'home.savings': ('Poupança', 'Savings'), 'home.inColony': ('Há na colônia', 'Made in the colony'), 'home.missing': ('Falta', 'Missing'),
   'rating.service': ('{service} a {n} ruas', '{service} {n} streets away'), 'rating.outOfReach': ('{service} fora de alcance', '{service} out of reach'),

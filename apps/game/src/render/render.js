@@ -3854,7 +3854,7 @@ const Paisagem = (() => {
     desliga() { vivo = false; cancelAnimationFrame(raf); removeEventListener('resize', aoMudar); camadas = []; },
   };
 })();
-// ---- Música: cinco peças compostas na hora (valsa, xote, moda de viola, toada, valsa de festa).
+// ---- Música: seis peças compostas na hora (valsa, xote, moda de viola, toada, valsa de festa, milonga).
 // Cada peça é gravada uma vez num buffer (sem precisar de toque) e tocada pelo Web Audio, com entrada suave
 // e uma peça cruzando com a outra no fim. A ordem segue a estação.
 const Musica = (() => {
@@ -3864,6 +3864,7 @@ const Musica = (() => {
   const AC = {
     D: [50, 54, 57], G: [43, 50, 55, 59], A: [45, 52, 57, 61], A7: [45, 52, 55, 61], Bm: [47, 54, 59, 62], Em: [40, 52, 55, 59], Fs: [42, 54, 58, 61],
     C: [48, 52, 55, 60], D7: [50, 54, 57, 60], Am: [45, 52, 57, 60], Dm: [50, 53, 57, 62], E: [40, 52, 56, 59], E7: [40, 50, 56, 59], F: [41, 53, 57, 60], B7: [47, 51, 54, 57],
+    Gm: [43, 50, 55, 58], C7: [48, 52, 55, 58],
   };
   const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
   const sem = (s) => () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return s / 4294967296; };
@@ -3907,6 +3908,35 @@ const Musica = (() => {
     });
     return mel;
   }
+  // a milonga, escrita à mão: cada lugar de acorde são dois compassos de 2/4, contados em colcheias (0 a 8).
+  // O acordeão canta do começo ao fim; da segunda vez em diante, a mão direita dobra em terças, dentro do ré menor
+  // (dó sustenido no lá, fá sustenido no ré)
+  function melMilonga(P) {
+    const A = [
+      [[74, 0, 1.5], [77, 1.5, 1.5], [76, 3, 1], [74, 4, 3], [69, 7, 1]],
+      [[73, 0, 1.5], [76, 1.5, 1.5], [79, 3, 1], [77, 4, 1], [76, 5, 1], [73, 6, 2]],
+      [[69, 0, 1.5], [73, 1.5, 1.5], [76, 3, 1], [79, 4, 2], [77, 6, 1], [76, 7, 1]],
+      [[74, 0, 4], [77, 4, 1.5], [76, 5.5, 1.5], [74, 7, 1]],
+      [[70, 0, 1.5], [74, 1.5, 1.5], [79, 3, 1], [77, 4, 1], [74, 5, 1], [70, 6, 2]],
+      [[69, 0, 1.5], [74, 1.5, 1.5], [77, 3, 1], [76, 4, 1], [74, 5, 1], [72, 6, 1], [70, 7, 1]],
+      [[69, 0, 1.5], [67, 1.5, 1.5], [64, 3, 1], [73, 4, 2], [76, 6, 1], [73, 7, 1]],
+      [[74, 0, 8]],
+    ];
+    const B = [
+      [[72, 0, 1.5], [77, 1.5, 1.5], [81, 3, 1], [79, 4, 1], [77, 5, 1], [76, 6, 1], [77, 7, 1]],
+      [[79, 0, 1.5], [76, 1.5, 1.5], [72, 3, 1], [70, 4, 2], [72, 6, 1], [76, 7, 1]],
+      [[77, 0, 3], [81, 3, 1], [79, 4, 1.5], [77, 5.5, 1.5], [76, 7, 1]],
+      [[78, 0, 1.5], [74, 1.5, 1.5], [72, 3, 1], [69, 4, 1], [72, 5, 1], [78, 6, 2]],
+      [[79, 0, 3], [77, 3, 1], [74, 4, 1.5], [70, 5.5, 1.5], [74, 7, 1]],
+      [[77, 0, 1.5], [76, 1.5, 1.5], [74, 3, 1], [69, 4, 3], [74, 7, 1]],
+      [[73, 0, 1.5], [76, 1.5, 1.5], [79, 3, 1], [77, 4, 1], [76, 5, 1], [74, 6, 1], [73, 7, 1]],
+      [[74, 0, 8]],
+    ];
+    const escala = (c) => [2, 4, 5, 7, 9, 10, 0].map((pc) => (c === 'A7' && pc === 0 ? 1 : c === 'D7' && pc === 5 ? 6 : pc));
+    const terca = (n, c) => { for (let m = n - 3; m >= n - 4; m--) if (escala(c).includes(((m % 12) + 12) % 12)) return m; return null; };
+    const comTerca = (parte, lista) => lista.map((x, k) => x.map(([n, i, d]) => [n, i, d, terca(n, P.partes[parte][k])]));
+    return { A: comTerca('A', A), B: comTerca('B', B) };
+  }
   const PECAS = [
     { nome: 'Valsa do Assunguy', est: [0, 1, 2, 3], bpm: 84, compasso: 3, acomp: 'valsa', forma: 'AABA', mel: melValsa, vozes: ['corda', 'flauta', 'corda', 'flauta'], partes: { A: ['D', 'G', 'A', 'D', 'Bm', 'G', 'A7', 'D'], B: ['Bm', 'Em', 'Fs', 'Bm', 'G', 'D', 'A7', 'D'] } },
     { nome: 'Xote da Colônia', est: [1, 0], bpm: 104, compasso: 4, acomp: 'xote', forma: 'AABA', mel: melGeral, semente: 1867, escala: [7, 9, 11, 0, 2, 4, 6], faixa: [67, 84], inicio: 74, vozes: ['gaita', 'gaita', 'corda', 'gaita'],
@@ -3921,6 +3951,9 @@ const Musica = (() => {
     { nome: 'Valsa da Festa do Divino', est: [0, 1], bpm: 96, compasso: 3, acomp: 'valsa', forma: 'AABA', mel: melGeral, semente: 1889, escala: [7, 9, 11, 0, 2, 4, 6], faixa: [67, 86], inicio: 79, vozes: ['corda', 'gaita', 'flauta', 'corda'],
       ritmos: [[['c', 0, 2], ['p', 2, 1]], [['c', 0, 1], ['p', 1, 1], ['p', 2, 1]], [['c', 0, 1.5], ['p', 1.5, .5], ['c', 2, 1]]],
       partes: { A: ['G', 'D', 'D7', 'G', 'G', 'C', 'D7', 'G'], B: ['C', 'G', 'D', 'G', 'Em', 'Am', 'D7', 'G'] } },
+    // o tempo da milonga é a colcheia: cada lugar de acorde tem oito, dois compassos de 2/4
+    { nome: 'Milonga do Tropeiro', est: [3, 2], bpm: 156, compasso: 8, acomp: 'milonga', forma: 'AABA', mel: melMilonga, vozes: ['acordeao', 'acordeao', 'acordeao', 'acordeao'], tercasEm: [1, 2, 3],
+      partes: { A: ['Dm', 'A7', 'A7', 'Dm', 'Gm', 'Dm', 'A7', 'Dm'], B: ['F', 'C7', 'F', 'D7', 'Gm', 'Dm', 'A7', 'Dm'] } },
   ];
   const bufs = PECAS.map(() => null);
   async function grava(P) {
@@ -3953,6 +3986,19 @@ const Musica = (() => {
       o1.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(saida); g.connect(eco);
       o1.start(t); o2.start(t); o1.stop(t + dur + .02); o2.stop(t + dur + .02);
     };
+    // acordeão de três palhetas: duas no tom, uma um pouco alta (o batimento do musette), e uma oitava abaixo;
+    // o fole entra rápido, cresce um pouco na nota e solta curto
+    const acordeao = (n, t, dur, vol) => {
+      const f = oc.createBiquadFilter(), g = oc.createGain();
+      f.type = 'lowpass'; f.frequency.value = Math.min(4200, hz(n) * 7); f.Q.value = 1.4;
+      [[1, 'sawtooth', 1], [Math.pow(2, 13 / 1200), 'sawtooth', .8], [.5 * Math.pow(2, -4 / 1200), 'square', .45]].forEach(([k, tipo, v]) => {
+        const o = oc.createOscillator(), og = oc.createGain();
+        o.type = tipo; o.frequency.value = hz(n) * k; og.gain.value = v; o.connect(og); og.connect(f); o.start(t); o.stop(t + dur + .08);
+      });
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol * .8, t + .03); g.gain.linearRampToValueAtTime(vol, t + Math.min(.4, dur * .6));
+      g.gain.setValueAtTime(vol, t + dur * .9); g.gain.linearRampToValueAtTime(0, t + dur + .06);
+      f.connect(g); g.connect(saida); g.connect(eco);
+    };
     const baixo = (c) => (AC[c][0] < 45 ? AC[c][0] + 12 : AC[c][0]);
     for (let cI = 0; cI < nComp; cI++) {
       const frase = Math.floor(cI / 8), parte = P.forma[frase], comp = cI % 8, nome = P.partes[parte][comp], ac0 = AC[nome], t = cI * P.compasso * T, b0 = baixo(nome);
@@ -3970,14 +4016,28 @@ const Musica = (() => {
       } else if (P.acomp === 'seisoito') {
         const tons = [b0, b0 + 7, b0 + 12, ac0[1] + 12, b0 + 12, b0 + 7];
         tons.forEach((n, e) => corda(n, t + e * T, T * (e ? 1.6 : 3.2), e ? .1 : .28, e ? 2200 : 1300));
+      } else if (P.acomp === 'milonga') {
+        // bordoneio: o polegar do violão marca o 3-3-2 de cada compasso (fundamental, quinta, fundamental) e, no fim
+        // do segundo, chega ao baixo do próximo acorde por meio tom; a mão esquerda do acordeão dá o acorde curto
+        // no tempo fraco
+        const prox = (P.partes[P.forma[Math.floor((cI + 1) / 8)]] || P.partes[parte])[(cI + 1) % 8], bp = baixo(prox);
+        const quinta = b0 + 7 > 57 ? b0 - 5 : b0 + 7, tons = ac0.slice(1).map((n) => n + 12);
+        [0, 4].forEach((c0, k) => {
+          corda(b0, t + c0 * T, T * 1.5, .3, 1200);
+          corda(quinta, t + (c0 + 1.5) * T, T * 1.5, .24, 1200);
+          corda(k && bp !== b0 ? bp + (bp > b0 ? -1 : 1) : b0, t + (c0 + 3) * T, T * .95, .24, 1200);
+          tons.forEach((n) => acordeao(n - 12, t + (c0 + 2) * T, T * .55, .022));
+          if (c0) tons.forEach((n) => acordeao(n - 12, t + (c0 + 1) * T, T * .4, .016));
+        });
       }
       const voz = P.vozes[frase % P.vozes.length];
       mel[parte][comp].forEach(([n, ini, d, terca]) => {
         const tt = t + ini * T, dd = d * T;
         if (voz === 'flauta') flauta(n, tt, dd * .95, .16);
         else if (voz === 'gaita') gaita(n, tt, dd * .92, .09);
+        else if (voz === 'acordeao') acordeao(n, tt, dd * .94, .055);
         else corda(n, tt, dd + .4, .22, 3400);
-        if (terca) corda(terca, tt + .012, dd + .4, .15, 3000);
+        if (terca && (!P.tercasEm || P.tercasEm.includes(frase))) { if (voz === 'acordeao') acordeao(terca, tt, dd * .94, .04); else corda(terca, tt + .012, dd + .4, .15, 3000); }
       });
     }
 

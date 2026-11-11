@@ -8,7 +8,7 @@
 // advice the colony cannot pay for is blocked, the province's extra funds and time are offered here, a
 // far land gets a measured package (store + waystation + mule trains, or a collection point) instead of a
 // lone store, and each producer's outlet feeds a "what fixes it" advice.
-import { railExits } from './race.js';
+import { railExits, vehicleAvailable } from './race.js';
 import {
   BUILDINGS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LEVELS, MILESTONES, TRANSPORT_ROLES, VEHICLES,
   type BuildingId, type GoodId, type GreatWorkId, type MilestoneDef, type TransportRoleDef, type VehicleDef, type VehicleId,
@@ -60,7 +60,7 @@ export interface Advice {
 /** Every building income advice competes on the same scale: in how many years the gain pays the cost. */
 export const workWeight = (cost: number, gain: number): number => 60 + Math.max(0, Math.min(30, 30 - (cost / Math.max(1, gain)) * 4));
 const unlocked = (s: GameState, t: BuildingId): boolean => !def(t).lateGame && (def(t).minLevel || 1) <= (s.level || 1);
-const vehicleUnlocked = (s: GameState, v: VehicleId): boolean => { const V = VEHICLES[v] as VehicleDef; return !V.lateGame && (s.level || 1) >= (V.minLevel || 1); };
+const vehicleUnlocked = vehicleAvailable;
 const roleOf = (t: BuildingId): TransportRoleDef | undefined => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
 const ALL = Object.keys(BUILDINGS) as BuildingId[];
 /** The colony with more vehicles at a building, and its level raised when asked. */

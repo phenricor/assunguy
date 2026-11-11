@@ -2,7 +2,7 @@
 // changes (Satisfação, Capacidade, Produção; no prices in buttons; confirmations for vehicles and moves).
 import { BALANCE, BUILDINGS, MILESTONES, TRANSPORT_ROLES, VEHICLES, type BuildingId, type GoodId, type VehicleId } from '@assunguy/data';
 import {
-  HOME_UPGRADE, allocate, annex, annexCost, buyVehicle, connected, costOf, def, demolish, explore, EXPEDITION_COST, fleetOf, fleetSize, fleetSlots,
+  HOME_UPGRADE, vehicleAvailable, allocate, annex, annexCost, buyVehicle, connected, costOf, def, demolish, explore, EXPEDITION_COST, fleetOf, fleetSize, fleetSlots,
   marginOf, producerFix, sellVehicle, serviceRadius, setMargin, soilOf, swapCrop, swapOptions, undoUpgrade, upgrade, upgradeCost, upkeepOf,
   homeOf, reach, streetsBeside, geography, gatewayTight,
   type FamilyId, type GameState, type LandId, type LotKey, type RatingItem,
@@ -171,7 +171,7 @@ function transportBlock(key: LotKey, L: string[]): string {
     L.push(K.row(T('ui.tr.capacity'), T('ui.arrobasSeason', { n: fmt(x.capacity) })));
     if (role.reach) L.push(K.row(T('ui.sel.reach'), T('ui.lots', { n: role.reach })));
   }
-  const vs = (role.vehicles ?? []).filter((v) => !(VEHICLES[v] as { lateGame?: boolean }).lateGame && ((VEHICLES[v] as { minLevel?: number }).minLevel ?? 1) <= s.level);
+  const vs = (role.vehicles ?? []).filter((v) => vehicleAvailable(s, v as VehicleId));
   const rows = vs.map((v) => `<div class="cartao"><div class="cartao-t"><div class="cartao-n"><b>${esc(T(`vehicle.${v}`))}</b><small>${esc(T('ui.tr.vehicleSub', { cargo: (VEHICLES[v] as { cargo: number }).cargo, upkeep: (VEHICLES[v] as { upkeep: number }).upkeep }))}</small></div><div class="qtd"><button type="button" data-sell="${v}" ${f[v] ? '' : 'disabled'} aria-label="−">−</button><b>${f[v] ?? 0}</b><button type="button" data-buy="${v}" ${fleetSize(s, key) < slots ? '' : 'disabled'} aria-label="+">+</button></div></div></div>`).join('');
   const m = marginOf(s, key);
   return K.section(T('ui.tr.fleet', { n: fleetSize(s, key), of: slots })) + `<div class="cartoes">${rows}</div>` + K.section(T('ui.tr.tariff'), 'tariff') + K.chips(MARGINS.map((v) => [String(v), T(`ui.tr.margin.${String(v).replace('.', '_').replace('-', 'm')}`)] as [string, string]), String(m), 'margem');

@@ -11,6 +11,28 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.8] - 2026-11-11
+
+Trains for the race, a milonga, and texts that read right.
+
+### Added
+
+- A sixth piece of music, "Milonga do Tropeiro": a milonga in D minor led by a three-reed accordion, which sings
+  the tune (in thirds from the second time on) and plays the chords, over the guitar's 3-3-2 bass walking to each
+  chord. It plays mostly in autumn and winter.
+
+### Fixed
+
+- A train station had no trains to buy: its sheet left out every rail vehicle, so rails to the edge opened no market.
+  The light train can be bought from the start of the race, the medium and heavy ones when the rivals' advances open
+  them, and Inácio asks for a train when a station stands empty. One rule now decides which vehicles can be bought,
+  for the sheet, the advisor and the command.
+- A new district's name showed as its id in the season report ("district.hamlet|2,5"); the same in the advice that
+  names a district.
+- Texts that put a building's name before a gendered word ("Embarcadouro lotada", "Casa vazio") now read right
+  whatever the building; a collection point that fills up at harvest in several places is one line, not one each.
+- The end of a long crisis reads "Acabou a Revolução Federalista." and its warning "há sinais de que vem aí ...".
+
 ## [1.0.0-beta.7] - 2026-11-11
 
 Transport, reviewed as a whole: buildings that work from the day they are built, advice that is measured on the
@@ -149,7 +171,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...HEAD
+[1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [1.0.0-beta.6]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.5...v1.0.0-beta.6
 [1.0.0-beta.5]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.4...v1.0.0-beta.5
