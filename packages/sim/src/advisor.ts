@@ -28,7 +28,7 @@ import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from '
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -325,6 +325,18 @@ function colonyAdvice(x: Ctx): Advice[] {
       const t = (['cassavaField', 'cornField', 'beanField'] as BuildingId[]).find(can) as BuildingId;
       add(shortOfWork ? 72 : 44, 'idle.jobs', { n: a.idle.length, level: s.level + 1, workers: next?.workers ?? 0, shortOfWork: shortOfWork ? 1 : 0, building: t, cost: cost(t) }, build(t));
     }
+  }
+  // the next level short only of workers: the cheapest jobs that still pay, so the colony can level up
+  if (shortOfWork && next && c.incomeTotal >= next.income && a.idle.length >= 3) {
+    const short = next.workers - a.employed;
+    const cands = ALL.filter((t) => can(t) && (def(t).jobs ?? 0) > 0 && !def(t).housing && !roleOf(t) && !def(t).riverside).sort((p, q) => cost(p) / (def(p).jobs as number) - cost(q) / (def(q).jobs as number)).slice(0, 6);
+    let best: { t: BuildingId; gain: number; perJob: number } | null = null;
+    for (const t of cands) {
+      const g = measured(x, { [t]: 1 }).incomeTotal - c.incomeTotal, perJob = cost(t) / (def(t).jobs as number);
+      // a job that adds next to nothing (a crop the market already has too much of) only adds waste
+      if (g >= Math.max(5, cost(t) * 0.08) && (!best || perJob < best.perJob - 1e-9 || (Math.abs(perJob - best.perJob) < 1e-9 && g > best.gain))) best = { t, gain: g, perJob };
+    }
+    if (best) add(next.milestone ? 88 : 72, 'levelWorkers', { level: next.level, n: short, current: a.employed, target: next.workers, building: best.t, cost: cost(best.t), gain: Math.round(best.gain) }, build(best.t));
   }
   // new chains: a cane field alone yields nothing; the sum must join the works
   const has = (t: BuildingId) => Object.values(s.map.buildings).includes(t);
@@ -649,7 +661,7 @@ export function advise(s: GameState, w: World): Advice[] {
       for (const y of list) if (/^(farLand\.|noCollection$|noGateway$)/.test(y.rule)) y.weight = Math.min(y.weight, 79);
       // short of the workers that level asks for, with the goal's own buildings done: jobs first
       if (employed < titleLevel.workers && !list.some((y) => y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands'))
-        for (const y of list) if (y.rule === 'idle.invest' || y.rule === 'idle.jobs' || y.rule.startsWith('pierFullIdle')) y.weight = Math.max(y.weight, left <= 12 ? 92 : 88);
+        for (const y of list) if (y.rule === 'levelWorkers' || y.rule === 'idle.invest' || y.rule === 'idle.jobs' || y.rule.startsWith('pierFullIdle')) y.weight = Math.max(y.weight, y.rule === 'levelWorkers' ? (left <= 12 ? 93 : 89) : left <= 12 ? 92 : 88);
     }
     // families weigh most in the milestone and only come to empty homes: behind on them, homes come even with idle
     // hands (the prototype held huts back above 30% idle, so an advisor-led colony fell far short of its families)

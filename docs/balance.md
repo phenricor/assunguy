@@ -48,21 +48,28 @@ deadline, or 160 families.
 
 New collection points and gateways come with their first vehicle, mule trains cost $ 200 and carry 80, the trading
 post, landing and waystation open at level 3, every transport advice is measured on the whole chain, and producers
-walk past a store with no gateway in reach to one that exports. Six seeds, both policies, 72 seasons:
+walk past a store with no gateway in reach to one that exports.
 
-| Seed | Before: greedy / patient (parish, waste at 72) | After: greedy / patient |
+The first run of these changes showed a limit that was already there: the parish comes with level 4, which asks
+for 50 workers, and the robot kept the colony a few jobs short with 65 to 75 families idle (2 of 12 runs missed
+the parish, against 1 of 12 before). The advisor now has a measured jobs advice for that case (`levelWorkers`): when
+the next level lacks only workers, the cheapest job that still pays (at least 8% of its cost a year), above other
+investments for the level that brings a title; the robot builds two at a time, as a player would.
+
+Six seeds, both policies, 72 seasons (parish season, waste at 72):
+
+| Seed | Before: greedy / patient | After: greedy / patient |
 |---|---|---|
-| 1869 | 50, 37% / 52, 24% | not reached, 37% / 45, 8% |
-| 4242 | 50, 23% / 50, 19% | 45, 21% / 43, 27% |
-| 777 | 49, 25% / 51, 24% | 50, 25% / not reached, 5% |
-| 7 | 47, 12% / 46, 17% | 47, 11% / 42, 23% |
-| 31 | 53, 33% / not reached, 30% | 54, 22% / 41, 13% |
-| 2024 | 41, 27% / 47, 31% | 43, 21% / 46, 10% |
+| 1869 | 50, 37% / 52, 24% | 37, 28% / 37, 11% |
+| 4242 | 50, 23% / 50, 19% | 38, 19% / 38, 48% |
+| 777 | 49, 25% / 51, 24% | 39, 16% / 38, 37% |
+| 7 | 47, 12% / 46, 17% | 37, 38% / 38, 29% |
+| 31 | 53, 33% / not reached, 30% | 39, 27% / 40, 16% |
+| 2024 | 41, 27% / 47, 31% | 37, 23% / 41, 41% |
 
-Parish reached in 11 of 12 runs before and 10 of 12 after; when reached, a median of 50 seasons before and 45
-after. Waste at season 72 averages 25% before and 19% after; income, $ 7.250 and $ 7.690 a year.
+Parish reached in 12 of 12 runs (11 before), all before the deadline at 44 (before, most needed the extra time).
+Income at 72 averages $ 8.010 a year (was $ 7.250); waste, 28% (was 25%), higher in some patient runs.
 
-The two runs that miss the parish now both stall at level 3 with 65 to 75 families idle: the parish comes with
-level 4, which asks for 50 workers, and the robot keeps the colony a few jobs short. Their waste is low (5% and
-37%, the second with the pier full all the time), so the bottleneck is jobs, not transport. Worth its own review:
-the level 4 worker requirement against the robot's job advice.
+Over 130 seasons (`pnpm balance`), the village is still reached in 1 of 6 runs (seed 4242, patient, season 79, was
+99); the rest end at its deadline, now earlier because the parish comes earlier. The village (180 families, four
+lands, more services) is the next thing to review.

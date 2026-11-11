@@ -126,8 +126,8 @@ export function play(seed: number, o: BotOptions = {}): Run {
       const pick = list.find((x: Advice) => !x.blocked && x.cost <= s.cash - reserve);
       if (!pick) break;
       tried.add(JSON.stringify(pick.action));
-      // homes for the next groups: a player builds a row of huts, not one (the advice names one hut)
-      const times = pick.rule === 'milestoneFamilies' || pick.rule === 'jobsEmpty.build' ? 4 : 1;
+      // homes for the next groups, or the jobs a level is short of: a player builds a row, not one (the advice names one)
+      const times = pick.rule === 'milestoneFamilies' || pick.rule === 'jobsEmpty.build' ? 4 : pick.rule === 'levelWorkers' ? 2 : 1;
       let done = false;
       for (let k = 0; k < times && s.cash - reserve >= pick.cost; k++) done = act(s, w, pick.action!) || done;
       if (done) actions.push(pick.rule);

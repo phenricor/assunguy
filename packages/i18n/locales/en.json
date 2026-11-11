@@ -55,6 +55,8 @@
  "advice.jobsEmpty.homes.title": "{n} jobs with nobody",
  "advice.levelBuilding.body": "{building} for $ {cost}.",
  "advice.levelBuilding.title": "Level {level} asks for {building}",
+ "advice.levelWorkers.body": "The level asks for {target} families at work; today there are {current}. {building} is the cheapest job now: $ {cost}, +$ {gain} income a year.",
+ "advice.levelWorkers.title": "{n} jobs short of level {level}",
  "advice.lostGood.noBuyer.body": "No buyer. Consider changing what is planted.",
  "advice.lostGood.noBuyer.title": "{good}: {lost} arrobas lost",
  "advice.lostGood.workshop.body": "{building} processes the surplus: +$ {gain} income a year.",

@@ -35,6 +35,8 @@ whole chain, and screens that say why cargo is lost.
   exports it and halve the colony's income.
 - Near a deadline, while the title's level still lacks workers, the jobs it asks for come before new collection
   points and gateways, which pay the families over years.
+- New advice when the next level lacks only workers: how many jobs are missing and the cheapest job that still
+  pays. Robot colonies now reach the parish before the deadline in every test run.
 
 ### Fixed
 

@@ -35,7 +35,12 @@ function action(ac: LegacyAdvice['ac']): AdviceAction | null {
 }
 /** Prototype advice the port replaced with measured advice of its own. */
 const PORTED_AWAY = (tit: string) => /(roças sem comércio|produção sem captação|sem vaga|sem veículos|sem porta)$/.test(tit);
-const MEASURED = new Set(['noCollection', 'noSlot', 'noVehicles.collection', 'noVehicles.gateway', 'noGateway']);
+const MEASURED = new Set(['noCollection', 'noSlot', 'noVehicles.collection', 'noVehicles.gateway', 'noGateway', 'levelWorkers']);
+/** The list keeps one advice per building: a building the jobs advice names leaves the prototype's for it out. */
+const takenBy = (all: { rule: string; action: AdviceAction | null }[]) => {
+  const b = new Set(all.filter((x) => x.rule === 'levelWorkers' && x.action?.kind === 'build').map((x) => (x.action as { building: string }).building));
+  return (a: AdviceAction | null) => a?.kind === 'build' && b.has(a.building);
+};
 const key = (weight: number, a: AdviceAction | null) => `${weight.toFixed(6)} ${JSON.stringify(a)}`;
 
 describe('advisor (golden, against the prototype)', () => {
@@ -47,8 +52,9 @@ describe('advisor (golden, against the prototype)', () => {
         if (i > 0) { passSeason(s, w); for (const _ of run.seasons[i - 1]!.picks) { const d = defineEvent(s, s.queue[0]!); resolveEvent(s, w, d.options.findIndex((o) => !o.can || o.can(s))); } }
         // the lone store for far fields is replaced by a measured package (see the review); a land with no
         // collection point is now measured too, with the vehicle a new one comes with (1.1.0)
-        const expected = want.filter((x) => !PORTED_AWAY(x.tit)).map((x) => key(x.w, action(x.ac)));
-        const mine = ruleAdvice(s, w).filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action));
+        const all = ruleAdvice(s, w), taken = takenBy(all);
+        const expected = want.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac))).map((x) => key(x.w, action(x.ac)));
+        const mine = all.filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action));
         expect(mine, `${name} state ${i}: ${want.map((x) => x.tit).join(' | ')}`).toEqual(expected);
       });
     });
@@ -66,8 +72,9 @@ describe('advisor on variants of the saves (golden)', () => {
         for (const [k, t] of Object.entries(spec.add ?? {})) s.map.buildings[k as LotKey] = B[t] as never;
         if (spec.dizimo) s.taxes.tithe = { general: spec.dizimo, byGood: {} };
         updateRatings(s, w); // the prototype's calcula re-rates the homes
-        const expected = list.filter((x) => !PORTED_AWAY(x.tit)).map((x) => key(x.w, action(x.ac)));
-        expect(ruleAdvice(s, w).filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
+        const all = ruleAdvice(s, w), taken = takenBy(all);
+        const expected = list.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac))).map((x) => key(x.w, action(x.ac)));
+        expect(all.filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
       });
     }
   }

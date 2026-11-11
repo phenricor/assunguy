@@ -55,6 +55,8 @@
  "advice.jobsEmpty.homes.title": "{n} vagas sem gente",
  "advice.levelBuilding.body": "{building} por $ {cost}.",
  "advice.levelBuilding.title": "O nível {level} pede {building}",
+ "advice.levelWorkers.body": "O nível pede {target} famílias trabalhando; hoje são {current}. {building} é o emprego mais barato agora: $ {cost}, +$ {gain} de renda por ano.",
+ "advice.levelWorkers.title": "Faltam {n} empregos para o nível {level}",
  "advice.lostGood.noBuyer.body": "Sem comprador. Vale mudar o que se planta.",
  "advice.lostGood.noBuyer.title": "{good}: {lost} arrobas perdidas",
  "advice.lostGood.workshop.body": "{building} transforma o que sobra: +$ {gain} de renda por ano.",
