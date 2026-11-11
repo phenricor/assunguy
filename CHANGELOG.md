@@ -13,8 +13,9 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ### Added
 
-- A sixth piece of music, "Milonga do Tropeiro": a milonga in D minor, with the guitar's 3-3-2 bass walking to
-  each chord and the accordion singing the middle part over thirds. It plays mostly in autumn and winter.
+- A sixth piece of music, "Milonga do Tropeiro": a milonga in D minor led by a three-reed accordion, which sings
+  the tune (in thirds from the second time on) and plays the chords, over the guitar's 3-3-2 bass walking to each
+  chord. It plays mostly in autumn and winter.
 
 ## [1.0.0-beta.7] - 2026-11-11
 
