@@ -19,6 +19,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ### Fixed
 
+- A train station had no trains to buy: its sheet left out every rail vehicle, so rails to the edge opened no market.
+  The light train can be bought from the start of the race, the medium and heavy ones when the rivals' advances open
+  them, and Inácio asks for a train when a station stands empty. One rule now decides which vehicles can be bought,
+  for the sheet, the advisor and the command.
 - A new district's name showed as its id in the season report ("district.hamlet|2,5"); the same in the advice that
   names a district.
 - Texts that put a building's name before a gendered word ("Embarcadouro lotada", "Casa vazio") now read right
