@@ -4,7 +4,7 @@ import { createTranslator, landName, districtName, setMissingHandler, type Local
 // a placeholder left empty shows a fallback (0 or an ellipsis); say which one, once, so it gets fixed
 const warned = new Set<string>();
 setMissingHandler((key, hole) => { const k = `${key}:${hole}`; if (!warned.has(k)) { warned.add(k); console.warn(`[i18n] ${key} has no value for {${hole}}`); } });
-import type { GameState, World, LotKey, LandId } from '@assunguy/sim';
+import { parseNameId, type DistrictName, type GameState, type World, type LotKey, type LandId } from '@assunguy/sim';
 
 let tr: Translator = createTranslator(pickLocale());
 const listeners: (() => void)[] = [];
@@ -38,7 +38,13 @@ export function nameOf(k: string, v: string | number, rest?: Record<string, stri
   if (typeof v === 'number') return Number.isInteger(v) ? tr.number(v) : tr.number(v, Math.abs(v) < 10 ? 1 : 0);
   if (k === 'land' && ctx && isLot(v)) { const L = ctx.w.lands[v as LandId]; return L ? landName(tr, L) : v; }
   if ((k === 'at' || k === 'key') && ctx && isLot(v)) { const t = ctx.s.map.buildings[v as LotKey]; return t ? tr.t(`building.${t}`) : v; }
-  if (k === 'district' && ctx) { try { return districtName(tr, JSON.parse(v), (id) => (ctx!.w.lands[id as LandId] ? landName(tr, ctx!.w.lands[id as LandId]!) : id)); } catch { return v; } }
+  // a district comes as its name (the screens) or as the name's id (news and advice)
+  if (k === 'district') {
+    let n: DistrictName;
+    try { n = JSON.parse(v) as DistrictName; } catch { n = parseNameId(v); }
+    if (!n || typeof n !== 'object') n = parseNameId(v);
+    return districtName(tr, n, (id) => (ctx?.w.lands[id as LandId] ? landName(tr, ctx.w.lands[id as LandId]!) : id));
+  }
   // a value that is itself a key (a news item's reason) is written with the other parameters
   if (v.includes('.') && tr.has(v)) return tr.t(v, rest && fmtParams(Object.fromEntries(Object.entries(rest).filter(([x, y]) => x !== k && !(typeof y === 'string' && y.includes('.'))))));
   const ns = NS[k];

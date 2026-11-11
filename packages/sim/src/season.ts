@@ -117,7 +117,10 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   if (s.milestone >= 3 && !s.race) startRace(s, news);
   else if (s.race) advanceRace(s, computeEconomy(s, w), news);
   if (tr.firewoodShortageStarted) news.push({ key: 'news.firewoodShortage' });
-  for (const k of tr.fullCollections) news.push({ key: 'news.collectionFull', params: { building: s.map.buildings[k] as string } });
+  // one line per kind of building, however many of them filled up
+  const full: Record<string, number> = {};
+  for (const k of tr.fullCollections) full[s.map.buildings[k] as string] = (full[s.map.buildings[k] as string] ?? 0) + 1;
+  for (const [building, n] of Object.entries(full).sort()) news.push(n > 1 ? { key: 'news.collectionFullMany', params: { building, n } } : { key: 'news.collectionFull', params: { building } });
   // caves on our lands: settlers explore one now and then, and the province hears of it
   for (const key of (Object.keys(s.map.nature) as LotKey[]).filter((x) => s.map.nature[x] === 'cave').sort()) {
     const [a, b] = parseKey(key);

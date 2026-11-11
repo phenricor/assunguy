@@ -17,6 +17,14 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
   the tune (in thirds from the second time on) and plays the chords, over the guitar's 3-3-2 bass walking to each
   chord. It plays mostly in autumn and winter.
 
+### Fixed
+
+- A new district's name showed as its id in the season report ("district.hamlet|2,5"); the same in the advice that
+  names a district.
+- Texts that put a building's name before a gendered word ("Embarcadouro lotada", "Casa vazio") now read right
+  whatever the building; a collection point that fills up at harvest in several places is one line, not one each.
+- The end of a long crisis reads "Acabou a Revolução Federalista." and its warning "há sinais de que vem aí ...".
+
 ## [1.0.0-beta.7] - 2026-11-11
 
 Transport, reviewed as a whole: buildings that work from the day they are built, advice that is measured on the

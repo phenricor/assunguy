@@ -28,6 +28,15 @@ export const districtsUnlocked = (s: GameState): boolean => s.milestone >= 2;
 
 /** A comparable string for a district name, to keep names apart. */
 export const nameId = (n: DistrictName): string => n.custom ?? `${n.key}${n.land ? `|${n.land}` : ''}${n.n ? `#${n.n}` : ''}`;
+/** The name back from its id (news and advice carry the id); anything that is not a written name is the player's. */
+export function parseNameId(id: string): DistrictName {
+  const m = /^(district\.[A-Za-z]+)(?:\|([^#]+))?(?:#(\d+))?$/.exec(id);
+  if (!m) return { key: 'district.custom', custom: id };
+  const n: DistrictName = { key: m[1] as string };
+  if (m[2]) n.land = m[2] as LandId;
+  if (m[3]) n.n = Number(m[3]);
+  return n;
+}
 
 export function computeDistricts(s: GameState, w: World): Districts {
   const map = s.map, linked = connected(map), reachAll = O.R + 3, isHome = (t: BuildingId | undefined) => !!t && !!def(t).housing;
