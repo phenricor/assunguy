@@ -11,6 +11,11 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Added
+
+- A sixth piece of music, "Milonga do Tropeiro": a milonga in D minor, with the guitar's 3-3-2 bass walking to
+  each chord and the accordion singing the middle part over thirds. It plays mostly in autumn and winter.
+
 ## [1.0.0-beta.7] - 2026-11-11
 
 Transport, reviewed as a whole: buildings that work from the day they are built, advice that is measured on the
