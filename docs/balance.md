@@ -43,3 +43,26 @@ reaches 165 to 175 families before the deadline. The fixes so far are in the adv
 lines from any free stretch, homes when families lag, the goal before new jobs near the deadline); the goal's
 numbers are unchanged. Candidates if the village should be reachable by following the advisor: a 48-season
 deadline, or 160 families.
+
+## Transport review (1.0.0-beta.7, November 2026)
+
+New collection points and gateways come with their first vehicle, mule trains cost $ 200 and carry 80, the trading
+post, landing and waystation open at level 3, every transport advice is measured on the whole chain, and producers
+walk past a store with no gateway in reach to one that exports. Six seeds, both policies, 72 seasons:
+
+| Seed | Before: greedy / patient (parish, waste at 72) | After: greedy / patient |
+|---|---|---|
+| 1869 | 50, 37% / 52, 24% | not reached, 37% / 45, 8% |
+| 4242 | 50, 23% / 50, 19% | 45, 21% / 43, 27% |
+| 777 | 49, 25% / 51, 24% | 50, 25% / not reached, 5% |
+| 7 | 47, 12% / 46, 17% | 47, 11% / 42, 23% |
+| 31 | 53, 33% / not reached, 30% | 54, 22% / 41, 13% |
+| 2024 | 41, 27% / 47, 31% | 43, 21% / 46, 10% |
+
+Parish reached in 11 of 12 runs before and 10 of 12 after; when reached, a median of 50 seasons before and 45
+after. Waste at season 72 averages 25% before and 19% after; income, $ 7.250 and $ 7.690 a year.
+
+The two runs that miss the parish now both stall at level 3 with 65 to 75 families idle: the parish comes with
+level 4, which asks for 50 workers, and the robot keeps the colony a few jobs short. Their waste is low (5% and
+37%, the second with the pier full all the time), so the bottleneck is jobs, not transport. Worth its own review:
+the level 4 worker requirement against the robot's job advice.

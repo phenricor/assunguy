@@ -11,6 +11,39 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.7] - 2026-11-11
+
+Transport, reviewed as a whole: buildings that work from the day they are built, advice that is measured on the
+whole chain, and screens that say why cargo is lost.
+
+### Changed
+
+- A new trading post, waystation or rail stop comes with a mule train (or railcar), and a new landing or pier with a
+  canoe, at the same price: a collection point or gateway carries from its first season.
+- Mule trains cost $ 200 (was $ 300) and carry 80 arrobas a season (was 60).
+- The trading post, the landing, the waystation and mule trains open at level 3 (was 4), when fields start to lie
+  far from the commerce.
+- The advisor's transport advice is measured: an empty collection point, a full one, a gateway with no slot left, a
+  land with no collection point and a commerce with no gateway each say what they would add a year, and are only
+  given when they add something. A vehicle behind a full gateway adds nothing, so the gateway comes first.
+- Packages for far fields start with the building and the vehicle it comes with, the cheapest step that pays; when
+  it fills up, the advice for a full building adds the next vehicle.
+- A producer's "O que resolve" also looks at adding a vehicle to the collection point that already reaches it, or
+  to a full gateway, and at upgrading a gateway with no slot left.
+- Producers walk a few lots more to a commerce that can send their surplus out rather than stop at one with no
+  gateway in reach. Before, a new store far from the gateways could pull the fields' cargo away from the one that
+  exports it and halve the colony's income.
+- Near a deadline, while the title's level still lacks workers, the jobs it asks for come before new collection
+  points and gateways, which pay the families over years.
+
+### Fixed
+
+- A producer's sheet says why its cargo walks: the collection point in reach has no vehicle, is full, there is
+  none in reach, or the gateway is full.
+- In the outlets layer, a collection point with no vehicle is drawn grey and labelled, and what still walks keeps
+  its own line to the commerce; collection points show how full they are.
+- The full-gateway workshop advice no longer says "1 famílias" or "0 arrobas a menos".
+
 ## [1.0.0-beta.6] - 2026-11-10
 
 ### Fixed
@@ -114,7 +147,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...HEAD
+[1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [1.0.0-beta.6]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.5...v1.0.0-beta.6
 [1.0.0-beta.5]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.4...v1.0.0-beta.5
 [1.0.0-beta.4]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.3...v1.0.0-beta.4

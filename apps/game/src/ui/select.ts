@@ -1,10 +1,10 @@
 // What the player sees on tapping a building or a land: the prototype's selection sheet, with the review's
 // changes (Satisfação, Capacidade, Produção; no prices in buttons; confirmations for vehicles and moves).
-import { BUILDINGS, MILESTONES, TRANSPORT_ROLES, VEHICLES, type BuildingId, type GoodId, type VehicleId } from '@assunguy/data';
+import { BALANCE, BUILDINGS, MILESTONES, TRANSPORT_ROLES, VEHICLES, type BuildingId, type GoodId, type VehicleId } from '@assunguy/data';
 import {
   HOME_UPGRADE, allocate, annex, annexCost, buyVehicle, connected, costOf, def, demolish, explore, EXPEDITION_COST, fleetOf, fleetSize, fleetSlots,
   marginOf, producerFix, sellVehicle, serviceRadius, setMargin, soilOf, swapCrop, swapOptions, undoUpgrade, upgrade, upgradeCost, upkeepOf,
-  homeOf, reach, streetsBeside,
+  homeOf, reach, streetsBeside, geography, gatewayTight,
   type FamilyId, type GameState, type LandId, type LotKey, type RatingItem,
 } from '@assunguy/sim';
 import * as store from '../store';
@@ -137,7 +137,20 @@ function outlet(key: LotKey): string {
   const fix = o.share < 0.9 ? producerFix(s, w, key, c) : null;
   const rows = [K.row(T('ui.outlet.share'), pct(o.share), o.share >= 0.9 ? 'mais' : o.share < 0.75 ? 'menos' : ''), ...(lost >= 0.5 ? parts.map(([k, v]) => K.row(T(`ui.outlet.lost.${k}`), T('ui.arrobas', { n: fmt(v) }), 'menos')) : [])];
   const box = fix ? `<div class="explica"><h4>${esc(T('ui.outlet.fix'))}</h4><p><b>${esc(T(`advice.${fix.rule}.title`, { at: key, share: Math.round(o.share * 100), ...fix.params }))}</b></p><p>${esc(T(`advice.${fix.rule}.body`, { at: key, ...fix.params }))}</p><div class="acoes">${K.go(T('ui.do'), fix.action, 'pri')}</div></div>` : '';
-  return K.section(T('ui.outlet.title')) + K.rows(rows) + box;
+  return K.section(T('ui.outlet.title')) + K.rows(rows) + (o.share < 0.9 ? why(key) : '') + box;
+}
+/** Why a producer's cargo walks: its collection point has no vehicle, is full, or there is none in reach. */
+function why(key: LotKey): string {
+  const { s } = store.session(), c = store.economy(), G = geography(s, connected(s.map)), p = G.producers[key];
+  if (!p || p.carry <= BALANCE.freeCarryDistance) return '';
+  const cols = p.collections.map((ci) => G.collections[ci]!.key), R = c.transport.collections;
+  const empty = cols.find((k) => (R.find((x) => x.key === k)?.capacity ?? 0) <= 0), full = cols.find((k) => (R.find((x) => x.key === k)?.peak ?? 0) >= 0.9);
+  const full2 = c.transport.gateways.find((g) => gatewayTight(g));
+  const text = empty ? T('ui.outlet.why.empty', { building: s.map.buildings[empty] as string })
+    : full ? T('ui.outlet.why.full', { building: s.map.buildings[full] as string })
+    : !cols.length ? T('ui.outlet.why.none', { n: p.carry })
+    : full2 ? T('ui.outlet.why.gateway', { building: s.map.buildings[full2.key] as string }) : '';
+  return text ? K.note(esc(text), 'ruim') : '';
 }
 
 // ---- transport buildings: fleet as a cart (− / +), tariff, capacity

@@ -50,7 +50,9 @@ export function build(s: GameState, w: World, type: BuildingId, a: number, b: nu
   const cost = costOf(type, s.milestone);
   if (s.cash < cost) return fail('noCash');
   const key = lotKey(a, b);
-  const ch = measuredChange(s, w, () => { s.map.buildings[key] = type; for (const [x, y] of cellsOf(a, b, type)) delete s.map.trees[lotKey(x, y)]; });
+  // a collection point or gateway comes with its first vehicle, so it carries from the first season
+  const starter = (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[type]?.starter as VehicleId | undefined;
+  const ch = measuredChange(s, w, () => { s.map.buildings[key] = type; for (const [x, y] of cellsOf(a, b, type)) delete s.map.trees[lotKey(x, y)]; if (starter) s.fleet[key] = { [starter]: 1 }; });
   s.cash -= cost; s.buildCosts += cost; s.seasonWork.buildings[key] = cost;
   log(s, 'built', { building: type, key, cost, change: ch });
   settle(s, w);

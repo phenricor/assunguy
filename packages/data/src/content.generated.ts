@@ -462,7 +462,7 @@ export const BUILDINGS = {
     "category": "transport",
     "cost": 300,
     "payer": "colony",
-    "minLevel": 4,
+    "minLevel": 3,
     "jobs": 1,
     "sector": "commerce"
   },
@@ -1096,7 +1096,7 @@ export const BUILDINGS = {
     "category": "transport",
     "cost": 250,
     "payer": "colony",
-    "minLevel": 4,
+    "minLevel": 3,
     "jobs": 1,
     "sector": "commerce"
   },
@@ -1104,7 +1104,7 @@ export const BUILDINGS = {
     "category": "transport",
     "cost": 200,
     "payer": "colony",
-    "minLevel": 4,
+    "minLevel": 3,
     "jobs": 1,
     "sector": "river",
     "riverside": true
@@ -1130,10 +1130,10 @@ export const VEHICLES = {
   },
   "muleTrain": {
     "mode": "road",
-    "cargo": 60,
-    "price": 300,
+    "cargo": 80,
+    "price": 200,
     "upkeep": 20,
-    "minLevel": 4
+    "minLevel": 3
   },
   "wagon": {
     "mode": "road",
@@ -1193,7 +1193,7 @@ export const TRANSPORT_ROLES = {
     "reach": 10
   },
   "tradingPost": {
-    "role": "collection",
+    "starter": "muleTrain", "role": "collection",
     "mode": "road",
     "reach": 8,
     "vehicles": [
@@ -1207,7 +1207,7 @@ export const TRANSPORT_ROLES = {
     ]
   },
   "landing": {
-    "role": "collection",
+    "starter": "canoe", "role": "collection",
     "mode": "river",
     "reach": 8,
     "vehicles": [
@@ -1220,7 +1220,7 @@ export const TRANSPORT_ROLES = {
     ]
   },
   "railStop": {
-    "role": "collection",
+    "starter": "railcar", "role": "collection",
     "mode": "rail",
     "reach": 10,
     "vehicles": [
@@ -1233,7 +1233,7 @@ export const TRANSPORT_ROLES = {
     ]
   },
   "riverPort": {
-    "role": "gateway",
+    "starter": "canoe", "role": "gateway",
     "mode": "river",
     "vehicles": [
       "canoe"
@@ -1245,7 +1245,7 @@ export const TRANSPORT_ROLES = {
     ]
   },
   "waystation": {
-    "role": "gateway",
+    "starter": "muleTrain", "role": "gateway",
     "mode": "road",
     "vehicles": [
       "muleTrain",
@@ -1419,16 +1419,16 @@ export const LEVEL_UNLOCKS: Readonly<Record<number, readonly string[]>> = {
     "corral",
     "pigsty",
     "saltery",
-    "mine"
+    "mine",
+    "tradingPost",
+    "landing",
+    "waystation"
   ],
   "4": [
     "whitewashedHouse",
     "market",
     "wheatField",
-    "mill",
-    "waystation",
-    "tradingPost",
-    "landing"
+    "mill"
   ],
   "5": [
     "caneField",

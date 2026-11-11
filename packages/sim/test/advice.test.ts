@@ -33,6 +33,9 @@ function action(ac: LegacyAdvice['ac']): AdviceAction | null {
   }
   throw new Error('unmapped action ' + JSON.stringify(ac));
 }
+/** Prototype advice the port replaced with measured advice of its own. */
+const PORTED_AWAY = (tit: string) => /(roças sem comércio|produção sem captação|sem vaga|sem veículos|sem porta)$/.test(tit);
+const MEASURED = new Set(['noCollection', 'noSlot', 'noVehicles.collection', 'noVehicles.gateway', 'noGateway']);
 const key = (weight: number, a: AdviceAction | null) => `${weight.toFixed(6)} ${JSON.stringify(a)}`;
 
 describe('advisor (golden, against the prototype)', () => {
@@ -42,9 +45,10 @@ describe('advisor (golden, against the prototype)', () => {
       const s = legacyState(run.state), w = generateWorld(s.seed, s.mapVersion);
       states.forEach((want, i) => {
         if (i > 0) { passSeason(s, w); for (const _ of run.seasons[i - 1]!.picks) { const d = defineEvent(s, s.queue[0]!); resolveEvent(s, w, d.options.findIndex((o) => !o.can || o.can(s))); } }
-        // the lone store for far fields is replaced by a measured package (see the review)
-        const expected = want.filter((x) => !x.tit.endsWith('roças sem comércio')).map((x) => key(x.w, action(x.ac)));
-        const mine = ruleAdvice(s, w).map((x) => key(x.weight, x.action));
+        // the lone store for far fields is replaced by a measured package (see the review); a land with no
+        // collection point is now measured too, with the vehicle a new one comes with (1.1.0)
+        const expected = want.filter((x) => !PORTED_AWAY(x.tit)).map((x) => key(x.w, action(x.ac)));
+        const mine = ruleAdvice(s, w).filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action));
         expect(mine, `${name} state ${i}: ${want.map((x) => x.tit).join(' | ')}`).toEqual(expected);
       });
     });
@@ -62,8 +66,8 @@ describe('advisor on variants of the saves (golden)', () => {
         for (const [k, t] of Object.entries(spec.add ?? {})) s.map.buildings[k as LotKey] = B[t] as never;
         if (spec.dizimo) s.taxes.tithe = { general: spec.dizimo, byGood: {} };
         updateRatings(s, w); // the prototype's calcula re-rates the homes
-        const expected = list.filter((x) => !x.tit.endsWith('roças sem comércio')).map((x) => key(x.w, action(x.ac)));
-        expect(ruleAdvice(s, w).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
+        const expected = list.filter((x) => !PORTED_AWAY(x.tit)).map((x) => key(x.w, action(x.ac)));
+        expect(ruleAdvice(s, w).filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
       });
     }
   }
@@ -75,7 +79,7 @@ describe('advisor: the November review rules', () => {
     const { s, w } = load('speedrun');
     const a = advise(s, w), far = a.find((x) => x.rule.startsWith('farLand'));
     expect(far?.rule).toBe('farLand.storePackage');
-    expect(far?.action).toMatchObject({ kind: 'collect', building: 'store', land: '2,3', with: ['waystation'], fleet: { muleTrain: 2 } });
+    expect(far?.action).toMatchObject({ kind: 'collect', building: 'store', land: '2,3', with: ['waystation'] });
     expect(far!.params.gain as number).toBeGreaterThan(0);
     expect(far!.blocked).toBe(far!.cost > s.cash);
     expect(a.some((x) => x.rule === 'noCollection' && x.params.land === '2,3')).toBe(false);

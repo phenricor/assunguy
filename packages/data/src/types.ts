@@ -89,6 +89,8 @@ export interface TransportRoleDef {
   vehicles?: readonly string[];
   /** Vehicle slots by building level 0, 1, 2. */
   slots?: readonly number[];
+  /** The vehicle a new building comes with, so it carries from the first season. */
+  starter?: string;
 }
 
 export interface LevelDef {

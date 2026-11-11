@@ -1,6 +1,6 @@
 // The advisor's screen (the player names the advisor; the role is `advisor` in code): what weighs most now,
 // each item with the action that answers it. Advice above the cash in hand is shown blocked.
-import { VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
+import { TRANSPORT_ROLES, VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
 import {
   askProvince, build, buyVehicle, collectionLot, costOf, proposeTax, sellVehicle, streets, swapCrop, upgrade,
   type AdviceAction, type LotKey,
@@ -64,7 +64,10 @@ export function runAction(a: AdviceAction | { construir?: string }): void {
       at(lot);
       const fleet = Object.entries(a.fleet ?? {}) as [VehicleId, number][];
       const cost = costOf(a.building, g.s.milestone) + (a.with ?? []).reduce((x, t) => x + costOf(t, g.s.milestone), 0) + fleet.reduce((x, [v, n]) => x + (VEHICLES[v] as { price: number }).price * n, 0);
-      const lines = [K.row(T(`building.${a.building}`), ''), ...(a.with ?? []).map((t) => K.row(T(`building.${t}`), '')), ...fleet.map(([v, n]) => K.row(T(`vehicle.${v}`), `× ${n}`)), K.row(T('ui.build.cost'), `$ ${fmt(cost)}`)];
+      // each new collection point or gateway already comes with one vehicle; the fleet lines are the ones bought with it
+      const starterOf = (t: string) => (TRANSPORT_ROLES as Record<string, { starter?: string }>)[t]?.starter;
+      const withOne = (t: string) => (starterOf(t) ? T('ui.build.withOne', { item: T(`vehicle.${starterOf(t)}`).toLocaleLowerCase() }) : '');
+      const lines = [K.row(T(`building.${a.building}`), withOne(a.building)), ...(a.with ?? []).map((t) => K.row(T(`building.${t}`), withOne(t))), ...fleet.map(([v, n]) => K.row(T(`vehicle.${v}`), `× ${n}`)), K.row(T('ui.build.cost'), `$ ${fmt(cost)}`)];
       confirm(T('ui.advisor.collectTitle'), lines, T('ui.build.build'), () => {
         const [x0, y0] = lot.split(',').map(Number) as [number, number];
         if (!store.run((x, y) => build(x, y, a.building, x0, y0))) return;

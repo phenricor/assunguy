@@ -14,6 +14,8 @@ export type Mode = 'river' | 'road' | 'rail';
 const FREE_CARRY = BALANCE.freeCarryDistance;
 const K = BALANCE.routeChoiceSharpness;
 const ISOLATED = BALANCE.isolatedCommerceWeight;
+/** Lots a producer would rather walk to reach a commerce that exports than stop at one that does not. */
+const ISOLATED_DETOUR = 8;
 const TRAVEL = BALANCE.travelTime as Partial<Record<VehicleId, number>>;
 const role = (t: BuildingId): TransportRoleDef | undefined => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
 const vehicle = (v: string): VehicleDef | undefined => (VEHICLES as Partial<Record<string, VehicleDef>>)[v];
@@ -92,8 +94,11 @@ export function geography(s: GameState, linked: Set<LotKey>): Geography {
   for (const key of keys) {
     const t = s.map.buildings[key] as BuildingId, T = def(t);
     if (!(T.output || T.extraOutputs || t === 'mine') || T.recipes) continue;
-    let jL = 0, dL = 1e9;
-    commerce.forEach((c, j) => { const d = distance(key, c.key); if (d < dL) { dL = d; jL = j; } });
+    // the nearest commerce on foot; one with no gateway in reach only sells to the families around it, so a producer
+    // walks a few lots more to one that can send the surplus out (otherwise a new store far from any gateway would
+    // pull the fields' cargo away from the one that exports it)
+    let jL = 0, dL = 1e9, eL = 1e9;
+    commerce.forEach((c, j) => { const d = distance(key, c.key), e = d + (c.linked ? 0 : ISOLATED_DETOUR); if (e < eL) { eL = e; dL = d; jL = j; } });
     // on foot, nothing is lost within the free distance of the nearest commerce; farther, it is lost on the way
     // (the prototype also made a commerce's whole land lossless; removed in the November review).
     // Within that distance walking is free, so nobody pays a collection point (November review, too).

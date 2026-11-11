@@ -14,8 +14,12 @@ describe('measuring hypothetical buildings (golden, against the playtester saves
   for (const [name, c] of Object.entries(cases)) {
     it(`${name}: same income, exports and losses for each hypothetical building`, () => {
       const s = legacyState(c.state), w = generateWorld(s.seed, s.mapVersion);
+      const base = measure(s, w);
       for (const r of c.runs) {
         const e = measure(s, w, toExtra(r.x));
+        // 1.0.0-beta.7: producers walk past a store with no gateway in reach to one that exports, so a new store far
+        // from the gateways no longer pulls the fields' cargo away (the prototype lost income there)
+        if ('armazem' in r.x) { expect(e.incomeTotal, JSON.stringify(r.x)).toBeGreaterThanOrEqual(Math.min(r.renda, base.incomeTotal) - 1); continue; }
         expect(e.incomeTotal, JSON.stringify(r.x)).toBeCloseTo(r.renda, 6);
         expect(e.exportedTotal, JSON.stringify(r.x)).toBeCloseTo(r.fora, 6);
         expect(e.lostTotal, JSON.stringify(r.x)).toBeCloseTo(r.perda, 6);

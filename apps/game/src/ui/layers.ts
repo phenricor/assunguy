@@ -80,15 +80,19 @@ hooks.drawOutlet = (ctx: CanvasRenderingContext2D) => {
   const at = (k: LotKey) => { const [a, b] = k.split(',').map(Number) as [number, number]; return P(a, b); };
   ctx.save();
   ctx.fillStyle = 'rgba(246,240,226,.5)'; ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  const G = geography(s, connected(s.map));
+  const G = geography(s, connected(s.map)), capOf: Record<string, number> = {};
+  for (const x of c.transport.collections) capOf[x.key] = x.capacity;
   // each line with a light outline and arrows the way the cargo goes (the renderer's linhaFluxo)
   const line = (p: [number, number], q: [number, number], color: string, w: number, dash = false) => api.linhaFluxo(p, q, color, w, dash);
   ctx.globalAlpha = 0.92;
   for (const [key, pr] of Object.entries(G.producers) as [LotKey, (typeof G.producers)[LotKey]][]) {
     const o = c.outlet[key]; if (!o || o.sent < 1) continue;
     const w = Math.max(1.5, Math.min(5, Math.sqrt(o.sent) / 6)) * Math.max(0.7, z);
-    if (pr.carry > 6 && pr.collections.length) { const col = G.collections[pr.collections[0]!]; if (col) line(at(key), at(col.key), '#2A78D6', w, true); }
-    const com = G.commerce[pr.carryTo]; if (com && !com.virtual && (pr.carry <= 6 || !pr.collections.length)) line(at(key), at(com.key), pr.carry <= 6 ? '#3E7D3A' : '#B5452B', w);
+    // to its collection point: blue when it carries, grey when it has no vehicle; what still walks gets its own red line
+    const col = pr.carry > 6 && pr.collections.length ? G.collections[pr.collections[0]!] : undefined, carries = !!col && (capOf[col.key] ?? 0) > 0;
+    if (col) line(at(key), at(col.key), carries ? '#2A78D6' : '#8A8170', carries ? w : Math.max(1.2, w * 0.6), true);
+    const walks = !col || !carries || o.lost.onFoot > o.sent * 0.1;
+    const com = G.commerce[pr.carryTo]; if (com && !com.virtual && walks) line(at(key), at(com.key), pr.carry <= 6 ? '#3E7D3A' : '#B5452B', col ? Math.max(1.2, w * 0.7) : w);
   }
   for (const col of G.collections) { const best = col.to.slice().sort((a, b) => b.share - a.share)[0]; const com = best && G.commerce[best.j]; if (com && !com.virtual) line(at(col.key), at(com.key), '#2A78D6', 3 * Math.max(0.7, z)); }
   for (const com of G.commerce) {
@@ -99,6 +103,8 @@ hooks.drawOutlet = (ctx: CanvasRenderingContext2D) => {
   ctx.setLineDash([]); ctx.globalAlpha = 1;
   // gateways: how full they are
   for (const g of c.transport.gateways) { const [x, y] = at(g.key); api.letreiro(x, y - 46 * z, `${Math.round(Math.min(1, g.occupancy) * 100)}%`, 13); }
+  // collection points: how full, or that they have no vehicle
+  for (const x of c.transport.collections) { const [px, py] = at(x.key); api.letreiro(px, py - 46 * z, x.capacity > 0 ? `${Math.round(Math.min(1, x.occupancy) * 100)}%` : T('ui.layer.noVehicle'), 13); }
   // producers: the share that reaches a buyer
   ctx.font = '700 11px "Libre Franklin",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const [key, o] of Object.entries(c.outlet) as [LotKey, (typeof c.outlet)[LotKey]][]) {

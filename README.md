@@ -13,7 +13,7 @@ O jogo corre em turnos de uma estação. A cada estação as famílias trabalham
 - Português e inglês, trocáveis a qualquer momento.
 - Roda inteiro no navegador, sem servidor. Os jogos ficam salvos no próprio aparelho e podem ser exportados para um arquivo.
 
-Versão atual: **1.0.0-beta.6**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
+Versão atual: **1.0.0-beta.7**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
 
 ## Colônia do Assunguy
 
@@ -48,7 +48,7 @@ Fontes: [IBGE, histórico de Cerro Azul](https://biblioteca.ibge.gov.br/visualiz
 </tr>
 <tr>
 <td width="96"><img src="docs/readme/mecanica-escoamento.png" width="88" height="88" alt=""></td>
-<td><b>Escoamento.</b> O que a colônia não consome precisa sair. Cais, porto e pouso são as portas para fora, venda e embarcadouro recolhem a produção longe do comércio, e tropas, carroças, canoas e vapores levam a carga. A tarifa é sua: a preço de custo o caixa empata, com margem ganha, mas os produtores passam a preferir levar a pé.</td>
+<td><b>Escoamento.</b> O que a colônia não consome precisa sair. Cais, porto e pouso são as portas para fora, venda e embarcadouro recolhem a produção longe do comércio, e tropas, carroças, canoas e vapores levam a carga. Cada prédio de transporte já vem com o primeiro veículo; quando enche, outro veículo ou um nível a mais abrem espaço. A tarifa é sua: a preço de custo o caixa empata, com margem ganha, mas os produtores passam a preferir levar a pé.</td>
 </tr>
 <tr>
 <td width="96"><img src="docs/readme/mecanica-governo.png" width="88" height="88" alt=""></td>

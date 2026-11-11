@@ -23,12 +23,12 @@ import { canPlace, canPlaceStreet } from './placement.js';
 import { goalPace, greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
 import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
 import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw, type DestinationId } from './state.js';
-import { collectionState, distance, fleetOf, fleetSize, gatewayTight, geography } from './transport.js';
+import { collectionState, distance, fleetOf, fleetSize, fleetSlots, gatewayTight, geography } from './transport.js';
 import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -63,6 +63,21 @@ const unlocked = (s: GameState, t: BuildingId): boolean => !def(t).lateGame && (
 const vehicleUnlocked = (s: GameState, v: VehicleId): boolean => { const V = VEHICLES[v] as VehicleDef; return !V.lateGame && (s.level || 1) >= (V.minLevel || 1); };
 const roleOf = (t: BuildingId): TransportRoleDef | undefined => (TRANSPORT_ROLES as Partial<Record<BuildingId, TransportRoleDef>>)[t];
 const ALL = Object.keys(BUILDINGS) as BuildingId[];
+/** The colony with more vehicles at a building, and its level raised when asked. */
+const withFleet = (s: GameState, key: LotKey, v: VehicleId, n = 1, up = 0): GameState => {
+  const f = fleetOf(s, key);
+  return { ...s, fleet: { ...s.fleet, [key]: { ...f, [v]: (f[v] ?? 0) + n } }, ...(up ? { upgrades: { ...s.upgrades, [key]: (s.upgrades[key] ?? 0) + up } } : {}) };
+};
+/** The largest vehicle a transport building can take at this level. */
+const bestVehicleAt = (s: GameState, key: LotKey): VehicleId | undefined => ((roleOf(s.map.buildings[key] as BuildingId)?.vehicles ?? []) as VehicleId[]).filter((v) => vehicleUnlocked(s, v)).sort((p, q) => (VEHICLES[q] as VehicleDef).cargo - (VEHICLES[p] as VehicleDef).cargo)[0];
+/**
+ * A new collection point or gateway starts with the vehicle it comes with: the cheapest first step, which the
+ * player can afford sooner; when it fills up, the advice for a full building adds the next vehicle, measured.
+ */
+const PACKAGE = 1;
+const extraVehicles = (t: BuildingId) => PACKAGE - (roleOf(t)?.starter ? 1 : 0);
+const packageCost = (s: GameState, t: BuildingId, v: VehicleId): number => costOf(t, s.milestone) + extraVehicles(t) * (VEHICLES[v] as VehicleDef).price;
+const packageFleet = (t: BuildingId, v: VehicleId): Partial<Record<VehicleId, number>> => (extraVehicles(t) > 0 ? { [v]: extraVehicles(t) } : {});
 /** Store, market and pier upgrades cost the full price, then half again; others 60% then the full price. */
 const FLEET_UPGRADE: BuildingId[] = ['store', 'market', 'riverPort'];
 export const upgradeCost = (t: BuildingId, level: number, milestone: number): number => Math.round(costOf(t, milestone) * (FLEET_UPGRADE.includes(t) ? (level === 0 ? 1 : 1.5) : (level === 0 ? 0.6 : 1)));
@@ -171,9 +186,26 @@ export function producerFix(s: GameState, w: World, key: LotKey, c: Economy = co
       if (!unlocked(s, ct) || (ct === 'landing' && !landHasWater(s, w, land))) continue;
       const lot = nearestFree(s, w, ct, key);
       if (!lot) continue;
-      const gain = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: 2 } }), w).incomeTotal - c.incomeTotal;
-      const cost = costOf(ct, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price;
-      if (gain >= 15) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: { [v]: 2 } }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
+      const gain = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+      const cost = packageCost(s, ct, v);
+      if (gain >= 15) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: packageFleet(ct, v) }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
+    }
+  }
+  // what already serves it: one more vehicle at a collection point in its reach, or at a full gateway
+  if (p) {
+    const at = [...p.collections.map((ci) => G.collections[ci]!.key), ...c.transport.gateways.filter((g) => gatewayTight(g)).map((g) => g.key)];
+    for (const k of at) {
+      const v = bestVehicleAt(s, k);
+      if (!v || fleetSize(s, k) >= fleetSlots(s, k)) continue;
+      const gain = computeEconomy(withFleet(s, k, v), w).incomeTotal - c.incomeTotal, cost = (VEHICLES[v] as VehicleDef).price;
+      if (gain >= 15) options.push({ rule: 'outlet.vehicle', action: { kind: 'buyVehicle', key: k, vehicle: v }, gain, cost, params: { building: s.map.buildings[k] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
+    }
+    // a full gateway with no slot left: raise its level and add a vehicle
+    for (const g of c.transport.gateways.filter((y) => gatewayTight(y) && fleetSize(s, y.key) >= fleetSlots(s, y.key) && upgradeOf(s, y.key) < 2)) {
+      const v = bestVehicleAt(s, g.key);
+      if (!v) continue;
+      const gain = computeEconomy(withFleet(s, g.key, v, 1, 1), w).incomeTotal - c.incomeTotal, cost = upgradeCost(s.map.buildings[g.key] as BuildingId, upgradeOf(s, g.key), s.milestone) + (VEHICLES[v] as VehicleDef).price;
+      if (gain >= 15) options.push({ rule: 'outlet.upgrade', action: { kind: 'select', key: g.key, upgrade: true }, gain, cost, params: { building: s.map.buildings[g.key] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
     }
   }
   return options.sort((x, y) => y.gain / Math.max(1, y.cost) - x.gain / Math.max(1, x.cost))[0] ?? null;
@@ -411,8 +443,9 @@ function invest(x: Ctx): { t: BuildingId; cost: number; income: number; years: n
 function transportAdvice(x: Ctx): Advice[] {
   const { s, w, c } = x, R = c.transport, L: Advice[] = [];
   const add = (weight: number, rule: string, params: Advice['params'], action: AdviceAction | null) => L.push({ weight, rule, params, action, cost: 0, blocked: false });
-  const gainVehicle = (key: LotKey, v: VehicleId) => { const f = fleetOf(s, key); return computeEconomy({ ...s, fleet: { ...s.fleet, [key]: { ...f, [v]: (f[v] ?? 0) + 1 } } }, w).incomeTotal - c.incomeTotal; };
-  const bestVehicle = (key: LotKey) => ((roleOf(s.map.buildings[key] as BuildingId)?.vehicles ?? []) as VehicleId[]).filter((v) => vehicleUnlocked(s, v)).sort((p, q) => (VEHICLES[q] as VehicleDef).cargo - (VEHICLES[p] as VehicleDef).cargo)[0];
+  // every suggestion here is measured on the whole chain: a vehicle behind a full gateway gains nothing, so the gateway comes first
+  const gainVehicle = (key: LotKey, v: VehicleId, up = 0) => computeEconomy(withFleet(s, key, v, 1, up), w).incomeTotal - c.incomeTotal;
+  const bestVehicle = (key: LotKey) => bestVehicleAt(s, key);
   let measuredN = 0;
   const items = [...R.collections.map((y) => ['collection', y] as const), ...R.gateways.map((y) => ['gateway', y] as const)].sort((p, q) => q[1].peak - p[1].peak);
   for (const [which, y] of items) {
@@ -420,20 +453,32 @@ function transportAdvice(x: Ctx): Advice[] {
     if (!v) continue;
     const V = VEHICLES[v] as VehicleDef;
     const tight = which === 'gateway' ? gatewayTight(y) : y.peak >= 0.9;
-    if (y.capacity <= 0 && room) { add(74, `noVehicles.${which}`, { at: y.key, vehicle: v, cost: V.price }, { kind: 'buyVehicle', key: y.key, vehicle: v }); continue; }
+    if (y.capacity <= 0 && room) {
+      const g = gainVehicle(y.key, v);
+      // an empty building is a waste the player may not have noticed: it ranks high when it pays
+      if (g >= 10) add(Math.max(72, workWeight(V.price, g)), `noVehicles.${which}`, { at: y.key, vehicle: v, cost: V.price, gain: Math.round(g) }, { kind: 'buyVehicle', key: y.key, vehicle: v });
+      continue;
+    }
     if (tight && room && measuredN < 4) {
       measuredN++;
       const g = gainVehicle(y.key, v);
       if (g - V.upkeep * 4 >= V.price / 2) add(workWeight(V.price, g), `full.${which}`, { at: y.key, vehicle: v, cost: V.price, upkeep: V.upkeep * 4, gain: Math.round(g) }, { kind: 'buyVehicle', key: y.key, vehicle: v });
-    } else if (tight && !room && upgradeOf(s, y.key) < 2) add(62, 'noSlot', { at: y.key }, { kind: 'select', key: y.key, upgrade: true });
+    } else if (tight && !room && upgradeOf(s, y.key) < 2) {
+      const g = gainVehicle(y.key, v, 1), cost = upgradeCost(s.map.buildings[y.key] as BuildingId, upgradeOf(s, y.key), s.milestone) + V.price;
+      if (g >= 10) add(workWeight(cost, g), 'noSlot', { at: y.key, vehicle: v, cost, gain: Math.round(g) }, { kind: 'select', key: y.key, upgrade: true });
+    }
     else if (which === 'collection' && collectionState(y as Economy['transport']['collections'][number]) === 'idle' && fleetSize(s, y.key) > 1 && y.tariff > 0.45) {
       const v0 = (Object.keys(y.fleet) as VehicleId[]).find((z) => y.fleet[z]);
       if (v0) add(46, 'idleCollection', { at: y.key, tariff: Math.round(y.tariff * 100) / 100, vehicle: v0 }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
     }
   }
   if (s.level >= 4) for (const r of R.lands.filter((y) => y.producedValue > 0 && y.lostValue > 40 && y.lostValue / y.producedValue > 0.12 && !y.covered).slice(0, 2)) {
-    const t: BuildingId = landHasWater(s, w, r.id) ? 'landing' : 'tradingPost', v: VehicleId = t === 'tradingPost' ? 'muleTrain' : 'canoe', total = costOf(t, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price;
-    L.push({ weight: workWeight(total, r.lostValue * 0.6), rule: 'noCollection', params: { land: r.id, lost: Math.round(r.lostValue), building: t, vehicle: v, cost: total }, action: { kind: 'collect', building: t, land: r.id, fleet: { [v]: 2 } }, cost: total, blocked: false });
+    const t: BuildingId = landHasWater(s, w, r.id) ? 'landing' : 'tradingPost', v: VehicleId = t === 'tradingPost' ? 'muleTrain' : 'canoe', total = packageCost(s, t, v);
+    const lot = collectionLot(s, w, t, r.id);
+    if (!lot) continue;
+    const gain = computeEconomy(withPlaced(s, { [lot]: t }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+    if (gain < 15) continue;
+    L.push({ weight: workWeight(total, gain), rule: 'noCollection', params: { land: r.id, lost: Math.round(r.lostValue), building: t, vehicle: v, cost: total, gain: Math.round(gain) }, action: { kind: 'collect', building: t, land: r.id, lot, fleet: packageFleet(t, v) }, cost: total, blocked: false });
   }
   // the pier full all year and idle people: transforming here employs them and sends less cargo to the canoes
   {
@@ -444,11 +489,17 @@ function transportAdvice(x: Ctx): Advice[] {
         const c2 = measured(x, { [t]: 1 }), g = c2.incomeTotal - c.incomeTotal, less = c.exportedTotal - c2.exportedTotal;
         if (g > 20 && (!best || g > best.g)) best = { t, g, less };
       }
-      if (best) { const n = Math.min(a0.idle.length, def(best.t).jobs || 1); add(78, 'pierFullIdle', { building: best.t, cost: costOf(best.t, s.milestone), n, gain: Math.round(best.g), less: best.less > 10 ? Math.round(best.less) : 0 }, { kind: 'build', building: best.t }); }
+      if (best) { const n = Math.min(a0.idle.length, def(best.t).jobs || 1); add(78, best.less > 10 ? 'pierFullIdle.less' : 'pierFullIdle', { building: best.t, cost: costOf(best.t, s.milestone), n, gain: Math.round(best.g), less: best.less > 10 ? Math.round(best.less) : 0 }, { kind: 'build', building: best.t }); }
     }
   }
   // the store package replaces the prototype's lone store for far fields (see storePackage)
-  for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) L.push({ weight: workWeight(costOf('waystation', s.milestone) + 600, y.lost * 3), rule: 'noGateway', params: { at: y.key, lost: Math.round(y.lost) }, action: { kind: 'collect', building: 'waystation', near: y.key }, cost: costOf('waystation', s.milestone) + 600, blocked: false });
+  // a commerce with no gateway in reach: a waystation next to it, measured with its mule trains
+  if (unlocked(s, 'waystation')) for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) {
+    const lot = collectionLot(s, w, 'waystation', null, y.key);
+    if (!lot) continue;
+    const cost = packageCost(s, 'waystation', 'muleTrain'), gain = computeEconomy(withPlaced(s, { [lot]: 'waystation' }, { [lot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+    if (gain >= 15) L.push({ weight: workWeight(cost, gain), rule: 'noGateway', params: { at: y.key, lost: Math.round(y.lost), cost, gain: Math.round(gain) }, action: { kind: 'collect', building: 'waystation', near: y.key, lot, fleet: packageFleet('waystation', 'muleTrain') }, cost, blocked: false });
+  }
   const u = s.transport.last;
   if (u && u.margin >= 0.25 && u.loss > 0.2) add(60, 'highTariffs', { margin: Math.round(u.margin * 100), loss: Math.round(u.loss * 100) }, { kind: 'screen', screen: 'transport', tab: 'collections' });
   return L;
@@ -536,7 +587,7 @@ export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(
     const lot = collectionLot(s, w, t, land);
     if (!lot) continue;
     const gain = computeEconomy(withPlaced(s, { [lot]: t }, { [lot]: { [v]: 2 } }), w).incomeTotal - c.incomeTotal;
-    options.push({ ...base, option: 'collection', action: { kind: 'collect', building: t, land, lot, fleet: { [v]: 2 } }, cost: costOf(t, s.milestone) + 2 * (VEHICLES[v] as VehicleDef).price, gain });
+    options.push({ ...base, option: 'collection', action: { kind: 'collect', building: t, land, lot, fleet: packageFleet(t, v) }, cost: packageCost(s, t, v), gain });
   }
   if (unlocked(s, 'store')) {
     const storeLot = collectionLot(s, w, 'store', land);
@@ -549,9 +600,8 @@ export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(
       } else if (unlocked(s, 'waystation')) {
         const wayLot = collectionLot(withStore, w, 'waystation', null, storeLot);
         if (wayLot) {
-          const fleet = { muleTrain: 2 } as const;
-          const gain = computeEconomy(withPlaced(s, { [storeLot]: 'store', [wayLot]: 'waystation' }, { [wayLot]: fleet }), w).incomeTotal - c.incomeTotal;
-          options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot, with: ['waystation'], fleet }, cost: costOf('store', s.milestone) + costOf('waystation', s.milestone) + 2 * (VEHICLES.muleTrain as VehicleDef).price, gain });
+          const gain = computeEconomy(withPlaced(s, { [storeLot]: 'store', [wayLot]: 'waystation' }, { [wayLot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+          options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot, with: ['waystation'], fleet: packageFleet('waystation', 'muleTrain') }, cost: costOf('store', s.milestone) + packageCost(s, 'waystation', 'muleTrain'), gain });
         }
       }
     }
@@ -592,6 +642,15 @@ export function advise(s: GameState, w: World): Advice[] {
     // and while the goal still lacks buildings or lands, new jobs wait: they pay the families, not the purse
     if ((left <= 24 || (pace && pace.behind > 0.15)) && list.some((y) => y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands'))
       for (const y of list) if (y.rule === 'idle.invest' || y.rule === 'idle.jobs' || y.rule === 'chain' || y.rule === 'cropSwap') y.weight = Math.min(y.weight, 79);
+    // the title comes with a level: near the deadline, new collection points and gateways (which pay the families
+    // over years) wait behind what the goal and its level ask for; filling and fixing the ones that exist does not
+    const titleLevel = LEVELS.find((l) => l.milestone === s.milestone + 1), employed = allocate(s).employed;
+    if (left <= 24 && titleLevel && s.level < titleLevel.level) {
+      for (const y of list) if (/^(farLand\.|noCollection$|noGateway$)/.test(y.rule)) y.weight = Math.min(y.weight, 79);
+      // short of the workers that level asks for, with the goal's own buildings done: jobs first
+      if (employed < titleLevel.workers && !list.some((y) => y.rule === 'milestoneBuilding' || y.rule === 'milestoneLands'))
+        for (const y of list) if (y.rule === 'idle.invest' || y.rule === 'idle.jobs' || y.rule.startsWith('pierFullIdle')) y.weight = Math.max(y.weight, left <= 12 ? 92 : 88);
+    }
     // families weigh most in the milestone and only come to empty homes: behind on them, homes come even with idle
     // hands (the prototype held huts back above 30% idle, so an advisor-led colony fell far short of its families)
     const tg = MILESTONES[s.milestone + 1] as MilestoneDef, missing = Math.round((tg.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05)) - Object.keys(s.families).length;

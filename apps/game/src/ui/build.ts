@@ -178,6 +178,9 @@ export function previewAt(t: BuildingId, a: number, b: number, from?: LotKey): v
     const flow = flowInto(t, key, s, s2, from);
     setPreview(highlight(t, key, s2, r1, flow));
     if (!from) L.push(K.row(T('ui.build.cost'), `$ ${fmt(cost)}`));
+    // a collection point or gateway comes with its first vehicle
+    const starter = roleOf(t)?.starter;
+    if (!from && starter) L.push(K.row(T('ui.build.includes'), T('ui.build.oneOf', { item: T(`vehicle.${starter}`).toLocaleLowerCase() })));
     const up = upkeepOf(t, s.milestone);
     if (!from && up) L.push(K.row(T('ui.build.upkeep'), `$ ${fmt(up)}`));
     L.push(K.row(T('ui.satisfaction'), `${m0} → ${m1}`, m1 > m0 ? 'mais' : m1 < m0 ? 'menos' : ''));
