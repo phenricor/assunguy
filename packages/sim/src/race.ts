@@ -5,7 +5,7 @@
 // lot from a train station to an edge of the map) open Curitiba, Paranaguá and later São Paulo. Families leave
 // when the income per family falls from its best or the freight is too dear; a colony that stays down is
 // declared in decline and ends; one that leads two markets for two years at level 12 wins.
-import { BUILDINGS, WORLD, type BuildingId } from '@assunguy/data';
+import { BUILDINGS, VEHICLES, WORLD, type BuildingId, type VehicleDef, type VehicleId } from '@assunguy/data';
 import type { Economy } from './economy.js';
 import { chronicle } from './events.js';
 import { heightAt } from './map.js';
@@ -61,6 +61,13 @@ export const competitivenessOf = (rival: number, cost: number): number => Math.m
 export const acceptance = (comp: number): number => (comp >= 0.8 ? 1 : 0.3 + Math.max(0, (comp - 0.6) / 0.2) * 0.7);
 /** Late-game buildings open during the race. */
 export const raceBuilding = (s: GameState, t: BuildingId): boolean => !!s.race && (t === 'trainStation' || t === 'railStop');
+/** Whether a vehicle can be bought now: rail vehicles from the race on (the bigger trains when the rivals' advances open them), others by level. */
+export function vehicleAvailable(s: GameState, v: VehicleId): boolean {
+  const V = VEHICLES[v] as VehicleDef | undefined;
+  if (!V) return false;
+  if (V.lateGame && !(s.race && (v === 'railcar' || v === 'lightTrain' || opened(s, v)))) return false;
+  return (s.level || 1) >= (V.minLevel || 1);
+}
 
 // ---- rails
 

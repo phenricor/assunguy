@@ -15,7 +15,7 @@ import { updateRatings } from './ratings.js';
 import { measuredChange, settle } from './settle.js';
 import { change, snapshot } from './report.js';
 import { AGENT_COST } from './season.js';
-import { opened, raceBuilding, railBlocked, railCost } from './race.js';
+import { raceBuilding, railBlocked, railCost, vehicleAvailable } from './race.js';
 import { occupancy } from './map.js';
 import { upgradeOf, type FamilyId, type GameState, type TaxId, type TaxLaw } from './state.js';
 import { fleetOf, fleetSize, fleetSlots } from './transport.js';
@@ -231,7 +231,7 @@ export function annex(s: GameState, w: World, id: LandId): CommandResult {
 export function buyVehicle(s: GameState, w: World, key: LotKey, v: VehicleId): CommandResult {
   const t = s.map.buildings[key] as BuildingId | undefined, V = VEHICLES[v] as VehicleDef | undefined;
   if (!t || !V || !(roleOf(t)?.vehicles ?? []).includes(v)) return fail('wrongVehicle');
-  if ((V.lateGame && !(s.race && (v === 'railcar' || v === 'lightTrain' || opened(s, v)))) || (s.level || 1) < (V.minLevel || 1)) return fail('locked');
+  if (!vehicleAvailable(s, v)) return fail('locked');
   if (fleetSize(s, key) >= fleetSlots(s, key)) return fail('noSlot');
   if (s.cash < V.price) return fail('noCash');
   s.cash -= V.price; s.buildCosts += V.price;

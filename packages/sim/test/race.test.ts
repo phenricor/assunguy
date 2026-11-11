@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acceptance, advanceRace, competitivenessOf, computeEconomy, newGame, passSeason, rails, railExits, rivalCost, opened, build } from '../src/index.js';
+import { acceptance, advanceRace, buyVehicle, competitivenessOf, computeEconomy, newGame, passSeason, rails, railExits, rivalCost, opened, build, vehicleAvailable } from '../src/index.js';
 
 describe('the transport race', () => {
   it('starts the season after the colony becomes a Town, with its intro', () => {
@@ -43,5 +43,29 @@ describe('the transport race', () => {
       expect(c.transport.gateways.find((g) => g.key === `${a},${b}`)?.dests.map((d) => d.d)).toEqual(['curitiba', 'paranagua']);
     }
     void advanceRace; void col;
+  });
+  it('trains can be bought from the race on, the bigger ones when the rivals open them, ', () => {
+    const { s, w } = newGame(1869);
+    s.queue = []; s.level = 10;
+    expect(vehicleAvailable(s, 'lightTrain')).toBe(false);
+    s.milestone = 3; passSeason(s, w);
+    expect(vehicleAvailable(s, 'lightTrain')).toBe(true);
+    expect(vehicleAvailable(s, 'mediumTrain')).toBe(false);
+    s.cash = 1e7;
+    for (const id of Object.keys(w.lands)) s.map.lands[id as never] = 'ours';
+    // a station near the south edge whose column runs free down to it
+    let at: [number, number] | null = null;
+    for (let b = 96; b > 70 && !at; b--) for (let a = 10; a < 70 && !at; a++) {
+      const t = structuredClone(s);
+      t.map.streets[`${a - 1},${b}`] = true;
+      if (!build(t, w, 'trainStation', a, b).ok || !rails(t, w, [a, b + 1], [a, 104]).ok || railExits(t, `${a},${b}`).south === undefined) continue;
+      s.map.streets[`${a - 1},${b}`] = true; build(s, w, 'trainStation', a, b); rails(s, w, [a, b + 1], [a, 104]); at = [a, b];
+    }
+    expect(at).not.toBeNull();
+    const [a, b] = at!;
+    expect(railExits(s, `${a},${b}`).south).toBeDefined();
+    expect(buyVehicle(s, w, `${a},${b}`, 'lightTrain').ok).toBe(true);
+    s.market.t = s.race!.t0 + 12;
+    expect(vehicleAvailable(s, 'mediumTrain')).toBe(true);
   });
 });
