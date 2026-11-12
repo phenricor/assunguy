@@ -319,7 +319,7 @@ U = {
   'district.tFamilies': ('famílias', 'families'), 'district.tIdle': ('sem trabalho', 'without work'), 'district.tIncome': ('renda por ano', 'income a year'),
   'district.tSat': ('satisfação', 'satisfaction'), 'district.tReach': ('chega ao comprador', 'reaches a buyer'),
   'goal.families': ('Famílias', 'Families'), 'goal.workingFamilies': ('Famílias trabalhando', 'Families at work'), 'goal.road': ('Estrada até Curitiba', 'Road to Curitiba'), 'goal.lands': ('Terras', 'Lands'), 'goal.satisfaction': ('Satisfação', 'Satisfaction'),
-  'goal.workers': ('Famílias com trabalho', 'Families at work'), 'goal.income': ('Renda por ano', 'Income a year'),
+  'goal.workers': ('Famílias trabalhando', 'Families at work'), 'goal.income': ('Renda por ano', 'Income a year'),
   'goal.idle': ('Famílias sem trabalho', 'Families without work'), 'goal.atMost': ('{n}% (no máximo {max}%)', '{n}% (at most {max}%)'),
   'goal.districts': ('Bairros', 'Districts'),
   # layers

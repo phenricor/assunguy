@@ -101,7 +101,9 @@ const neighbourOfOurs = (s: GameState, id: LandId): boolean => { const [c, l] = 
 export function suggestedLand(s: GameState, w: World, river: boolean): LandId | null {
   const hasRiver = (id: LandId) => { const [cl] = parseKey(id), R = 15; for (let x = cl * R; x < (cl + 1) * R; x++) if (w.riverWidth[x] && landOf(x, w.riverBank[x] as number) === id) return true; return false; };
   const ids = (Object.keys(w.lands) as LandId[]).filter((id) => s.map.lands[id] !== 'ours' && neighbourOfOurs(s, id));
-  const score = (id: LandId) => (river && hasRiver(id) ? 0 : 2) + (s.map.lands[id] === 'seen' ? 0 : 1);
+  // from the village on, without the road, the lands on its way south come first: the town asks for it
+  const way = s.milestone >= 2 && !hasRoad(s) ? new Set(Array.from({ length: 58 }, (_, i) => landOf(22, 47 + i))) : null;
+  const score = (id: LandId) => (river && hasRiver(id) ? 0 : 2) + (s.map.lands[id] === 'seen' ? 0 : 1) - (way?.has(id) ? 3 : 0);
   return ids.sort((x, y) => score(x) - score(y))[0] ?? null;
 }
 /** A free lot on our river bank where a pier fits (a missing street does not count against it). */
@@ -482,7 +484,8 @@ function colonyAdvice(x: Ctx): Advice[] {
   if (s.milestone >= 2 && !hasRoad(s)) {
     // with the town next and the road all it still lacks, the road comes first
     const onlyRoad = !!next && next.milestone === 3 && levelRequirements(s, w, next.level, c).every((g) => g.ok || g.kind === 'road');
-    const weight = onlyRoad ? 92 : next && next.milestone === 3 ? 66 : 30, south: LandId[] = [];
+    // the road takes lands and seasons: from two levels before the town it comes before most works
+    const weight = onlyRoad ? 92 : s.level >= milestoneLevel(3) - 2 ? 80 : next && next.milestone === 3 ? 66 : 30, south: LandId[] = [];
     for (let y = 47; y < 105; y++) { const id = landOf(22, y); if (!south.includes(id) && s.map.lands[id] !== 'ours') south.push(id); }
     if (south.length) add(weight, 'road.lands', { n: south.length }, { kind: 'land', land: south[0]! });
     else add(weight, 'road.street', {}, { kind: 'build', building: 'street' });

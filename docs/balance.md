@@ -73,3 +73,36 @@ Income at 72 averages $ 8.010 a year (was $ 7.250); waste, 28% (was 25%), higher
 Over 130 seasons (`pnpm balance`), the village is still reached in 1 of 6 runs (seed 4242, patient, season 79, was
 99); the rest end at its deadline, now earlier because the parish comes earlier. The village (180 families, four
 lands, more services) is the next thing to review.
+
+## Rebalance on districts (November 2026)
+
+Aim: a full game of 2 to 3 hours (about 240 seasons), unemployment around 25% at most, and a city that fills its
+map. Changes, with the prototype's values in `packages/sim/test/fixtures/prototype-rules.json` (the golden tests
+run on them through `test/prototypeRules.ts`):
+
+- Homes hold 1, 2, 3 and 4 families (hut, house, whitewashed house, townhouse; they held 2, 4, 5 and 6). The
+  colony starts in four houses with eight families (`BALANCE.smallHomes`).
+- 18 levels: hamlet 1 to 4, parish 5 to 8, village 9 to 13, town 14 to 18. Unlocks are spread over them; the
+  council moves to level 7 so taxes come before the village's costs. Levels 8, 12, 16 and 18 ask for 2, 3, 4 and 5
+  districts; 10, 13 and 17 for at most 30%, 25% and 25% of families without work.
+- Milestones count families at work (`BALANCE.milestoneWorkers`): parish 44 in 40 seasons, village 90 in 56,
+  town 190 in 72.
+- Advisor: it aims at the jobs the next level really asks for, suggests homes when a level lacks families for its
+  jobs (`levelFamilies`), suggests a tithe a point above the milestone's satisfaction (`BALANCE.titheSpare`, was 3),
+  and brings the road forward from two levels before the town.
+
+Robot, patient policy, 270 seasons (season of each level; the game starts at 12):
+
+| Seed | Parish (5) | Village (9) | Level 13 | Mean idle after season 30 |
+|---|---|---|---|---|
+| 1869 | 36 | 79 | 153 | 22% |
+| 4242 | 37 | 79 | 124 | 25% |
+| 777 | 36 | 75 | 116 | 15% |
+
+Before (twelve levels, big homes, milestones counting every family): parish at 37 to 41 when reached, the village
+reached once (79), idle 30% to 40%. Greedy robots still miss the village: they never save for the market.
+
+No robot reaches the town: it stalls on the road to Curitiba (lands to annex south, then a street to the edge),
+as before the rebalance. The late levels are set from the player's save (year 28, season 121: 514 families in big
+homes, about 278 at work, $ 30,000 a year), which on the new rules sits at level 14 and would need about twice
+the homes to reach 18.
