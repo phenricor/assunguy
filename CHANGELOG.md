@@ -11,6 +11,28 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Added
+
+- "Rumo ao nível X" at the top of the advisor's screen: only what the next level still lacks (families at work,
+  income, buildings) and a package of works that closes it, measured on the colony, with its cost and the income it
+  adds. It says when level 12 wins the race.
+- The advisor's guide comes in chapters that open when their subject enters the game. The first steps are the first
+  chapter; "A corrida" opens with the race (station, rails to the edge, a train, the race panel, level 12). A
+  notebook in the settings keeps every chapter to read again, and a closed one can come back.
+- New advice, all measured: a market the colony leads (or keeps above 80%) that the rivals' next advance takes away,
+  with the costs on both sides; families about to leave in the race, two seasons ahead, with the income and the works
+  that avoid it; a vehicle to spare where a gateway or collection point is little used (it replaces the unmeasured
+  advice on idle collection points).
+- Buying or selling a vehicle, and upgrading a building, show the change in the families' income a year.
+
+### Changed
+
+- Each upgrade the colony pays for opens one more job (the prototype opened one at the second level only), so
+  workshops and services are another way to the workers a level asks for besides another hundred fields.
+- In the race, the seasons leading two markets count toward victory only from level 12.
+- The asset returns say when a kind of building has too many (the last one already takes income away), instead of
+  calling one more worth it.
+
 ### Fixed
 
 - A steamboat bought at the pier never showed on the river; it now steams down to Iguape like the canoes.

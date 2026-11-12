@@ -9,7 +9,7 @@ import * as store from './store';
 import { setErrorSink } from './store';
 import { hint } from './ui/kit';
 import { T, has, onLocale } from './i18n';
-import { bar, nextEvent, refresh, wire, cancel } from './ui/app';
+import { bar, guide, nextEvent, refresh, wire, cancel } from './ui/app';
 import { chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet } from './ui/build';
 import { openBuilding, openLand } from './ui/select';
 import { openReport, openReports } from './ui/report';
@@ -39,7 +39,7 @@ Object.assign(hooks, {
   chooseBuild, openBuildList, previewAt, previewMove, streetTap, railTap, openStreet, openBuilding, openLand,
   defineEvent: (ev: QueuedEvent) => defineEvent(store.session().s, ev),
   openReport, openReports, openAdvisor, runAction, openColony, openGovernment, openTransport, openLevel, openDistrict,
-  openLayers, abreCamadas: openLayers, openMenu, openSettings, abreMenu: openSettings,
+  openLayers, abreCamadas: openLayers, openMenu, openSettings, abreMenu: openSettings, guide,
 });
 setErrorSink((msg) => { api.Sons.toca('erro', 300); hint(msg, 2600); });
 wire();

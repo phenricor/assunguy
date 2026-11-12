@@ -2,13 +2,13 @@
 // each item with the action that answers it. Advice above the cash in hand is shown blocked.
 import { TRANSPORT_ROLES, VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
 import {
-  askProvince, build, buyVehicle, collectionLot, costOf, proposeTax, sellVehicle, streets, swapCrop, upgrade,
-  type AdviceAction, type LotKey,
+  askProvince, build, buyVehicle, collectionLot, costOf, planSteps, proposeTax, sellVehicle, streets, swapCrop, upgrade,
+  type AdviceAction, type LevelPlan, type LotKey,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T } from '../i18n';
 import { api, hooks } from '../view';
-import { K, esc, fmt, confirm, hint } from './kit';
+import { K, esc, fmt, confirm, hint, signedMoney } from './kit';
 import { cancel, refresh } from './app';
 import { screen, closeScreen } from './report';
 
@@ -29,8 +29,56 @@ export function openAdvisor(): void {
       return K.card({ title: esc(T(`advice.${a.rule}.title`, p)), sub: esc(T(`advice.${a.rule}.body`, p)), body: btn, dim: a.blocked, attrs: undefined }) + (n < 0 ? '' : '');
     }));
   }).join('');
-  screen({ id: 'advisor', title: name, sub: T('ui.advisor.sub'), body: groups || K.empty(T('ui.advisor.none', { advisor: name })) });
+  const p = screen({ id: 'advisor', title: name, sub: T('ui.advisor.sub'), body: `<div id="planBox">${planBlock(null)}</div>` + (groups || K.empty(T('ui.advisor.none', { advisor: name }))) });
   hooks.atualizaTopo?.();
+  startPlan(p);
+}
+
+// ---- the way to the next level: what is missing and the works that close it, measured after the screen opens
+
+let planCache: { sig: string; plan: LevelPlan | null } | null = null;
+let planRun = 0;
+const planSig = () => { const s = store.session().s; return `${s.market.t}|${s.level}|${Object.keys(s.map.buildings).length}|${JSON.stringify(s.upgrades).length}|${Object.keys(s.families).length}|${store.session().meta.id}`; };
+
+function planBlock(plan: LevelPlan | null | undefined): string {
+  const { s } = store.session();
+  if (plan === undefined) return '';
+  const head = (lv: number) => K.section(esc(T('ui.plan.title', { level: lv })));
+  if (plan === null) return s.level >= 12 ? '' : head(s.level + 1) + K.note(esc(T('ui.plan.computing')), 'neutra');
+  const lacks = [
+    plan.workers.current < plan.workers.target ? K.row(esc(T('ui.plan.workers', { n: plan.workers.target - plan.workers.current })), '', 'menos') : '',
+    plan.income.current < plan.income.target ? K.row(esc(T('ui.plan.income', { n: fmt(plan.income.target - plan.income.current) })), '', 'menos') : '',
+    ...plan.missing.map((m) => K.row(esc(T('ui.plan.building', { building: m.building })), '', 'menos')),
+  ].filter(Boolean);
+  if (!lacks.length) return head(plan.level) + K.note(esc(T('ui.plan.ready', { level: plan.level })), 'bom') + (s.race && plan.level === 12 ? K.note(esc(T('ui.plan.wins')), 'neutra') : '');
+  const name = (i: LevelPlan['items'][number]) => T(i.n > 1 ? `building.${i.building}.plural` : `building.${i.building}`);
+  const items = plan.items.map((i) => K.row(esc(i.upgrade ? T(i.n > 1 ? 'ui.plan.upgradeN' : 'ui.plan.upgrade', { n: i.n, what: name(i) }) : T('ui.plan.item', { n: i.n, what: name(i) })), `$ ${fmt(i.cost)}`));
+  const totals = plan.items.length ? K.rows([K.row(esc(T('ui.plan.cost')), `$ ${fmt(plan.cost)}`), K.row(esc(T('ui.tr.income')), esc(T('ui.perYear', { value: signedMoney(plan.gain) })), plan.gain > 0 ? 'mais' : '')]) : '';
+  return head(plan.level) + K.rows(lacks)
+    + (plan.items.length ? K.section(esc(T('ui.plan.works'))) + K.rows(items) + totals : '')
+    + (plan.families ? K.note(esc(T('ui.plan.families', { n: plan.families })), 'neutra') : !plan.reached ? K.note(esc(T('ui.plan.short')), 'neutra') : '')
+    + (s.race && plan.level === 12 ? K.note(esc(T('ui.plan.wins')), 'neutra') : '');
+}
+
+/** Runs the plan a few steps per frame, so the screen stays responsive; keeps it for the season. */
+function startPlan(p: HTMLElement): void {
+  const box = () => p.querySelector<HTMLElement>('#planBox');
+  const { s, w } = store.session();
+  if (s.level >= 12) { const b = box(); if (b) b.innerHTML = ''; return; }
+  const sig = planSig();
+  if (planCache?.sig === sig) { const b = box(); if (b) b.innerHTML = planBlock(planCache.plan); return; }
+  const run = ++planRun, gen = planSteps(structuredClone(s), w);
+  const tick = () => {
+    const b = box();
+    if (run !== planRun || !b || !b.isConnected) return;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 24) {
+      const r = gen.next();
+      if (r.done) { planCache = { sig, plan: r.value }; b.innerHTML = planBlock(r.value); return; }
+    }
+    setTimeout(tick, 0);
+  };
+  setTimeout(tick, 30);
 }
 
 /** Carries out an advice's action, or opens what the player needs to do it. */

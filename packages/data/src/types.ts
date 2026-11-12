@@ -132,6 +132,8 @@ export interface BalanceDef {
   storageKeep: { none: number; grain: number; fresh: number };
   riverFreight: number;
   freeCarryDistance: number;
+  /** Each upgrade the colony pays for opens one more job (the prototype opened one at level 2 only). */
+  upgradeOpensJobs: boolean;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;

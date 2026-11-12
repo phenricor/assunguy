@@ -2,7 +2,7 @@
 // The prototype's renderer draws; this module decides what the player sees in the sheets and popups and
 // sends the player's decisions to the simulation as commands.
 import { MILESTONES, type BuildingId } from '@assunguy/data';
-import { computeEconomy, allocate, seasonOf, yearOf, type GameState, type LotKey, type LandId } from '@assunguy/sim';
+import { computeEconomy, allocate, railExits, seasonOf, yearOf, type GameState, type LotKey, type LandId } from '@assunguy/sim';
 import * as store from '../store';
 import { T, has, num } from '../i18n';
 import { api, vars, hooks, show, PT, EN } from '../view';
@@ -90,30 +90,63 @@ export function top(): void {
   guide();
 }
 
-// ---- first steps: they go away as the player does them
+// ---- the advisor's guide: chapters that open when their subject enters the game; each step goes away when the
+// player does it, and tapping it takes the player there. The notebook (settings) keeps every chapter to re-read.
 
 interface Step { key: string; done: (s: GameState) => boolean; go: () => void }
+export interface Chapter { id: string; opens: (s: GameState) => boolean; steps: Step[] }
 const count = (s: GameState, f: (t: BuildingId) => boolean) => Object.values(s.map.buildings).filter((t) => f(t as BuildingId)).length;
-const STEPS: Step[] = [
-  { key: 'jobs', done: (s) => count(s, (t) => t.endsWith('Field')) > 3, go: () => hooks.chooseBuild('beanField') },
-  { key: 'homes', done: (s) => count(s, (t) => t === 'hut' || t === 'house' || t === 'whitewashedHouse' || t === 'townhouse') > 4, go: () => hooks.chooseBuild('hut') },
-  { key: 'season', done: (s) => s.market.t > 12, go: () => passSeason() },
-  { key: 'advisor', done: (s) => !!s.flags.sawAdvisor, go: () => hooks.openAdvisor() },
-  { key: 'level', done: (s) => s.level >= 2, go: () => hooks.openLevel() },
+const keysOf = (s: GameState, t: BuildingId) => (Object.keys(s.map.buildings) as LotKey[]).filter((k) => s.map.buildings[k] === t);
+const stations = (s: GameState) => keysOf(s, 'trainStation');
+const goTo = (k: LotKey | undefined) => { if (!k) return; const [x, y] = k.split(',').map(Number) as [number, number]; api.vaiPara(x, y); hooks.openBuilding(k); };
+export const CHAPTERS: Chapter[] = [
+  { id: 'start', opens: () => true, steps: [
+    { key: 'jobs', done: (s) => count(s, (t) => t.endsWith('Field')) > 3, go: () => hooks.chooseBuild('beanField') },
+    { key: 'homes', done: (s) => count(s, (t) => t === 'hut' || t === 'house' || t === 'whitewashedHouse' || t === 'townhouse') > 4, go: () => hooks.chooseBuild('hut') },
+    { key: 'season', done: (s) => s.market.t > 12, go: () => passSeason() },
+    { key: 'advisor', done: (s) => !!s.flags.sawAdvisor, go: () => hooks.openAdvisor() },
+    { key: 'level', done: (s) => s.level >= 2, go: () => hooks.openLevel() },
+  ] },
+  { id: 'race', opens: (s) => !!s.race, steps: [
+    { key: 'race.station', done: (s) => stations(s).length > 0, go: () => hooks.chooseBuild('trainStation') },
+    { key: 'race.rails', done: (s) => stations(s).some((k) => Object.keys(railExits(s, k)).length > 0), go: () => hooks.chooseBuild('rail') },
+    { key: 'race.train', done: (s) => stations(s).some((k) => Object.values(s.fleet[k] ?? {}).some((n) => (n ?? 0) > 0)), go: () => goTo(stations(store.session().s)[0]) },
+    { key: 'race.panel', done: (s) => !!s.flags.sawRace, go: () => hooks.openTransport() },
+    { key: 'race.win', done: (s) => !!s.race?.won, go: () => hooks.openAdvisor() },
+  ] },
 ];
+const chapterOff = (s: GameState, id: string) => (id === 'start' ? !!s.flags.guideOff : !!s.flags[`guideOff:${id}`]);
+/** The chapter on the banner: the latest one that has opened and still has steps to do. */
+function currentChapter(s: GameState): [Chapter, number] | null {
+  for (const ch of CHAPTERS.slice().reverse()) {
+    if (!ch.opens(s) || chapterOff(s, ch.id)) continue;
+    const i = ch.steps.findIndex((x) => !x.done(s));
+    if (i >= 0) return [ch, i];
+  }
+  return null;
+}
 export function guide(): void {
   const g = $('guia');
   if (!store.hasGame()) { g.hidden = true; return; }
   const { s } = store.session();
-  if (s.flags.guideOff || ui.mode.build || ui.mode.move) { g.hidden = true; return; }
-  const i = STEPS.findIndex((x) => !x.done(s));
-  if (i < 0) { g.hidden = true; return; }
-  const x = STEPS[i] as Step;
-  $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { n: i + 1, of: STEPS.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, { advisor: store.session().meta.advisor }))}</b><span>${esc(T(`ui.guide.${x.key}.body`))}</span>`;
+  const cur = ui.mode.build || ui.mode.move ? null : currentChapter(s);
+  if (!cur) { g.hidden = true; return; }
+  const [ch, i] = cur, x = ch.steps[i] as Step;
+  $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { chapter: T(`ui.guide.chapter.${ch.id}`), n: i + 1, of: ch.steps.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, { advisor: store.session().meta.advisor }))}</b><span>${esc(T(`ui.guide.${x.key}.body`, { advisor: store.session().meta.advisor }))}</span>`;
   $('guiaAc').onclick = x.go;
   const fx = $('guiaX'); fx.innerHTML = X_SVG;
-  fx.onclick = () => { s.flags.guideOff = true; store.save(); guide(); };
+  fx.onclick = () => { if (ch.id === 'start') s.flags.guideOff = true; else s.flags[`guideOff:${ch.id}`] = true; store.save(); guide(); };
   g.hidden = false;
+}
+
+/** The advisor's notebook: every chapter that has opened, each step with a mark when done; a chapter can come back. */
+export function openNotebook(): void {
+  const { s } = store.session(), adv = store.session().meta.advisor;
+  const open = CHAPTERS.filter((ch) => ch.opens(s));
+  const body = open.map((ch) => K.section(esc(T(`ui.guide.chapter.${ch.id}`))) + K.rows(ch.steps.map((x) => K.row(`<b>${esc(T(`ui.guide.${x.key}.title`, { advisor: adv }))}</b><br><small>${esc(T(`ui.guide.${x.key}.body`, { advisor: adv }))}</small>`, x.done(s) ? '✓' : '', x.done(s) ? 'mais' : '')))
+    + (chapterOff(s, ch.id) && ch.steps.some((x) => !x.done(s)) ? K.actions([{ id: `nb-${ch.id}`, text: T('ui.guide.again') }] as never) : '')).join('');
+  sheetWith(T('ui.guide.notebook', { advisor: adv }), T('ui.guide.notebookSub'), body);
+  for (const ch of open) { const b = document.getElementById(`nb-${ch.id}`); if (b) b.onclick = () => { if (ch.id === 'start') s.flags.guideOff = false; else delete s.flags[`guideOff:${ch.id}`]; store.save(); cancel(); guide(); }; }
 }
 
 // ---- the bottom bar

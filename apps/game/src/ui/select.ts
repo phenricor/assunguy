@@ -3,7 +3,7 @@
 import { BALANCE, BUILDINGS, MILESTONES, TRANSPORT_ROLES, VEHICLES, type BuildingId, type GoodId, type VehicleId } from '@assunguy/data';
 import {
   HOME_UPGRADE, vehicleAvailable, allocate, annex, annexCost, buyVehicle, connected, costOf, def, demolish, explore, EXPEDITION_COST, fleetOf, fleetSize, fleetSlots,
-  marginOf, producerFix, sellVehicle, serviceRadius, setMargin, soilOf, swapCrop, swapOptions, undoUpgrade, upgrade, upgradeCost, upkeepOf,
+  computeEconomy, marginOf, producerFix, sellVehicle, serviceRadius, setMargin, soilOf, swapCrop, swapOptions, undoUpgrade, upgrade, upgradeCost, upkeepOf,
   homeOf, reach, streetsBeside, geography, gatewayTight,
   type FamilyId, type GameState, type LandId, type LotKey, type RatingItem,
 } from '@assunguy/sim';
@@ -107,7 +107,9 @@ export function openBuilding(key: LotKey, tabWanted?: string, note = ''): void {
   const warn = linked ? '' : K.note(D.crop ? T('ui.sel.cropUnlinked') : T('ui.sel.unlinked'), 'ruim');
   const how = `<p class="sub">${esc(D.crop ? T('ui.sel.howCrop') : D.housing && fams.length ? T('ui.sel.howHome', { n: fams.length }) : T('ui.sel.how'))}${built !== undefined ? ` ${esc(T('ui.sel.refund', { money: fmt(built + (up?.cost ?? 0)) }))}` : ''}</p>`;
   const upCost = D.payer === 'colony' && lv < 2 ? upgradeCost(t, lv, s.milestone) : 0;
-  const upInfo = upCost ? K.note(T('ui.sel.upgradeCost', { cost: fmt(upCost), upkeep: fmt(upkeepOf(t, s.milestone)) }), 'neutra') : '';
+  // what the upgrade does, measured: one more job where the colony pays for it, and the change in the families' income
+  const upGain = upCost ? Math.round(computeEconomy({ ...s, upgrades: { ...s.upgrades, [key]: lv + 1 } }, w).incomeTotal - store.economy().incomeTotal) : 0;
+  const upInfo = upCost ? K.note(T((D.jobs ?? 0) > 0 && !D.crop ? 'ui.sel.upgradeJob' : 'ui.sel.upgradeCost', { cost: fmt(upCost), gain: signedMoney(upGain) }), 'neutra') : '';
   sheetWith(title, T(`building.${t}.description`), `${tabs ? K.tabs(tabs, tab) : ''}${note ? K.note(esc(note)) : ''}${warn}${extra}${K.rows(L)}${upInfo}${K.actions(buttons as never)}${how}`, `building`);
   sheet().querySelectorAll<HTMLElement>('[data-aba]').forEach((b) => { b.onclick = () => openBuilding(key, b.dataset.aba); });
   const go = (id: string, f: () => void) => { const b = document.getElementById(id); if (b) b.onclick = f; };
@@ -177,14 +179,17 @@ function transportBlock(key: LotKey, L: string[]): string {
   return K.section(T('ui.tr.fleet', { n: fleetSize(s, key), of: slots })) + `<div class="cartoes">${rows}</div>` + K.section(T('ui.tr.tariff'), 'tariff') + K.chips(MARGINS.map((v) => [String(v), T(`ui.tr.margin.${String(v).replace('.', '_').replace('-', 'm')}`)] as [string, string]), String(m), 'margem');
 }
 function wireTransport(key: LotKey): void {
-  const { s } = store.session();
+  const { s, w } = store.session();
+  // the change in the families' income with one vehicle more or less, measured on the whole chain
+  const withOne = (v: VehicleId, n: number) => { const f = fleetOf(s, key); return Math.round(computeEconomy({ ...s, fleet: { ...s.fleet, [key]: { ...f, [v]: (f[v] ?? 0) + n } } }, w).incomeTotal - store.economy().incomeTotal); };
+  const incomeRow = (g: number) => K.row(T('ui.tr.income'), T('ui.perYear', { value: signedMoney(g) }), g > 0 ? 'mais' : g < 0 ? 'menos' : '');
   sheet().querySelectorAll<HTMLElement>('[data-buy]').forEach((b) => { b.onclick = () => {
     const v = b.dataset.buy as VehicleId, V = VEHICLES[v] as { price: number; cargo: number; upkeep: number };
-    confirm(T('ui.tr.buyTitle', { vehicle: v }), [K.row(T('ui.build.cost'), `$ ${fmt(V.price)}`), K.row(T('ui.tr.capacity'), T('ui.tr.plusCargo', { n: V.cargo })), K.row(T('ui.build.upkeep'), `$ ${fmt(V.upkeep)}`)], T('ui.tr.buy'), () => { if (store.run((x, y) => buyVehicle(x, y, key, v))) { api.Sons.toca('obra'); refresh(); openBuilding(key); } });
+    confirm(T('ui.tr.buyTitle', { vehicle: v }), [K.row(T('ui.build.cost'), `$ ${fmt(V.price)}`), K.row(T('ui.build.upkeep'), `$ ${fmt(V.upkeep)}`), incomeRow(withOne(v, 1))], T('ui.tr.buy'), () => { if (store.run((x, y) => buyVehicle(x, y, key, v))) { api.Sons.toca('obra'); refresh(); openBuilding(key); } });
   }; });
   sheet().querySelectorAll<HTMLElement>('[data-sell]').forEach((b) => { b.onclick = () => {
     const v = b.dataset.sell as VehicleId, V = VEHICLES[v] as { price: number; cargo: number };
-    confirm(T('ui.tr.sellTitle', { vehicle: v }), [K.row(T('ui.tr.back'), `+$ ${fmt(Math.round(V.price * 0.5))}`, 'mais'), K.row(T('ui.tr.capacity'), T('ui.tr.minusCargo', { n: V.cargo }), 'menos')], T('ui.tr.sell'), () => { if (store.run((x, y) => sellVehicle(x, y, key, v))) { refresh(); openBuilding(key); } });
+    confirm(T('ui.tr.sellTitle', { vehicle: v }), [K.row(T('ui.tr.back'), `+$ ${fmt(Math.round(V.price * 0.5))}`, 'mais'), incomeRow(withOne(v, -1))], T('ui.tr.sell'), () => { if (store.run((x, y) => sellVehicle(x, y, key, v))) { refresh(); openBuilding(key); } });
   }; });
   sheet().querySelectorAll<HTMLElement>('[data-margem]').forEach((b) => { b.onclick = () => { if (store.run((x, y) => setMargin(x, y, key, Number(b.dataset.margem)))) { refresh(); openBuilding(key); } }; });
   void s;

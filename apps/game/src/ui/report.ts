@@ -8,7 +8,7 @@ import * as store from '../store';
 import { T, goodName, has, locale, plural } from '../i18n';
 import { api } from '../view';
 import { $, K, X_SVG, closePopup, esc, fmt, popup, signedMoney } from './kit';
-import { bar, nextEvent, ui } from './app';
+import { bar, guide, nextEvent, ui } from './app';
 
 const dateOf = (t: number) => T('ui.date', { year: yearOf(t - 1), season: T(`season.${seasonOf(t - 1)}`) });
 const arrow = (d: number) => (d > 0.5 ? '\u00a0<span class="seta mais">▲</span>' : d < -0.5 ? '\u00a0<span class="seta menos">▼</span>' : '');
@@ -38,6 +38,7 @@ export function closeScreen(): void {
   const p = $('econ');
   p.hidden = true; p.dataset.tela = ''; p.classList.remove('com-barra'); ui.screenOpen = false;
   document.querySelectorAll('#folha .aba').forEach((b) => b.classList.remove('on'));
+  guide();
   nextEvent();
 }
 
@@ -176,7 +177,7 @@ function openAsset(p: AssetReturn): void {
   if (p.goods) L.push(K.row(T('ui.report.a.produced'), fmt(p.goods.produced)), K.row(T('ui.report.a.soldHere'), fmt(p.goods.soldHere)), K.row(T('ui.report.a.exported'), fmt(p.goods.exported)), K.row(T('ui.report.a.lost'), fmt(p.goods.lost), p.goods.lost > p.goods.produced * 0.3 ? 'menos' : ''), K.row(T('ui.report.a.income'), `$ ${fmt(p.goods.income)}`));
   L.push(K.row(T('ui.report.a.upkeep'), T('ui.perYear', { value: `$ ${fmt(p.upkeep)}` })), K.row(T('ui.report.a.jobs'), fmt(p.jobs)));
   if (p.noTeam) L.push(K.row(T('ui.report.a.noTeam'), fmt(p.noTeam), 'menos'));
-  const intro = p.verdict === 'people' ? T('ui.report.assetPeople') : p.verdict === 'outlet' ? T('ui.report.assetOutlet') : '';
+  const intro = p.tooMany ? T('ui.report.assetTooMany') : p.verdict === 'people' ? T('ui.report.assetPeople') : p.verdict === 'outlet' ? T('ui.report.assetOutlet') : '';
   const pop = popup(esc(T(`building.${p.type}.plural`)), esc(intro), K.rows(L) + (p.verdict === 'outlet' ? K.actions([{ id: 'patTr', text: T('ui.report.seeTransport') }]) : ''));
   const b = pop.querySelector<HTMLElement>('#patTr');
   if (b) b.onclick = () => { closePopup(); hooks2.openTransport(); };

@@ -262,6 +262,7 @@ export function openDirection(tab = 'province'): void {
 
 export function openTransport(): void {
   const { s } = store.session(), c = store.economy(), R = c.transport;
+  if (s.race) s.flags.sawRace = true;
   const waste = Math.round(wasteShare(c) * 100);
   let body = K.tiles([{ v: `${waste}%`, r: T('ui.tr.waste'), bad: waste > 20 }, { v: fmt(c.exportedTotal), r: T('ui.tr.exported') }, { v: fmt(c.marketTotal), r: T('ui.tr.soldHere') }]);
   const causes = c.lostByGood as unknown as Record<string, Partial<Record<GoodId, number>>>;
@@ -285,8 +286,8 @@ function raceBlock(s: GameState): string {
     const ours = costs.length ? Math.min(...costs) : null, cp = comp[d] ?? 0;
     return K.card({ title: T(`ui.race.dest.${d}`), sub: `${T('ui.race.rival', { cost: num(rivalCost(s, d), 2) })}; ${ours === null ? T('ui.race.none') : T('ui.race.ours', { cost: num(ours, 2) })}`, right: ours === null ? '-' : `${Math.round(cp * 100)}%`, rightSub: T('ui.race.comp'), tone: ours === null ? '' : cp >= 1 ? 'bom' : cp < 0.8 ? 'ruim' : '' });
   });
-  const nx = nextAdvance(s);
-  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning }))) : ''].join('');
+  const nx = nextAdvance(s), leading = (Object.keys(comp) as (keyof typeof comp)[]).filter((d) => (c.transport.destVolume[d] ?? 0) > 0 && comp[d] >= 1).length;
+  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', s.level >= 12 && R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning })), 'bom') : K.note(esc(T('ui.race.goal', { n: leading })), 'neutra')].join('');
   return K.section(T('ui.race.title'), 'race') + K.cards(cards) + notes;
 }
 
