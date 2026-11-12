@@ -28,7 +28,7 @@ import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from '
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'idle.upgrade', 'levelWorkers.upgrade', 'service.upgrade', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -232,6 +232,42 @@ function nearestFree(s: GameState, w: World, t: BuildingId, key: LotKey): LotKey
 // ---- the rules
 
 interface Ctx { s: GameState; w: World; c: Economy; ratings: Ratings; linked: Set<LotKey>; memo: Map<string, Economy> }
+/**
+ * Upgrades worth weighing against a new building: one per kind the colony pays for (with jobs, not a field or a
+ * home or transport), the cheapest first, each measured. An upgrade opens a job and raises the output by half.
+ */
+export function upgradeOptions(s: GameState, w: World, c: Economy, limit = 5, only?: (k: LotKey) => boolean): { key: LotKey; t: BuildingId; cost: number; gain: number }[] {
+  const linked = connected(s.map), seen = new Set<BuildingId>(), out: { key: LotKey; t: BuildingId; cost: number; gain: number }[] = [];
+  const keys = (Object.keys(s.map.buildings) as LotKey[]).filter((k) => {
+    const t = s.map.buildings[k] as BuildingId, D = def(t);
+    return linked.has(k) && D.payer === 'colony' && !D.crop && !D.housing && (D.jobs ?? 0) > 0 && !roleOf(t) && upgradeOf(s, k) < 2 && (!only || only(k));
+  }).sort((p, q) => upgradeCost(s.map.buildings[p] as BuildingId, upgradeOf(s, p), s.milestone) - upgradeCost(s.map.buildings[q] as BuildingId, upgradeOf(s, q), s.milestone));
+  for (const k of keys) {
+    const t = s.map.buildings[k] as BuildingId;
+    if (seen.has(t)) continue;
+    seen.add(t);
+    const gain = computeEconomy({ ...s, upgrades: { ...s.upgrades, [k]: upgradeOf(s, k) + 1 } }, w).incomeTotal - c.incomeTotal;
+    out.push({ key: k, t, cost: upgradeCost(t, upgradeOf(s, k), s.milestone), gain });
+    if (seen.size >= limit) break;
+  }
+  return out;
+}
+
+/** Upgrading the existing building of a service that is nearest the homes without it: how many of them it then reaches. */
+export function serviceUpgrade(s: GameState, w: World, sv: Service, lacking: LotKey[]): { key: LotKey; t: BuildingId; cost: number; covers: number } | null {
+  if (!lacking.length) return null;
+  const [cx, cy] = lacking.reduce(([x, y], h) => { const [p, q] = parseKey(h); return [x + p / lacking.length, y + q / lacking.length]; }, [0, 0]);
+  const cands = (Object.keys(s.map.buildings) as LotKey[]).filter((k) => def(s.map.buildings[k] as BuildingId).service === sv && def(s.map.buildings[k] as BuildingId).payer !== 'families' && upgradeOf(s, k) < 2)
+    .sort((p, q) => { const [pa, pb] = parseKey(p), [qa, qb] = parseKey(q); return Math.hypot(pa - cx, pb - cy) - Math.hypot(qa - cx, qb - cy); }).slice(0, 2);
+  let best: { key: LotKey; t: BuildingId; cost: number; covers: number } | null = null;
+  for (const k of cands) {
+    const t = s.map.buildings[k] as BuildingId, r = rateHomes({ ...s, upgrades: { ...s.upgrades, [k]: upgradeOf(s, k) + 1 } }, w);
+    const covers = lacking.filter((h) => !r.homes[h]?.items.some((it) => it.kind === 'outOfReach' && it.service === sv)).length;
+    if (covers > 0 && (!best || covers > best.covers)) best = { key: k, t, cost: upgradeCost(t, upgradeOf(s, k), s.milestone), covers };
+  }
+  return best;
+}
+
 const measured = (x: Ctx, extra?: Extra): Economy => {
   const k = extra ? JSON.stringify(extra) : '';
   let r = x.memo.get(k);
@@ -323,7 +359,10 @@ function colonyAdvice(x: Ctx): Advice[] {
   if (a.idle.length >= 3 && (a.idle.length > nFam * 0.1 || shortOfWork)) {
     const wait = (t: BuildingId) => (def(t).crop ? firstHarvest(t, now) - now : 0);
     const rec = invest(x).filter((i) => (def(i.t).jobs || 0) > 0 && (!def(i.t).riverside || freeRiverbank(s, w))).sort((p, q) => (p.years + wait(p.t) / 4) - (q.years + wait(q.t) / 4))[0];
-    if (rec) { const nE = wait(rec.t); add(workWeight(rec.cost + (rec.income * nE) / 4, rec.income), 'idle.invest', { n: a.idle.length, building: rec.t, cost: rec.cost, gain: Math.round(rec.income), seasons: nE }, build(rec.t)); }
+    // upgrading what exists can open the job cheaper and pay more than a new building
+    const up = upgradeOptions(s, w, c, 4).filter((u) => u.gain >= Math.max(5, u.cost * 0.08)).sort((p, q) => q.gain / q.cost - p.gain / p.cost)[0];
+    if (up && (!rec || up.gain / up.cost > rec.income / Math.max(1, rec.cost))) add(workWeight(up.cost, up.gain), 'idle.upgrade', { n: a.idle.length, building: up.t, at: up.key, cost: up.cost, gain: Math.round(up.gain) }, { kind: 'select', key: up.key, upgrade: true });
+    else if (rec) { const nE = wait(rec.t); add(workWeight(rec.cost + (rec.income * nE) / 4, rec.income), 'idle.invest', { n: a.idle.length, building: rec.t, cost: rec.cost, gain: Math.round(rec.income), seasons: nE }, build(rec.t)); }
     else {
       const t = (['cassavaField', 'cornField', 'beanField'] as BuildingId[]).find(can) as BuildingId;
       add(shortOfWork ? 72 : 44, 'idle.jobs', { n: a.idle.length, level: s.level + 1, workers: next?.workers ?? 0, shortOfWork: shortOfWork ? 1 : 0, building: t, cost: cost(t) }, build(t));
@@ -339,7 +378,10 @@ function colonyAdvice(x: Ctx): Advice[] {
       // a job that adds next to nothing (a crop the market already has too much of) only adds waste
       if (g >= Math.max(5, cost(t) * 0.08) && (!best || perJob < best.perJob - 1e-9 || (Math.abs(perJob - best.perJob) < 1e-9 && g > best.gain))) best = { t, gain: g, perJob };
     }
-    if (best) add(next.milestone ? 88 : 72, 'levelWorkers', { level: next.level, n: short, current: a.employed, target: next.workers, building: best.t, cost: cost(best.t), gain: Math.round(best.gain) }, build(best.t));
+    // an upgrade opens one job: weighed by its cost per job like the new buildings
+    const up = upgradeOptions(s, w, c, 5).filter((u) => u.gain >= Math.max(5, u.cost * 0.08)).sort((p, q) => p.cost - q.cost)[0];
+    if (up && (!best || up.cost < best.perJob)) add(next.milestone ? 88 : 72, 'levelWorkers.upgrade', { level: next.level, n: short, current: a.employed, target: next.workers, building: up.t, at: up.key, cost: up.cost, gain: Math.round(up.gain) }, { kind: 'select', key: up.key, upgrade: true });
+    else if (best) add(next.milestone ? 88 : 72, 'levelWorkers', { level: next.level, n: short, current: a.employed, target: next.workers, building: best.t, cost: cost(best.t), gain: Math.round(best.gain) }, build(best.t));
   }
   // new chains: a cane field alone yields nothing; the sum must join the works
   const has = (t: BuildingId) => Object.values(s.map.buildings).includes(t);
@@ -412,6 +454,13 @@ function colonyAdvice(x: Ctx): Advice[] {
         const D = (districts ??= computeDistricts(s, w));
         const pb = D.info.map((d) => ({ d, without: d.homes.filter((h) => ratings.homes[h]?.items.some((it) => it.kind === 'outOfReach' && it.service === o.sv)) })).filter((x) => x.without.length).sort((p, q) => q.without.length - p.without.length)[0];
         if (pb) { where = { district: nameId(pb.d.name), at: pb.d.id, inDistrict: pb.without.length, all: pb.without.length === o.n ? 1 : 0 }; act = { kind: 'build', building: o.t, near: pb.without[0]! }; }
+      }
+      // upgrading the nearest one widens its reach: when it reaches the homes for less, that is the advice
+      const lacking = (Object.keys(ratings.homes) as LotKey[]).filter((h) => ratings.homes[h]?.items.some((it) => it.kind === 'outOfReach' && it.service === o.sv));
+      const su = i < 2 ? serviceUpgrade(s, w, o.sv, lacking) : null;
+      if (su && su.covers / su.cost >= Math.min(o.n, Math.round((def(o.t).radius || 6) * 2)) / cost(o.t)) {
+        add(weight, 'service.upgrade', { n: o.n, service: o.sv, building: su.t, at: su.key, cost: su.cost, covers: su.covers, mean, wanted }, { kind: 'select', key: su.key, upgrade: true });
+        return;
       }
       add(weight, i === 0 && mean < wanted + 3 ? 'service.satisfaction' : 'service.homes', { n: o.n, service: o.sv, building: o.t, cost: cost(o.t), up: Math.max(0.1, Math.round(o.up * 10) / 10), mean, wanted, milestone: target?.id ?? '', ...where }, act);
     });

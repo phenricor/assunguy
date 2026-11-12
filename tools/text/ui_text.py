@@ -297,6 +297,7 @@ U = {
   'fix.lots': ('{n} {what} aqui', '{n} {what} here'), 'fix.here': ('{building} aqui', '{building} here'), 'fix.upgrade': ('Melhorar {building}', 'Upgrade {building}'), 'fix.see': ('Ver {building}', 'See {building}'),
   'fix.jobsEffect': ('+{jobs} vagas, {gain} por ano, $ {cost}', '+{jobs} jobs, {gain} a year, $ {cost}'),
   'fix.gainEffect': ('{gain} por ano, $ {cost}', '{gain} a year, $ {cost}'),
+  'fix.upgradeCovers': ('Alcance maior: atende {n} dessas casas, $ {cost}', 'Wider reach: serves {n} of those homes, $ {cost}'),
   'fix.covers': ('Atende {n} dessas casas, $ {cost}', 'Serves {n} of those homes, $ {cost}'),
   'fix.move': ('Mova para longe das casas, na ficha do prédio.', 'Move it away from the homes, from its sheet.'),
   'fix.buildTitle': ('Construir {n} {what}?', 'Build {n} {what}?'), 'fix.build': ('Construir', 'Build'), 'fix.built': ('{n} obras feitas.', '{n} works done.'),

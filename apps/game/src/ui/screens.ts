@@ -389,7 +389,9 @@ function fixCards(list: Fix[]): string {
     if (f.advice) { const p = { at: f.advice.params.key ?? '', ...f.advice.params, advisor: store.session().meta.advisor }; return fixCard(T(`advice.${f.advice.rule}.title`, p), T(`advice.${f.advice.rule}.body`, p), f.action); }
     const t = f.building as BuildingId, eff = f.jobs ? T('ui.fix.jobsEffect', { jobs: f.jobs, gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) }) : T('ui.fix.gainEffect', { gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) });
     if (act.kind === 'buildLots') return fixCard(T('ui.fix.lots', { n: f.n ?? 1, what: bname(t, f.n) }), eff, f.action);
-    if (act.kind === 'select' && f.jobs) return fixCard(T('ui.fix.upgrade', { building: t }), eff, f.action);
+    const up = act.kind === 'select' && (f.action as { upgrade?: boolean }).upgrade;
+    if (up && f.covers !== undefined) return fixCard(T('ui.fix.upgrade', { building: t }), T('ui.fix.upgradeCovers', { n: f.covers, cost: fmt(f.cost) }), f.action);
+    if (up) return fixCard(T('ui.fix.upgrade', { building: t }), eff, f.action);
     if (act.kind === 'select') return fixCard(T('ui.fix.see', { building: t }), T('ui.fix.move'), f.action);
     if (f.covers !== undefined) return fixCard(T('ui.fix.here', { building: t }), T('ui.fix.covers', { n: f.covers, cost: fmt(f.cost) }), f.action);
     return fixCard(T('ui.fix.here', { building: t }), eff, f.action);

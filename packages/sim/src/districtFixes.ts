@@ -6,7 +6,7 @@
 // Costly (economies and ratings on copies), so it runs as steps the screen spreads over a few frames.
 import { BUILDINGS, TRANSPORT_ROLES, type BuildingId } from '@assunguy/data';
 import type { DistrictAccount } from './accounts.js';
-import { upgradeCost, type Advice, type AdviceAction } from './advisor.js';
+import { serviceUpgrade, upgradeCost, type Advice, type AdviceAction } from './advisor.js';
 import { districtOfLot } from './districtAdvice.js';
 import type { Districts } from './districts.js';
 import { computeEconomy, costOf, def, type Economy } from './economy.js';
@@ -65,7 +65,10 @@ export function* districtFixSteps(s: GameState, w: World, D: Districts, a: Distr
       fixes.push({ action: { kind: 'select', key: k, upgrade: true }, building: t, n: 1, cost: upgradeCost(t, upgradeOf(s, k), s.milestone), gain: Math.round(gain), jobs: 1 });
     }
     const score = (f: Fix) => ((f.jobs ?? 0) * 100 + (f.gain ?? 0)) / Math.max(1, f.cost);
-    out.jobs = { idle: a.idle, jobs: a.jobs, outsiders: Math.max(0, a.filled - a.working), colonyIdle: c.counts.work.idle.length, fixes: fixes.sort((p, q) => score(q) - score(p)).slice(0, 2) };
+    // the best new work and the best upgrade side by side, when there is one of each
+    const builds = fixes.filter((f) => f.action.kind !== 'select').sort((p, q) => score(q) - score(p)), ups = fixes.filter((f) => f.action.kind === 'select').sort((p, q) => score(q) - score(p));
+    const pick = builds[0] && ups[0] ? [builds[0], ups[0]].sort((p, q) => score(q) - score(p)) : [...builds, ...ups].slice(0, 2);
+    out.jobs = { idle: a.idle, jobs: a.jobs, outsiders: Math.max(0, a.filled - a.working), colonyIdle: c.counts.work.idle.length, fixes: pick };
   }
   // ---- outlet: the main reason the cargo does not reach a buyer, and the district's advice on it
   if (a.reach < 0.85 && a.produced > 0) {
@@ -92,6 +95,11 @@ export function* districtFixSteps(s: GameState, w: World, D: Districts, a: Distr
           }
           if (best) fixes.push({ action: { kind: 'buildAt', building: t, lot: best.lot }, building: t, n: 1, cost: costOf(t, s.milestone), gain: Math.round(best.gain) });
         }
+        // upgrading the district's store or collection point (more reach, more vehicles) can do it for less
+        for (const k of (d?.buildings ?? []).filter((k) => { const t = s.map.buildings[k] as BuildingId; return isRole(t) && def(t).payer !== 'families' && upgradeOf(s, k) < 2; }).slice(0, 3)) {
+          const t = s.map.buildings[k] as BuildingId, g = computeEconomy({ ...s, upgrades: { ...s.upgrades, [k]: upgradeOf(s, k) + 1 } }, w).incomeTotal - c.incomeTotal; yield;
+          if (g > 10) fixes.push({ action: { kind: 'select', key: k, upgrade: true }, building: t, n: 1, cost: upgradeCost(t, upgradeOf(s, k), s.milestone), gain: Math.round(g) });
+        }
         fixes.sort((p, q) => (q.gain ?? 0) / Math.max(1, q.cost) - (p.gain ?? 0) / Math.max(1, p.cost)).splice(2);
       }
     }
@@ -113,6 +121,10 @@ export function* districtFixSteps(s: GameState, w: World, D: Districts, a: Distr
         if (covers > 0 && (!best || covers > best.covers)) best = { lot, covers };
       }
       if (best) fixes.push({ action: { kind: 'buildAt', building: t, lot: best.lot }, building: t, n: 1, cost: costOf(t, s.milestone), covers: best.covers });
+      // or the nearest one, upgraded: a wider reach
+      const su = serviceUpgrade(s, w, sv, lacking); yield;
+      if (su) fixes.push({ action: { kind: 'select', key: su.key, upgrade: true }, building: su.t, n: 1, cost: su.cost, covers: su.covers });
+      fixes.sort((p, q) => (q.covers ?? 0) / Math.max(1, q.cost) - (p.covers ?? 0) / Math.max(1, p.cost));
     }
     out.services.push({ service: sv, n, homes: a.homes, fixes });
   }
