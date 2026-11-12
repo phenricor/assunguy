@@ -2,6 +2,7 @@
 // the twice-yearly report, and the goals (levels and milestones with deadlines).
 import { BALANCE, BUILDINGS, GREAT_WORKS, VEHICLES, GREAT_WORK_IDS, LEVELS, MILESTONES, type BuildingId, type GreatWorkId, type LevelDef, type MilestoneDef } from '@assunguy/data';
 import { allocate, computeEconomy, def, hasRoad, upkeepOf, type Economy } from './economy.js';
+import { computeDistricts } from './districts.js';
 import { connected } from './network.js';
 import { rateHomes, updateRatings } from './ratings.js';
 import { workDone, type FamilyId, type GameState } from './state.js';
@@ -83,7 +84,7 @@ export function advanceGreatWorks(s: GameState, news: GreatWorkNews[]): number {
 
 // ---- goals
 
-export interface GoalItem { kind: 'families' | 'road' | 'lands' | 'satisfaction' | 'building' | 'workers' | 'income'; target: number; current: number; ok: boolean; building?: BuildingId; extraDemand?: number }
+export interface GoalItem { kind: 'families' | 'road' | 'lands' | 'satisfaction' | 'building' | 'workers' | 'income' | 'idle' | 'districts'; target: number; current: number; ok: boolean; building?: BuildingId; extraDemand?: number }
 
 /**
  * What a milestone still asks for. `meanRating` defaults to rating the homes now; 'live' re-rates the live
@@ -110,8 +111,15 @@ export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, mean
 
 /** What the next level asks for: families at work, yearly income, buildings, and the milestone it carries. */
 export function levelRequirements(s: GameState, w: World, n: number, c: Economy, live = false): GoalItem[] {
-  const lv = levelDef(n) as LevelDef, workers = allocate(s).employed;
-  const items: GoalItem[] = [{ kind: 'workers', target: lv.workers, current: workers, ok: workers >= lv.workers }, { kind: 'income', target: lv.income, current: c.incomeTotal, ok: c.incomeTotal >= lv.income }];
+  const lv = levelDef(n) as LevelDef, a = allocate(s), workers = a.employed;
+  // a level that carries a milestone asks for its families at work once, in the milestone's terms
+  const both = !!lv.milestone && BALANCE.milestoneWorkers;
+  const items: GoalItem[] = [...(both ? [] : [{ kind: 'workers' as const, target: lv.workers, current: workers, ok: workers >= lv.workers }]), { kind: 'income', target: lv.income, current: c.incomeTotal, ok: c.incomeTotal >= lv.income }];
+  if (lv.idle !== undefined) {
+    const fam = Object.keys(s.families).length, share = fam ? Math.round((a.idle.length / fam) * 100) : 0, max = Math.round(lv.idle * 100);
+    items.push({ kind: 'idle', target: max, current: share, ok: share <= max });
+  }
+  if (lv.districts) { const d = computeDistricts(s, w).info.filter((x) => !x.hamlet).length; items.push({ kind: 'districts', target: lv.districts, current: d, ok: d >= lv.districts }); }
   for (const [t, q] of Object.entries(lv.requires ?? {}) as [BuildingId, number][]) { const have = Object.values(s.map.buildings).filter((x) => x === t).length; items.push({ kind: 'building', building: t, target: q, current: have, ok: have >= q }); }
   return lv.milestone ? items.concat(milestoneGaps(s, w, MILESTONES[lv.milestone] as MilestoneDef, live ? 'live' : undefined)) : items;
 }

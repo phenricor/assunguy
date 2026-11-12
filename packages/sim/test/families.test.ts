@@ -7,6 +7,9 @@ import type { FamilyId, GameState } from '../src/state.js';
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/families.json' with { type: 'json' };
 import { LEGACY, goodFromLegacy, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type LF = { id: string; nome: string; oficio: string | null; hab: number; nova: number; parada: number; chegou: number; fundo: number };
 const F = fixture as unknown as {

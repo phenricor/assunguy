@@ -4,6 +4,9 @@ import { canPlace, canPlaceStreet, type PlacementError } from '../src/placement.
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/placement.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 const F = fixture as unknown as { state: Record<string, unknown>; box: [number, number, number, number]; msgs: string[]; out: Record<string, string> };
 const CODE: Record<string, PlacementError | null> = {

@@ -1,0 +1,315 @@
+{
+ "housing": {
+  "hut": 2,
+  "house": 4,
+  "whitewashedHouse": 5,
+  "townhouse": 6
+ },
+ "minLevel": {
+  "whitewashedHouse": 4,
+  "townhouse": 7,
+  "church": 7,
+  "hospital": 11,
+  "theater": 11,
+  "workshop": 99,
+  "council": 7,
+  "market": 4,
+  "waystation": 3,
+  "pasture": 6,
+  "wheatField": 4,
+  "caneField": 5,
+  "tobaccoField": 6,
+  "cottonField": 9,
+  "coffeeField": 10,
+  "corral": 3,
+  "pigsty": 3,
+  "pineNutGrove": 2,
+  "yerbaGrove": 5,
+  "mine": 3,
+  "monjolo": 2,
+  "flourHouse": 2,
+  "saltery": 3,
+  "mill": 4,
+  "sugarMill": 5,
+  "distillery": 6,
+  "yerbaDryer": 5,
+  "tobaccoShed": 6,
+  "tannery": 7,
+  "carpentry": 8,
+  "cooperage": 8,
+  "smithy": 8,
+  "coffeeYard": 10,
+  "loom": 9,
+  "shoemaker": 11,
+  "fountain": 7,
+  "jail": 7,
+  "fireStation": 10,
+  "woodYard": 7,
+  "steamPier": 7,
+  "tradingPost": 3,
+  "landing": 3
+ },
+ "recipes": {
+  "pigsty": [
+   null
+  ],
+  "monjolo": [
+   null,
+   3
+  ],
+  "flourHouse": [
+   null
+  ],
+  "saltery": [
+   null,
+   6
+  ],
+  "mill": [
+   null
+  ],
+  "sugarMill": [
+   null,
+   10
+  ],
+  "distillery": [
+   null
+  ],
+  "yerbaDryer": [
+   null
+  ],
+  "tobaccoShed": [
+   null
+  ],
+  "tannery": [
+   null
+  ],
+  "carpentry": [
+   null
+  ],
+  "cooperage": [
+   null
+  ],
+  "smithy": [
+   null
+  ],
+  "coffeeYard": [
+   null
+  ],
+  "loom": [
+   null
+  ],
+  "shoemaker": [
+   null
+  ]
+ },
+ "vehicles": {
+  "canoe": 1,
+  "muleTrain": 3,
+  "wagon": 7,
+  "steamboat": 7
+ },
+ "levels": [
+  {
+   "level": 1,
+   "workers": 0,
+   "income": 0
+  },
+  {
+   "level": 2,
+   "workers": 14,
+   "income": 450
+  },
+  {
+   "level": 3,
+   "workers": 28,
+   "income": 1100
+  },
+  {
+   "level": 4,
+   "workers": 50,
+   "income": 2200,
+   "milestone": 1
+  },
+  {
+   "level": 5,
+   "workers": 65,
+   "income": 3000
+  },
+  {
+   "level": 6,
+   "workers": 85,
+   "income": 3900
+  },
+  {
+   "level": 7,
+   "workers": 110,
+   "income": 5000,
+   "milestone": 2
+  },
+  {
+   "level": 8,
+   "workers": 140,
+   "income": 6500
+  },
+  {
+   "level": 9,
+   "workers": 175,
+   "income": 8000
+  },
+  {
+   "level": 10,
+   "workers": 220,
+   "income": 10000,
+   "milestone": 3
+  },
+  {
+   "level": 11,
+   "workers": 320,
+   "income": 19000
+  },
+  {
+   "level": 12,
+   "workers": 420,
+   "income": 25000,
+   "requires": {
+    "hospital": 1,
+    "theater": 1
+   }
+  }
+ ],
+ "milestones": [
+  {
+   "id": "settlement",
+   "grant": 160,
+   "shareOfTrade": 0.1
+  },
+  {
+   "id": "parish",
+   "grant": 120,
+   "shareOfTrade": 0.1,
+   "families": 90,
+   "satisfaction": 50,
+   "deadline": 32,
+   "requires": {
+    "chapel": 1,
+    "school": 1,
+    "directorate": 1
+   }
+  },
+  {
+   "id": "village",
+   "grant": 80,
+   "shareOfTrade": 0.1,
+   "families": 180,
+   "satisfaction": 55,
+   "lands": 4,
+   "deadline": 40,
+   "requires": {
+    "chapel": 2,
+    "school": 2,
+    "apothecary": 2,
+    "market": 1
+   }
+  },
+  {
+   "id": "town",
+   "grant": 40,
+   "shareOfTrade": 0.1,
+   "families": 360,
+   "satisfaction": 60,
+   "lands": 9,
+   "deadline": 48,
+   "road": true,
+   "requires": {
+    "church": 1,
+    "council": 1,
+    "school": 4,
+    "apothecary": 3,
+    "market": 2
+   }
+  }
+ ],
+ "unlocks": {
+  "2": [
+   "monjolo",
+   "flourHouse",
+   "pineNutGrove",
+   "workshop"
+  ],
+  "3": [
+   "corral",
+   "pigsty",
+   "saltery",
+   "mine",
+   "tradingPost",
+   "landing",
+   "waystation"
+  ],
+  "4": [
+   "whitewashedHouse",
+   "market",
+   "wheatField",
+   "mill"
+  ],
+  "5": [
+   "caneField",
+   "sugarMill",
+   "yerbaGrove",
+   "yerbaDryer"
+  ],
+  "6": [
+   "distillery",
+   "tobaccoField",
+   "tobaccoShed",
+   "pasture"
+  ],
+  "7": [
+   "townhouse",
+   "church",
+   "council",
+   "tannery",
+   "fountain",
+   "jail",
+   "steamPier",
+   "woodYard"
+  ],
+  "8": [
+   "carpentry",
+   "cooperage",
+   "smithy"
+  ],
+  "9": [
+   "cottonField",
+   "loom"
+  ],
+  "10": [
+   "coffeeField",
+   "coffeeYard",
+   "fireStation"
+  ],
+  "11": [
+   "shoemaker",
+   "hospital",
+   "theater"
+  ]
+ },
+ "paths": {
+  "3": [
+   "polyculture",
+   "monoculture"
+  ],
+  "6": [
+   "familyWorkshop",
+   "manufacture"
+  ],
+  "9": [
+   "freeMuleteers",
+   "storeContract"
+  ],
+  "12": [
+   "publicSchool",
+   "brotherhoods"
+  ]
+ },
+ "railSpur": 11
+}

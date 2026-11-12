@@ -298,27 +298,27 @@ export const BUILDINGS = {
     "category": "housing",
     "cost": 20,
     "payer": "families",
-    "housing": 2
+    "housing": 1
   },
   "house": {
     "category": "housing",
     "cost": 80,
     "payer": "families",
-    "housing": 4
+    "housing": 2
   },
   "whitewashedHouse": {
     "category": "housing",
     "cost": 150,
     "payer": "families",
-    "minLevel": 4,
-    "housing": 5
+    "minLevel": 5,
+    "housing": 3
   },
   "townhouse": {
     "category": "housing",
     "cost": 260,
     "payer": "families",
-    "minLevel": 7,
-    "housing": 6
+    "minLevel": 9,
+    "housing": 4
   },
   "chapel": {
     "category": "services",
@@ -334,7 +334,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 900,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "jobs": 2,
     "sector": "services",
     "service": "faith",
@@ -369,7 +369,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 1100,
     "payer": "colony",
-    "minLevel": 11,
+    "minLevel": 14,
     "jobs": 4,
     "sector": "services",
     "service": "health",
@@ -380,7 +380,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 1400,
     "payer": "colony",
-    "minLevel": 11,
+    "minLevel": 16,
     "jobs": 3,
     "sector": "services",
     "service": "culture",
@@ -436,7 +436,7 @@ export const BUILDINGS = {
     "category": "commerce",
     "cost": 600,
     "payer": "colony",
-    "minLevel": 4,
+    "minLevel": 5,
     "jobs": 3,
     "sector": "commerce",
     "service": "commerce",
@@ -470,7 +470,7 @@ export const BUILDINGS = {
     "category": "retired",
     "cost": 150,
     "payer": "colony",
-    "minLevel": 6,
+    "minLevel": 7,
     "jobs": 1,
     "sector": "commerce",
     "size": [
@@ -548,7 +548,7 @@ export const BUILDINGS = {
     "category": "crops",
     "cost": 55,
     "payer": "families",
-    "minLevel": 5,
+    "minLevel": 6,
     "jobs": 1,
     "sector": "farming",
     "crop": true,
@@ -562,7 +562,7 @@ export const BUILDINGS = {
     "category": "crops",
     "cost": 70,
     "payer": "families",
-    "minLevel": 6,
+    "minLevel": 8,
     "jobs": 1,
     "sector": "farming",
     "crop": true,
@@ -576,7 +576,7 @@ export const BUILDINGS = {
     "category": "crops",
     "cost": 70,
     "payer": "families",
-    "minLevel": 9,
+    "minLevel": 11,
     "jobs": 1,
     "sector": "farming",
     "crop": true,
@@ -590,7 +590,7 @@ export const BUILDINGS = {
     "category": "crops",
     "cost": 90,
     "payer": "families",
-    "minLevel": 10,
+    "minLevel": 14,
     "jobs": 1,
     "sector": "farming",
     "crop": true,
@@ -665,7 +665,7 @@ export const BUILDINGS = {
     "category": "livestock",
     "cost": 70,
     "payer": "colony",
-    "minLevel": 5,
+    "minLevel": 6,
     "jobs": 1,
     "sector": "farming",
     "output": {
@@ -774,7 +774,7 @@ export const BUILDINGS = {
         "from": "meat",
         "to": "jerky",
         "ratio": 0.8,
-        "minLevel": 6
+        "minLevel": 7
       }
     ]
   },
@@ -799,7 +799,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 450,
     "payer": "colony",
-    "minLevel": 5,
+    "minLevel": 6,
     "jobs": 3,
     "sector": "crafts",
     "size": [
@@ -818,7 +818,7 @@ export const BUILDINGS = {
         "from": "sugarcane",
         "to": "sugar",
         "ratio": 0.2,
-        "minLevel": 10
+        "minLevel": 14
       }
     ]
   },
@@ -826,7 +826,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 240,
     "payer": "colony",
-    "minLevel": 6,
+    "minLevel": 7,
     "jobs": 1,
     "sector": "crafts",
     "nuisance": 1,
@@ -843,7 +843,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 220,
     "payer": "colony",
-    "minLevel": 5,
+    "minLevel": 6,
     "jobs": 2,
     "sector": "crafts",
     "nuisance": 1,
@@ -860,7 +860,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 140,
     "payer": "colony",
-    "minLevel": 6,
+    "minLevel": 8,
     "jobs": 1,
     "sector": "crafts",
     "processingCapacity": 20,
@@ -876,7 +876,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 200,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "jobs": 1,
     "sector": "crafts",
     "nuisance": 3,
@@ -893,7 +893,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 180,
     "payer": "colony",
-    "minLevel": 8,
+    "minLevel": 10,
     "jobs": 1,
     "sector": "crafts",
     "processingCapacity": 8,
@@ -909,7 +909,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 150,
     "payer": "colony",
-    "minLevel": 8,
+    "minLevel": 10,
     "jobs": 1,
     "sector": "crafts",
     "processingCapacity": 10,
@@ -925,7 +925,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 260,
     "payer": "colony",
-    "minLevel": 8,
+    "minLevel": 10,
     "jobs": 2,
     "sector": "crafts",
     "nuisance": 1,
@@ -942,7 +942,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 160,
     "payer": "colony",
-    "minLevel": 10,
+    "minLevel": 14,
     "jobs": 1,
     "sector": "crafts",
     "processingCapacity": 20,
@@ -958,7 +958,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 280,
     "payer": "colony",
-    "minLevel": 9,
+    "minLevel": 11,
     "jobs": 2,
     "sector": "crafts",
     "processingCapacity": 15,
@@ -974,7 +974,7 @@ export const BUILDINGS = {
     "category": "workshops",
     "cost": 170,
     "payer": "colony",
-    "minLevel": 11,
+    "minLevel": 13,
     "jobs": 1,
     "sector": "crafts",
     "processingCapacity": 8,
@@ -990,7 +990,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 350,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "service": "water",
     "radius": 7,
     "color": "#2E7FB8"
@@ -999,7 +999,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 600,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "jobs": 1,
     "sector": "services",
     "radius": 12
@@ -1008,7 +1008,7 @@ export const BUILDINGS = {
     "category": "services",
     "cost": 900,
     "payer": "colony",
-    "minLevel": 10,
+    "minLevel": 12,
     "jobs": 2,
     "sector": "services",
     "radius": 12
@@ -1035,7 +1035,7 @@ export const BUILDINGS = {
     "category": "transport",
     "cost": 900,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "jobs": 2,
     "sector": "crafts",
     "output": {
@@ -1076,7 +1076,7 @@ export const BUILDINGS = {
     "category": "transport",
     "cost": 5000,
     "payer": "colony",
-    "minLevel": 7,
+    "minLevel": 9,
     "jobs": 2,
     "sector": "river",
     "riverside": true,
@@ -1140,14 +1140,14 @@ export const VEHICLES = {
     "cargo": 150,
     "price": 650,
     "upkeep": 35,
-    "minLevel": 7
+    "minLevel": 9
   },
   "steamboat": {
     "mode": "river",
     "cargo": 700,
     "price": 4500,
     "upkeep": 110,
-    "minLevel": 7,
+    "minLevel": 9,
     "firewood": 40
   },
   "railcar": {
@@ -1293,61 +1293,101 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     "level": 2,
-    "workers": 14,
-    "income": 450
+    "workers": 10,
+    "income": 500
   },
   {
     "level": 3,
-    "workers": 28,
+    "workers": 20,
     "income": 1100
   },
   {
     "level": 4,
-    "workers": 50,
-    "income": 2200,
-    "milestone": 1
+    "workers": 32,
+    "income": 1900
   },
   {
     "level": 5,
-    "workers": 65,
-    "income": 3000
+    "workers": 44,
+    "income": 2800,
+    "milestone": 1
   },
   {
     "level": 6,
-    "workers": 85,
-    "income": 3900
+    "workers": 54,
+    "income": 3500
   },
   {
     "level": 7,
-    "workers": 110,
-    "income": 5000,
-    "milestone": 2
+    "workers": 64,
+    "income": 4300
   },
   {
     "level": 8,
-    "workers": 140,
-    "income": 6500
+    "workers": 76,
+    "income": 5200,
+    "districts": 2
   },
   {
     "level": 9,
-    "workers": 175,
-    "income": 8000
+    "workers": 90,
+    "income": 6200,
+    "milestone": 2
   },
   {
     "level": 10,
-    "workers": 220,
-    "income": 10000,
-    "milestone": 3
+    "workers": 106,
+    "income": 7400,
+    "idle": 0.3
   },
   {
     "level": 11,
-    "workers": 320,
-    "income": 19000
+    "workers": 124,
+    "income": 8800
   },
   {
     "level": 12,
-    "workers": 420,
-    "income": 25000,
+    "workers": 144,
+    "income": 10400,
+    "districts": 3
+  },
+  {
+    "level": 13,
+    "workers": 166,
+    "income": 12200,
+    "idle": 0.25
+  },
+  {
+    "level": 14,
+    "workers": 190,
+    "income": 14000,
+    "milestone": 3
+  },
+  {
+    "level": 15,
+    "workers": 220,
+    "income": 16500
+  },
+  {
+    "level": 16,
+    "workers": 255,
+    "income": 19500,
+    "districts": 4,
+    "requires": {
+      "hospital": 1
+    }
+  },
+  {
+    "level": 17,
+    "workers": 295,
+    "income": 23000,
+    "idle": 0.25
+  },
+  {
+    "level": 18,
+    "workers": 340,
+    "income": 27000,
+    "districts": 5,
     "requires": {
       "hospital": 1,
       "theater": 1
@@ -1365,9 +1405,9 @@ export const MILESTONES: readonly MilestoneDef[] = [
     "id": "parish",
     "grant": 120,
     "shareOfTrade": 0.1,
-    "families": 90,
+    "families": 44,
     "satisfaction": 50,
-    "deadline": 32,
+    "deadline": 40,
     "requires": {
       "chapel": 1,
       "school": 1,
@@ -1378,10 +1418,10 @@ export const MILESTONES: readonly MilestoneDef[] = [
     "id": "village",
     "grant": 80,
     "shareOfTrade": 0.1,
-    "families": 180,
+    "families": 90,
     "satisfaction": 55,
     "lands": 4,
-    "deadline": 40,
+    "deadline": 56,
     "requires": {
       "chapel": 2,
       "school": 2,
@@ -1393,10 +1433,10 @@ export const MILESTONES: readonly MilestoneDef[] = [
     "id": "town",
     "grant": 40,
     "shareOfTrade": 0.1,
-    "families": 360,
+    "families": 190,
     "satisfaction": 60,
     "lands": 9,
-    "deadline": 48,
+    "deadline": 72,
     "road": true,
     "requires": {
       "church": 1,
@@ -1410,65 +1450,73 @@ export const MILESTONES: readonly MilestoneDef[] = [
 
 export const LEVEL_UNLOCKS: Readonly<Record<number, readonly string[]>> = {
   "2": [
+    "pineNutGrove",
     "monjolo",
     "flourHouse",
-    "pineNutGrove",
     "workshop"
   ],
   "3": [
+    "waystation",
     "corral",
     "pigsty",
-    "saltery",
     "mine",
+    "saltery",
     "tradingPost",
-    "landing",
-    "waystation"
+    "landing"
   ],
   "4": [
-    "whitewashedHouse",
-    "market",
     "wheatField",
     "mill"
   ],
   "5": [
-    "caneField",
-    "sugarMill",
-    "yerbaGrove",
-    "yerbaDryer"
+    "whitewashedHouse",
+    "market"
   ],
   "6": [
-    "distillery",
-    "tobaccoField",
-    "tobaccoShed",
-    "pasture"
+    "caneField",
+    "yerbaGrove",
+    "sugarMill",
+    "yerbaDryer"
   ],
   "7": [
+    "pasture",
+    "distillery",
+    "council"
+  ],
+  "8": [
+    "tobaccoField",
+    "tobaccoShed"
+  ],
+  "9": [
     "townhouse",
     "church",
-    "council",
     "tannery",
     "fountain",
     "jail",
-    "steamPier",
-    "woodYard"
+    "woodYard",
+    "steamPier"
   ],
-  "8": [
+  "10": [
     "carpentry",
     "cooperage",
     "smithy"
   ],
-  "9": [
+  "11": [
     "cottonField",
     "loom"
   ],
-  "10": [
-    "coffeeField",
-    "coffeeYard",
+  "12": [
     "fireStation"
   ],
-  "11": [
-    "shoemaker",
-    "hospital",
+  "13": [
+    "shoemaker"
+  ],
+  "14": [
+    "coffeeField",
+    "coffeeYard",
+    "hospital"
+  ],
+  "16": [
     "theater"
   ]
 };
@@ -1506,15 +1554,15 @@ export const PATH_CHOICES: Readonly<Record<number, readonly [string, string]>> =
     "polyculture",
     "monoculture"
   ],
-  "6": [
+  "7": [
     "familyWorkshop",
     "manufacture"
   ],
-  "9": [
+  "11": [
     "freeMuleteers",
     "storeContract"
   ],
-  "12": [
+  "16": [
     "publicSchool",
     "brotherhoods"
   ]
@@ -1676,6 +1724,9 @@ export const BALANCE: BalanceDef = {
   "freeCarryDistance": 6,
   "upgradeOpensJobs": true,
   "milestoneWorkers": true,
+  "smallHomes": true,
+  "districtsFromStart": true,
+  "titheSpare": 1,
   "routeChoiceSharpness": 8,
   "isolatedCommerceWeight": 0.6,
   "lotPrice": 20,

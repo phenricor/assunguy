@@ -14,10 +14,10 @@ describe('report: what decisions changed, and the series', () => {
     expect(build(s, w, 'hut', ...parseKey(lot)).ok).toBe(true);
     const entry = s.log.at(-1)!;
     expect(entry.kind).toBe('built');
-    expect((entry.change as any).places).toBe(2);
+    expect((entry.change as any).places).toBe(1);
     const r = passSeason(s, w);
     expect(r.decisions.works).toEqual([expect.objectContaining({ building: 'hut', kind: 'built', n: 1, cost: 20 })]);
-    expect(r.decisions.works[0]!.change.places).toBe(2);
+    expect(r.decisions.works[0]!.change.places).toBe(1);
     expect(r.returns.length).toBeGreaterThan(3);
     expect(s.series).toHaveLength(1);
     expect(s.series![0]).toMatchObject({ t: s.market.t, families: expect.any(Number), production: expect.any(Object) });

@@ -3,7 +3,7 @@
 // steps the banner on the map walks through; each step goes away when the player does it. A chapter that opens
 // shows once on the banner as new; the notebook (in Settings) keeps them all to read again.
 import { railExits, type GameState, type LotKey } from '@assunguy/sim';
-import type { BuildingId } from '@assunguy/data';
+import { BUILDINGS, LEVELS, LEVEL_UNLOCKS, MILESTONES, topLevel, milestoneLevel, type BuildingId, type MilestoneDef } from '@assunguy/data';
 import * as store from '../store';
 import { T, has } from '../i18n';
 import { api, hooks } from '../view';
@@ -60,7 +60,22 @@ export function banner(s: GameState): { chapter: Chapter; step?: number } | null
 export function markSeen(s: GameState, id: string): void { s.flags[seenFlag(id)] = true; }
 
 const adv = () => store.session().meta.advisor;
-const paras = (key: string) => T(key, { advisor: adv() }).split('\n').map((p) => `<p>${esc(p)}</p>`).join('');
+/** The numbers the notebook quotes, from the game's own tables, so the text follows the balance. */
+export function facts(): Record<string, string | number> {
+  const list = (r: Readonly<Record<string, number>> | undefined) => Object.entries(r ?? {}).map(([t, q]) => (q > 1 ? `${T(`building.${t}`)} (${q})` : T(`building.${t}`))).join(', ');
+  const m = (i: number) => MILESTONES[i] as MilestoneDef, l = (n: number) => LEVELS.find((x) => x.level === n);
+  const unl = (n: number) => (LEVEL_UNLOCKS[n] ?? []).filter((t) => t !== 'workshop').map((t) => T(`building.${t}`)).join(', ');
+  const p1 = milestoneLevel(1), p2 = milestoneLevel(2), p3 = milestoneLevel(3);
+  return {
+    advisor: adv(), top: topLevel(), topNeeds: list(l(topLevel())?.requires), outletLevel: BUILDINGS.mine.minLevel ?? 3,
+    l2workers: l(2)?.workers ?? 0, l2income: l(2)?.income ?? 0,
+    parishLevel: p1, villageLevel: p2, townLevel: p3, beforeParish: p1 - 1, parishUnlocks: unl(p1),
+    villageFamilies: m(2).families ?? 0, villageSat: m(2).satisfaction ?? 0, villageLands: m(2).lands ?? 0, villageNeeds: list(m(2).requires), villageDeadline: m(2).deadline ?? 0,
+    townFamilies: m(3).families ?? 0, townSat: m(3).satisfaction ?? 0, townLands: m(3).lands ?? 0, townNeeds: list(m(3).requires), townDeadline: m(3).deadline ?? 0,
+    councilLevel: BUILDINGS.council.minLevel ?? 9,
+  };
+}
+const paras = (key: string) => T(key, facts()).split('\n').map((p) => `<p>${esc(p)}</p>`).join('');
 
 /** The notebook: every chapter, open ones to read and the rest with when they open. */
 export function openNotebook(): void {
@@ -68,7 +83,7 @@ export function openNotebook(): void {
   s.flags.sawNotebook = true;
   const cards = CHAPTERS.map((ch) => {
     const open = ch.opens(s), steps = ch.steps ?? [], done = steps.filter((x) => x.done(s)).length;
-    const sub = !open ? T(`ui.guide.lock.${ch.id}`) : steps.length ? T('ui.guide.stepsDone', { n: done, of: steps.length }) : !s.flags[seenFlag(ch.id)] && ch.id !== 'screen' && ch.id !== 'levels' ? T('ui.guide.new') : '';
+    const sub = !open ? T(`ui.guide.lock.${ch.id}`, facts()) : steps.length ? T('ui.guide.stepsDone', { n: done, of: steps.length }) : !s.flags[seenFlag(ch.id)] && ch.id !== 'screen' && ch.id !== 'levels' ? T('ui.guide.new') : '';
     return K.card({ title: esc(T(`ui.guide.chapter.${ch.id}`)), sub: esc(sub), dim: !open, attrs: open ? `data-ch="${ch.id}"` : '' });
   });
   const p = screen({ id: 'notebook', title: T('ui.guide.notebook', { advisor: adv() }), sub: T('ui.guide.notebookSub'), body: K.cards(cards) });
@@ -84,7 +99,7 @@ export function openChapter(id: string): void {
   const steps = ch.steps ?? [];
   let body = '';
   if (steps.length) {
-    body += K.section(esc(T('ui.guide.steps'))) + K.rows(steps.map((x) => K.row(`<b>${esc(T(`ui.guide.${x.key}.title`, { advisor: adv() }))}</b><br><small>${esc(T(`ui.guide.${x.key}.body`, { advisor: adv() }))}</small>`, x.done(s) ? '✓' : '', x.done(s) ? 'mais' : '')));
+    body += K.section(esc(T('ui.guide.steps'))) + K.rows(steps.map((x) => K.row(`<b>${esc(T(`ui.guide.${x.key}.title`, facts()))}</b><br><small>${esc(T(`ui.guide.${x.key}.body`, facts()))}</small>`, x.done(s) ? '✓' : '', x.done(s) ? 'mais' : '')));
     if (chapterOff(s, id) && steps.some((x) => !x.done(s))) body += K.actions([{ id: 'nbAgain', text: T('ui.guide.again') }] as never);
   }
   for (const k of ch.sections) {

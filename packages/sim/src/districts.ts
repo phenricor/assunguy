@@ -3,7 +3,7 @@
 // building; homes belong to the nearest anchor by street distance (crossing water or a land border costs
 // more); too-big districts split, isolated homes form a hamlet, weak districts fold into others. Then whole
 // blocks (ground closed in by streets) go to the district of most of their homes.
-import type { BuildingId } from '@assunguy/data';
+import { BALANCE, type BuildingId } from '@assunguy/data';
 import { def } from './economy.js';
 import { cellsOf } from './map.js';
 import { connected, streetsBeside } from './network.js';
@@ -27,7 +27,7 @@ const PRIORITY: BuildingId[] = ['directorate', 'council', 'church', 'chapel', 'm
 export const DISTRICT_COLORS = ['#C2562B', '#2F7F8A', '#8A5BB5', '#A67C12', '#3E7D3A', '#B5476B'];
 const O = { R: 6, bridge: 10, border: 3, minHomes: 6, maxHomes: 30, hamlet: 3 };
 /** Districts exist from the start: the first is the whole colony, and it becomes the Centre when a second is born. */
-export const districtsUnlocked = (_s: GameState): boolean => true;
+export const districtsUnlocked = (s: GameState): boolean => BALANCE.districtsFromStart || s.milestone >= 2;
 
 /** A comparable string for a district name, to keep names apart. */
 export const nameId = (n: DistrictName): string => n.custom ?? `${n.key}${n.land ? `|${n.land}` : ''}${n.n ? `#${n.n}` : ''}`;
@@ -143,7 +143,7 @@ export function computeDistricts(s: GameState, w: World): Districts {
   }
   // production away from the streets (fields beside fields) or beyond the reach goes to the district of the nearest
   // building that has one, over the ground: the district holds its people and what they make
-  {
+  if (BALANCE.districtsFromStart) {
     const ownerOf = (x: LotKey) => owner[x];
     let left = keys.filter((x) => !ownerOf(x));
     for (let it = 0; it < 12 && left.length; it++) {
@@ -240,7 +240,7 @@ export function computeDistricts(s: GameState, w: World): Districts {
     if (custom) n = { key: 'district.custom', custom };
     else {
       const mk = landmark[x];
-      n = i === 0 ? { key: anchors.length === 1 ? 'district.colony' : 'district.centre' } : mk && !hamlets.has(x) ? { key: `district.${LANDMARK[map.buildings[mk] as BuildingId]}` } : place(x, hs);
+      n = i === 0 ? { key: anchors.length === 1 && BALANCE.districtsFromStart ? 'district.colony' : 'district.centre' } : mk && !hamlets.has(x) ? { key: `district.${LANDMARK[map.buildings[mk] as BuildingId]}` } : place(x, hs);
       if (used[nameId(n)]) n = place(x, hs);
       if (used[nameId(n)] && w.lands[land] && n.land !== land) n = { ...n, land };
       for (let r = 2; used[nameId(n)]; r++) n = { ...n, n: r };

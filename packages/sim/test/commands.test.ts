@@ -7,6 +7,9 @@ import type { GameState } from '../src/state.js';
 import { generateWorld, parseKey, type LandId, type LotKey } from '../src/world.js';
 import fixture from './fixtures/commands.json' with { type: 'json' };
 import { LEGACY, goodFromLegacy, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type Snap = Record<string, any>;
 const B = LEGACY.buildings as Record<string, string>, V = LEGACY.vehicles as Record<string, string>, LAW = LEGACY.laws as Record<string, string>, TAX = LEGACY.taxes as Record<string, string>;

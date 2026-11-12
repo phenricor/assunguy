@@ -1,7 +1,7 @@
 // Events: what happens to the colony each season and the decisions it asks for. Each event is declared
 // here with its options and effects; all text lives in the i18n catalogs under event.<id>.*.
 // Every random draw comes from the market's seed, in the prototype's order.
-import { BUILDINGS, GOODS, GOOD_IDS, LEVELS, WEATHER_ODDS, type BuildingId, type GoodId } from '@assunguy/data';
+import { topLevel, BUILDINGS, GOODS, GOOD_IDS, LEVELS, PATH_CHOICES as DATA_PATH_CHOICES, WEATHER_ODDS, type BuildingId, type GoodId } from '@assunguy/data';
 import { allocate, costOf, def, hasRoad, sectorOf, soilOf, type Economy } from './economy.js';
 import { arrivalChance, arrivalSize, emptySlots, loseFamilies, receiveFamilies, syncFamilies } from './families.js';
 import { measure } from './measure.js';
@@ -107,7 +107,7 @@ const CRISES: Record<'frost' | 'flood', Option[]> = {
   frost: [{ can: pay(80), apply: (s) => applyEffects(s, { cash: -80, satisfaction: 3, reason: 'mood.frostAid' }) }, { apply: (s) => applyEffects(s, { satisfaction: -3, reason: 'mood.frost' }) }],
   flood: [{ can: pay(100), apply: (s) => applyEffects(s, { cash: -100, satisfaction: 2, reason: 'mood.floodRepairs' }) }, { apply: (s) => applyEffects(s, { satisfaction: -2, reason: 'mood.flood' }) }],
 };
-export const PATH_CHOICES: Record<number, [string, string]> = { 3: ['polyculture', 'monoculture'], 6: ['familyWorkshop', 'manufacture'], 9: ['freeMuleteers', 'storeContract'], 12: ['publicSchool', 'brotherhoods'] };
+export const PATH_CHOICES = DATA_PATH_CHOICES as Readonly<Record<number, readonly [string, string]>>;
 export const ARRIVAL_COST = 11;
 const SWAP_FACTOR = 0.5;
 export const firstHarvest = (t: BuildingId, now: number): number => {
@@ -147,7 +147,7 @@ export function defineEvent(s: GameState, ev: QueuedEvent): Defined {
     case 'decree': return { id: 'decree', params: { milestone: ev.milestone }, options: [
       { can: pay(150), apply: (s2) => applyEffects(s2, { cash: -150, satisfaction: 8, reason: 'mood.festival' }) },
       { apply: (s2) => applyEffects(s2, { satisfaction: 2, reason: `milestone.${ev.milestone}.reached` }) }] };
-    case 'victory': return { id: 'victory', options: [{ apply: () => {} }, { apply: () => {} }], changesGame: true };
+    case 'victory': return { id: 'victory', params: { level: topLevel() }, options: [{ apply: () => {} }, { apply: () => {} }], changesGame: true };
     case 'inspector': return { id: 'inspector', params: { milestone: ev.milestone }, options: [
       { apply: (s2) => { s2.intervention = true; s2.extraDemand += 2; s2.deadline = s2.market.t + 8; s2.warned = false; applyEffects(s2, { influence: -3, satisfaction: -5, seasons: 4, reason: 'mood.inspector' }); } },
       { can: (s2) => s2.influence >= 6 && s2.cash >= 500, apply: (s2) => { s2.extraDemand += 2; s2.deadline = s2.market.t + 8; s2.warned = false; applyEffects(s2, { influence: -6, cash: -500 }); } }] };

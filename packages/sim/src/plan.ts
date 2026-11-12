@@ -2,10 +2,11 @@
 // of works that closes the gap, each step measured on a copy of the colony with the works on real free lots.
 // The player reads it as "build these; it costs this and pays that", not as a list of formulas. It is costly (one
 // economy per step), so it runs as steps the screen spreads over a few frames.
-import { BUILDINGS, LEVELS, TRANSPORT_ROLES, type BuildingId } from '@assunguy/data';
+import { BALANCE, BUILDINGS, LEVELS, TRANSPORT_ROLES, type BuildingId } from '@assunguy/data';
 import { allocate, computeEconomy, costOf, def, type Economy } from './economy.js';
 import { upgradeCost } from './advisor.js';
 import { withWorks } from './measure.js';
+import { levelRequirements, type GoalItem } from './province.js';
 import { upgradeOf, type GameState } from './state.js';
 import type { LotKey, World } from './world.js';
 
@@ -26,6 +27,8 @@ export interface LevelPlan {
   families: number;
   /** The plan reaches the level's numbers. */
   reached: boolean;
+  /** What else the level still asks (districts, a share without work, the milestone's satisfaction, lands, road). */
+  pending: GoalItem[];
 }
 
 /** A job is worth about this much income a year when choosing between works. */
@@ -53,8 +56,15 @@ export function* planSteps(s0: GameState, w: World, o: PlanOptions = {}): Genera
   if (!lv && !o.jobs) return null;
   const a00 = allocate(s0);
   // a district's plan: the jobs it lacks, nothing about the level
-  const next = o.jobs ? { level: s0.level, workers: a00.employed + o.jobs, income: 0, requires: {} as Partial<Record<BuildingId, number>> } : lv!;
-  let s = s0, c: Economy = computeEconomy(s, w);
+  const c00 = computeEconomy(s0, w);
+  // at most a share of families without work: the jobs that keeps the rest at work
+  const fam0 = Object.keys(s0.families).length, idleCap = lv?.idle !== undefined && !o.jobs ? Math.ceil(fam0 * (1 - lv.idle)) : 0;
+  const reqs = o.jobs ? [] : levelRequirements(s0, w, lv!.level, c00);
+  // a milestone's families at work (more when the province asked for more)
+  const famGoal = reqs.find((g) => g.kind === 'families' && BALANCE.milestoneWorkers)?.target ?? 0;
+  const next = o.jobs ? { level: s0.level, workers: a00.employed + o.jobs, income: 0, requires: {} as Partial<Record<BuildingId, number>> } : { ...lv!, workers: Math.max(lv!.workers, idleCap, famGoal) };
+  const pending = reqs.filter((g) => !g.ok && !['workers', 'income', 'building', 'families'].includes(g.kind));
+  let s = s0, c: Economy = c00;
   const base = c.incomeTotal, a0 = allocate(s);
   const have = (t: BuildingId) => Object.values(s.map.buildings).filter((x) => x === t).length;
   const missing = (Object.entries(next.requires ?? {}) as [BuildingId, number][]).filter(([t, q]) => have(t) < q).map(([t, q]) => ({ building: t, n: q - have(t) }));
@@ -131,6 +141,7 @@ export function* planSteps(s0: GameState, w: World, o: PlanOptions = {}): Genera
     gain: Math.round(c.incomeTotal - base),
     families: Math.max(0, next.workers - workers - idleLeft),
     reached: workers >= next.workers && c.incomeTotal >= next.income,
+    pending: pending.filter((g) => g.kind !== 'idle' || workers < next.workers),
   };
 }
 

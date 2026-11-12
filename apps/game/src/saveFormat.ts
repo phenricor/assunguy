@@ -3,11 +3,23 @@
 // migration from the previous format is added below, so older saves keep loading. A save from a newer format
 // than this game knows is refused rather than guessed at.
 
-export const SAVE_FORMAT = 1;
+export const SAVE_FORMAT = 2;
 
 type Data = Record<string, unknown>;
+/** Format 2 has eighteen levels instead of twelve: each old level moves to the new one with the same standing. */
+export const LEVEL_FROM_12: Record<number, number> = { 1: 1, 2: 2, 3: 3, 4: 5, 5: 6, 6: 7, 7: 9, 8: 10, 9: 11, 10: 14, 11: 16, 12: 18 };
+const relevel = (n: unknown) => (typeof n === 'number' ? LEVEL_FROM_12[n] ?? n : n);
 /** MIGRATIONS[n] turns a save of format n into format n + 1. */
-const MIGRATIONS: Record<number, (d: Data) => Data> = {};
+const MIGRATIONS: Record<number, (d: Data) => Data> = {
+  1: (d) => {
+    const s = { ...(d.s as Data) };
+    s.level = relevel(s.level);
+    const choices = (s.choices ?? {}) as Record<string, unknown>;
+    s.choices = Object.fromEntries(Object.entries(choices).map(([k, v]) => [String(relevel(Number(k))), v]));
+    s.queue = ((s.queue ?? []) as Data[]).map((e) => (e.kind === 'pathChoice' ? { ...e, level: relevel(e.level) } : e));
+    return { ...d, s };
+  },
+};
 
 export type ReadResult<T> = { ok: true; save: T } | { ok: false; reason: 'invalid' | 'newer' };
 

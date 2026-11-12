@@ -1,6 +1,6 @@
 // The advisor's screen (the player names the advisor; the role is `advisor` in code): what weighs most now,
 // each item with the action that answers it. Advice above the cash in hand is shown blocked.
-import { TRANSPORT_ROLES, VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
+import { topLevel, TRANSPORT_ROLES, VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
 import {
   askProvince, build, buyVehicle, collectionLot, costOf, districtAlerts, planSteps, splitAdvice, proposeTax, sellVehicle, streets, swapCrop, upgrade,
   type Advice, type AdviceAction, type DistrictAlert, type LevelPlan, type LotKey,
@@ -82,27 +82,28 @@ function planBlock(plan: LevelPlan | null | undefined): string {
   const { s } = store.session();
   if (plan === undefined) return '';
   const head = (lv: number) => K.section(esc(T('ui.plan.title', { level: lv })));
-  if (plan === null) return s.level >= 12 ? '' : head(s.level + 1) + K.note(esc(T('ui.plan.computing')), 'neutra');
+  if (plan === null) return s.level >= topLevel() ? '' : head(s.level + 1) + K.note(esc(T('ui.plan.computing')), 'neutra');
   const lacks = [
     plan.workers.current < plan.workers.target ? K.row(esc(T('ui.plan.workers', { n: plan.workers.target - plan.workers.current })), '', 'menos') : '',
     plan.income.current < plan.income.target ? K.row(esc(T('ui.plan.income', { n: fmt(plan.income.target - plan.income.current) })), '', 'menos') : '',
     ...plan.missing.map((m) => K.row(esc(T('ui.plan.building', { building: m.building })), '', 'menos')),
+    ...plan.pending.map((g) => K.row(esc(T(`ui.plan.pending.${g.kind}`, { n: Math.round(g.current), target: g.target })), '', 'menos')),
   ].filter(Boolean);
-  if (!lacks.length) return head(plan.level) + K.note(esc(T('ui.plan.ready', { level: plan.level })), 'bom') + (s.race && plan.level === 12 ? K.note(esc(T('ui.plan.wins')), 'neutra') : '');
+  if (!lacks.length) return head(plan.level) + K.note(esc(T('ui.plan.ready', { level: plan.level })), 'bom') + (s.race && plan.level === topLevel() ? K.note(esc(T('ui.plan.wins', { top: topLevel() })), 'neutra') : '');
   const name = (i: LevelPlan['items'][number]) => T(i.n > 1 ? `building.${i.building}.plural` : `building.${i.building}`);
   const items = plan.items.map((i) => K.row(esc(i.upgrade ? T(i.n > 1 ? 'ui.plan.upgradeN' : 'ui.plan.upgrade', { n: i.n, what: name(i) }) : T('ui.plan.item', { n: i.n, what: name(i) })), `$ ${fmt(i.cost)}`));
   const totals = plan.items.length ? K.rows([K.row(esc(T('ui.plan.cost')), `$ ${fmt(plan.cost)}`), K.row(esc(T('ui.tr.income')), esc(T('ui.perYear', { value: signedMoney(plan.gain) })), plan.gain > 0 ? 'mais' : '')]) : '';
   return head(plan.level) + K.rows(lacks)
     + (plan.items.length ? K.section(esc(T('ui.plan.works'))) + K.rows(items) + totals : '')
     + (plan.families ? K.note(esc(T('ui.plan.families', { n: plan.families })), 'neutra') : !plan.reached ? K.note(esc(T('ui.plan.short')), 'neutra') : '')
-    + (s.race && plan.level === 12 ? K.note(esc(T('ui.plan.wins')), 'neutra') : '');
+    + (s.race && plan.level === topLevel() ? K.note(esc(T('ui.plan.wins', { top: topLevel() })), 'neutra') : '');
 }
 
 /** Runs the plan a few steps per frame, so the screen stays responsive; keeps it for the season. */
 function startPlan(p: HTMLElement): void {
   const box = () => p.querySelector<HTMLElement>('#planBox');
   const { s, w } = store.session();
-  if (s.level >= 12) { const b = box(); if (b) b.innerHTML = ''; return; }
+  if (s.level >= topLevel()) { const b = box(); if (b) b.innerHTML = ''; return; }
   const sig = planSig();
   if (planCache?.sig === sig) { const b = box(); if (b) b.innerHTML = planBlock(planCache.plan); return; }
   const run = ++planRun, gen = planSteps(structuredClone(s), w);

@@ -26,9 +26,22 @@ describe('content tables', () => {
     for (const m of MILESTONES) for (const b of Object.keys(m.requires ?? {})) expect(isBuilding(b), `${m.id} ${b}`).toBe(true);
   });
 
-  it('levels run 1 to 12 and milestones sit on levels 4, 7 and 10', () => {
-    expect(LEVELS.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(LEVELS.filter((l) => l.milestone).map((l) => l.level)).toEqual([4, 7, 10]);
+  it('levels run 1 to 18 and milestones sit on levels 5, 9 and 14', () => {
+    expect(LEVELS.map((l) => l.level)).toEqual(Array.from({ length: 18 }, (_, i) => i + 1));
+    expect(LEVELS.filter((l) => l.milestone).map((l) => l.level)).toEqual([5, 9, 14]);
+  });
+
+  it('each level asks for more than the one before, and nothing it asks for opens later', () => {
+    for (let i = 1; i < LEVELS.length; i++) {
+      const a = LEVELS[i - 1]!, b = LEVELS[i]!;
+      expect(b.workers, `level ${b.level}`).toBeGreaterThan(a.workers);
+      expect(b.income, `level ${b.level}`).toBeGreaterThan(a.income);
+      for (const t of Object.keys(b.requires ?? {})) expect((BUILDINGS as Record<string, { minLevel?: number }>)[t]!.minLevel ?? 1, `${t} for level ${b.level}`).toBeLessThan(b.level);
+    }
+    for (const m of MILESTONES.slice(1)) for (const t of Object.keys(m.requires ?? {})) {
+      const at = LEVELS.find((l) => l.milestone === MILESTONES.indexOf(m))!.level;
+      expect((BUILDINGS as Record<string, { minLevel?: number }>)[t]!.minLevel ?? 1, `${t} for ${m.id}`).toBeLessThan(at);
+    }
   });
 
   it('biome soils only rate known goods', () => {

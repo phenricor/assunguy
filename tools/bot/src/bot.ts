@@ -2,9 +2,9 @@
 // advisor, taking the heaviest advice it can pay for and act on, a few times, before passing the season.
 // It records what a designer needs to judge the balance: goals against deadlines, cash, idle families,
 // income, satisfaction, how full the gateways are and how much is wasted.
-import { MILESTONES, type BuildingId } from '@assunguy/data';
+import { MILESTONES, WORLD, type BuildingId } from '@assunguy/data';
 import {
-  advise, allocate, annex, suggestedLand, sizeOf, canPlace, streetLine, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
+  advise, allocate, lotKey, mainNetwork, annex, suggestedLand, sizeOf, canPlace, streetLine, streets, askProvince, build, buyVehicle, collectionLot, computeEconomy, def, defineEvent, explore, lotsFor, newGame,
   passSeason, proposeTax, resolveEvent, sellVehicle, soilOf, swapCrop, upgrade, wasteShare,
   type Advice, type AdviceAction, type CommandResult, type GameState, type LandId, type LotKey, type SeasonReport, type World,
 } from '@assunguy/sim';
@@ -51,12 +51,26 @@ export function extendStreets(s: GameState, w: World): boolean {
   return !!line && streets(s, w, line.from, line.to).opened > 0;
 }
 
+/** The road to Curitiba: a street line from the colony's network straight down to the map's south edge, in the
+ *  start column's region, a stretch each season (as a player would draw it). */
+function roadSouth(s: GameState, w: World): boolean {
+  const { regionSize: REG, height: NY, startColumn: A0 } = WORLD, c0 = Math.floor(A0 / REG) * REG, net = mainNetwork(s.map);
+  const cols = Array.from({ length: REG }, (_, i) => c0 + i).sort((p, q) => Math.abs(p - A0) - Math.abs(q - A0));
+  for (const x of cols) {
+    let y = -1;
+    for (let q = NY - 1; q >= 0 && y < 0; q--) if (net.has(lotKey(x, q))) y = q;
+    if (y < 0 || y >= NY - 1) continue;
+    if (streets(s, w, [x, y + 1], [x, NY - 1]).opened > 0) return true;
+  }
+  return false;
+}
+
 /** Carries out one advice; false when there is nothing the bot can do with it. */
 export function act(s: GameState, w: World, a: AdviceAction): boolean {
   const okd = (r: CommandResult) => r.ok;
   switch (a.kind) {
     case 'build': {
-      if (a.building === 'street') return false;
+      if (a.building === 'street') return roadSouth(s, w);
       let at = lotFor(s, w, a.building, a.near);
       // out of lots: open up to three street lines, then annex the next land if streets alone do not do it
       for (let i = 0; i < 3 && !at && extendStreets(s, w); i++) at = lotFor(s, w, a.building, a.near);
@@ -130,7 +144,7 @@ export function play(seed: number, o: BotOptions = {}): Run {
       if (!pick) break;
       tried.add(JSON.stringify(pick.action));
       // homes for the next groups, or the jobs a level is short of: a player builds a row, not one (the advice names one)
-      const times = pick.rule === 'milestoneFamilies' || pick.rule === 'jobsEmpty.build' ? 4 : pick.rule === 'levelWorkers' ? 2 : 1;
+      const times = pick.rule === 'milestoneFamilies' || pick.rule === 'levelFamilies' || pick.rule === 'jobsEmpty.build' ? 4 : pick.rule === 'levelWorkers' ? 2 : 1;
       let done = false;
       for (let k = 0; k < times && s.cash - reserve >= pick.cost; k++) done = act(s, w, pick.action!) || done;
       if (done) actions.push(pick.rule);

@@ -3,6 +3,9 @@ import type { GoodId } from '@assunguy/data';
 import { advanceMarket, currentPrice, initialMarket } from '../src/market.js';
 import fixture from './fixtures/market.json' with { type: 'json' };
 import { SHOCK_KIND, goodFromLegacy } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Season { t: number; seed: number; prices: Record<string, number>; shocks: { b: string; tipo: string; f: number; restam: number }[] }
 const golden = fixture as unknown as { start: { t: number; seed: number; prices: Record<string, number[]> }; seasons: Season[] };

@@ -6,6 +6,9 @@ import { generateWorld } from '../src/world.js';
 import { MILESTONES } from '@assunguy/data';
 import fixture from './fixtures/province.json' with { type: 'json' };
 import { legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Case {
   state: Record<string, unknown>; manut: number; verba: number;

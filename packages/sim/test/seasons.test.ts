@@ -5,6 +5,9 @@ import type { GameState } from '../src/state.js';
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/seasons.json' with { type: 'json' };
 import { LEGACY, goodFromLegacy, legacyEvent, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type Snap = Record<string, any>;
 const cases = fixture as unknown as Record<string, { state: Record<string, unknown>; seasons: { queued: any[]; picks: number[]; after: Snap }[] }>;

@@ -4,6 +4,9 @@ import { initialMap, rapidsLimit } from '../src/map.js';
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/map.json' with { type: 'json' };
 import { LEGACY } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Case {
   seed: number; version: number; streets: string[]; buildings: Record<string, string>; trees: Record<string, string>;

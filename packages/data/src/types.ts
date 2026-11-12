@@ -99,6 +99,10 @@ export interface LevelDef {
   income: number;
   milestone?: number;
   requires?: Readonly<Record<string, number>>;
+  /** At most this share of families without work (0 to 1). */
+  idle?: number;
+  /** At least this many districts (hamlets do not count). */
+  districts?: number;
 }
 
 export interface MilestoneDef {
@@ -136,6 +140,13 @@ export interface BalanceDef {
   upgradeOpensJobs: boolean;
   /** Milestones count families at work, not all families (the prototype counted all). */
   milestoneWorkers: boolean;
+  /** The colony starts in four houses (homes hold one to four families); off, the prototype's house and three huts. */
+  smallHomes: boolean;
+  /** Districts from the first season (the first called the Colony while alone), holding production as well as homes;
+   *  the prototype had districts of homes only, from the village. */
+  districtsFromStart: boolean;
+  /** Points of satisfaction above the milestone's the advisor keeps when it suggests a tithe (the prototype kept 3). */
+  titheSpare: number;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;

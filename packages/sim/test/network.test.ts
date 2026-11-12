@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { connected, mainNetwork, reach } from '../src/network.js';
 import fixture from './fixtures/network.json' with { type: 'json' };
 import { legacyMap } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Case { state: Record<string, unknown>; network: string[]; linked: string[]; reach: Record<string, { radius: number; dist: Record<string, number> }> }
 const cases = fixture as unknown as Record<string, Case>;

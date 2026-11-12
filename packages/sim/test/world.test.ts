@@ -3,6 +3,9 @@ import { createTranslator } from '@assunguy/i18n';
 import { SEAT_LAND, generateWorld, lotKey } from '../src/world.js';
 import fixture from './fixtures/world.json' with { type: 'json' };
 import { LEGACY, goodFromLegacy } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Case {
   seed: number; version: number; phases: number[]; bank: number[]; width: number[]; water: number;

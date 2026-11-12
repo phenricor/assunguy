@@ -18,7 +18,7 @@ export interface GreatWorkDef {
 export const GREAT_WORKS = {
   telegraph: { milestone: 2, road: true, cost: 4000, seasons: 8, upkeep: 20 },
   macadamRoad: { milestone: 3, road: true, cost: 12000, seasons: 12, upkeep: 40 },
-  railSpur: { level: 11, cost: 40000, seasons: 16, upkeep: 120 },
+  railSpur: { level: 16, cost: 40000, seasons: 16, upkeep: 120 },
   normalSchool: { milestone: 2, cost: 7000, seasons: 8, upkeep: 40 },
   jerkyPlant: { milestone: 2, cost: 5000, seasons: 6, upkeep: 30 },
   limeWorks: { milestone: 2, cost: 6000, seasons: 6, upkeep: 40, deposit: 'lime' },

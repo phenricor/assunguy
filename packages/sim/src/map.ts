@@ -1,6 +1,6 @@
 // The colony's map: streets, buildings, trees, which lands are ours, and the nature drawn once per game
 // (streams, waterfalls, caves, sinkholes). Unlike the world, all of this is saved.
-import { BUILDINGS, WORLD, type BuildingId } from '@assunguy/data';
+import { BALANCE, BUILDINGS, WORLD, type BuildingId } from '@assunguy/data';
 import { mulberry32 } from './rng.js';
 import { SEAT_LAND, inBounds, landOf, lotKey, noise, parseKey, type LandId, type LotKey, type World } from './world.js';
 
@@ -105,8 +105,9 @@ function initialLands(world: World): Record<LandId, LandStatus> {
 
 const START_BUILDINGS: [BuildingId, [number, number][]][] = [
   ['chapel', [[21, 32]]], ['store', [[23, 32]]], ['riverPort', [[22, 30]]], ['cornField', [[24, 32]]], ['beanField', [[25, 32]]],
-  ['cassavaField', [[20, 32]]], ['house', [[20, 34]]], ['hut', [[21, 34], [23, 34], [24, 34]]],
+  ['cassavaField', [[20, 32]]],
 ];
+const START_HOMES = (): [BuildingId, [number, number][]][] => (BALANCE.smallHomes ? [['house', [[20, 34], [21, 34], [23, 34], [24, 34]]]] : [['house', [[20, 34]]], ['hut', [[21, 34], [23, 34], [24, 34]]]]);
 
 /** The starting village: two streets, a chapel, a store, a river port, three fields and four homes. */
 export function initialMap(world: World): MapState {
@@ -119,7 +120,7 @@ export function initialMap(world: World): MapState {
   };
   street(22, 31, 22, 36);
   street(19, 33, 26, 33);
-  for (const [type, lots] of START_BUILDINGS) for (const [a, b0] of lots) {
+  for (const [type, lots] of [...START_BUILDINGS, ...START_HOMES()]) for (const [a, b0] of lots) {
     const key = lotKey(a, b0 + PLAN_SHIFT);
     map.buildings[key] = type;
     delete map.trees[key];

@@ -9,6 +9,9 @@ import advice from './fixtures/advice.json' with { type: 'json' };
 import seasons from './fixtures/seasons.json' with { type: 'json' };
 import variants from './fixtures/adviceVariants.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type LegacyAdvice = { w: number; tit: string; sub: string; ac: Record<string, any> | null };
 const B = LEGACY.buildings as Record<string, string>, V = LEGACY.vehicles as Record<string, string>;

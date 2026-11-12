@@ -1,5 +1,5 @@
-// A new game: the starting village of the prototype's "new colony", its ten founding families, the outside
-// market from its fixed seed, the first goal (the parish) due in 32 seasons, and the intro decree queued.
+// A new game: the starting village of the prototype's "new colony", its eight founding families, the outside
+// market from its fixed seed, the first goal (the parish) due in 40 seasons, and the intro decree queued.
 import { MILESTONES, type MilestoneDef } from '@assunguy/data';
 import { computeEconomy } from './economy.js';
 import { syncFamilies, updateSupply } from './families.js';

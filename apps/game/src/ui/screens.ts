@@ -1,6 +1,6 @@
 // The panels behind the bottom bar and the header: Colônia, Governo (with its detail tabs), Transporte,
 // Nível, Economia and a district's numbers. Same markup and pieces as the prototype's dashboards.
-import { BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
+import { topLevel, BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
   askProvince, districtFixSteps, splitAdvice, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
@@ -288,7 +288,7 @@ function raceBlock(s: GameState): string {
     return K.card({ title: T(`ui.race.dest.${d}`), sub: `${T('ui.race.rival', { cost: num(rivalCost(s, d), 2) })}; ${ours === null ? T('ui.race.none') : T('ui.race.ours', { cost: num(ours, 2) })}`, right: ours === null ? '-' : `${Math.round(cp * 100)}%`, rightSub: T('ui.race.comp'), tone: ours === null ? '' : cp >= 1 ? 'bom' : cp < 0.8 ? 'ruim' : '' });
   });
   const nx = nextAdvance(s), leading = (Object.keys(comp) as (keyof typeof comp)[]).filter((d) => (c.transport.destVolume[d] ?? 0) > 0 && comp[d] >= 1).length;
-  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', s.level >= 12 && R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning })), 'bom') : K.note(esc(T('ui.race.goal', { n: leading })), 'neutra')].join('');
+  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', s.level >= topLevel() && R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning })), 'bom') : K.note(esc(T('ui.race.goal', { n: leading, top: topLevel() })), 'neutra')].join('');
   return K.section(T('ui.race.title'), 'race') + K.cards(cards) + notes;
 }
 
@@ -297,7 +297,7 @@ function raceBlock(s: GameState): string {
 export function openLevel(): void {
   const { s, w } = store.session(), c = store.economy(), n = s.level + 1, next = LEVELS.find((l) => l.level === n);
   const target = MILESTONES[s.milestone + 1], left = s.deadline - s.market.t;
-  const item = (g: GoalItem) => K.row(goalLabel(g), g.kind === 'road' ? (g.ok ? T('ui.yes') : T('ui.no')) : `${fmt(g.current)} / ${fmt(g.target)}`, g.ok ? 'mais' : 'menos');
+  const item = (g: GoalItem) => K.row(goalLabel(g), g.kind === 'road' ? (g.ok ? T('ui.yes') : T('ui.no')) : g.kind === 'idle' ? T('ui.goal.atMost', { n: g.current, max: g.target }) : `${fmt(g.current)} / ${fmt(g.target)}`, g.ok ? 'mais' : 'menos');
   let body = `<div class="medalha"><b>${s.level}</b><small>${esc(T('ui.level.level'))}</small></div>`;
   if (next) {
     const req = levelRequirements(s, w, n, c);
@@ -323,6 +323,8 @@ function goalLabel(g: GoalItem): string {
     case 'building': return T(`building.${g.building}`);
     case 'workers': return T('ui.goal.workers');
     case 'income': return T('ui.goal.income');
+    case 'idle': return T('ui.goal.idle');
+    case 'districts': return T('ui.goal.districts');
   }
 }
 

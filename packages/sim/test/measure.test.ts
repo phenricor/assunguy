@@ -4,6 +4,9 @@ import { measure } from '../src/measure.js';
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/measure.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 const cases = fixture as unknown as Record<string, { state: Record<string, unknown>; runs: { x: Record<string, unknown>; renda: number; fora: number; perda: number }[] }>;
 const toExtra = (x: Record<string, unknown>): Extra => Object.fromEntries(Object.entries(x).map(([k, v]) => k === 'rendimento'

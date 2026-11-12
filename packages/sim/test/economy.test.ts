@@ -3,6 +3,9 @@ import { computeEconomy, type Economy, type LossCause } from '../src/economy.js'
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/economy.json' with { type: 'json' };
 import { LEGACY, goodFromLegacy, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type Rec = Record<string, number>;
 interface Case {

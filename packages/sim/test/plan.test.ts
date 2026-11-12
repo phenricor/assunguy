@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { advanceRace, allocate, computeEconomy, departuresAhead, levelPlan, newGame, passSeason, slotsOf, type LotKey } from '../src/index.js';
+import { topLevel } from '@assunguy/data';
 
 describe('the way to the next level', () => {
   it('a new colony gets a plan of works that reaches level 2, with its cost and income', () => {
@@ -24,15 +25,15 @@ describe('the way to the next level', () => {
 });
 
 describe('the race', () => {
-  it('leading two markets counts toward victory only from level 12', () => {
+  it('leading two markets counts toward victory only from the top level', () => {
     const { s, w } = newGame(1869);
     s.queue = []; s.milestone = 3; passSeason(s, w);
     const c = computeEconomy(s, w);
     c.transport.destVolume.iguape = 100; c.transport.destVolume.curitiba = 100;
     c.transport.competitiveness.iguape = 1.1; c.transport.competitiveness.curitiba = 1.1;
-    s.level = 10; advanceRace(s, c, []);
+    s.level = topLevel() - 1; advanceRace(s, c, []);
     expect(s.race!.winning).toBe(0);
-    s.level = 12; advanceRace(s, c, []);
+    s.level = topLevel(); advanceRace(s, c, []);
     expect(s.race!.winning).toBe(1);
   });
   it('warns before families leave, with the income and the works that avoid it', () => {
