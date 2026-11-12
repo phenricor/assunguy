@@ -1,6 +1,6 @@
 // The panels behind the bottom bar and the header: Colônia, Governo (with its detail tabs), Transporte,
 // Nível, Economia and a district's numbers. Same markup and pieces as the prototype's dashboards.
-import { BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
+import { BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
   askProvince, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
@@ -36,7 +36,7 @@ export function openColony(): void {
     + (top.length ? K.cards(top.map((g) => K.card({ ic: icon(g), title: goodName(g), sub: T('ui.arrobasYear', { n: fmt(c.produced[g]) }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: trend(s, g), attrs: 'data-det="economy:goods"' }))) : '');
   if (districtsUnlocked(s)) {
     const D = store.districts();
-    if (D.info.length) body += dash(T('ui.colony.districts'), 'districts:', T('ui.colony.districts'), K.note(esc(T('ui.colony.districtsNote', { n: D.info.length })), 'neutra'), K.rows(D.info.slice(0, 6).map((d) => K.row(districtName(d.name), T('ui.homesN', { n: d.homes.length })))));
+    if (D.info.length) body += dash(T('ui.colony.districts'), 'districts:', T('ui.colony.districts'), K.note(esc(D.info.length === 1 ? T('ui.district.single') : T('ui.colony.districtsNote', { n: D.info.length })), 'neutra'), K.rows(store.accounts().slice(0, 6).map((a) => K.row(esc(districtName(a.name)), esc(T('ui.district.listSub', { families: a.families, idle: a.idle })), a.idle > a.families * 0.3 ? 'menos' : ''))));
   }
   const ser = (s.series ?? []).slice(-12) as SeriesPoint[];
   if (ser.length >= 2) body += dash(T('ui.colony.familiesTitle'), '', '', K.note(esc(T('ui.colony.idleNote', { n: ser.length ? Math.round(((ser.at(-1)!.idle) / Math.max(1, ser.at(-1)!.families)) * 100) : 0 })), 'neutra'), K.chart({ labels: ser.map((p) => short(p.t)), series: [{ name: T('ui.colony.inColony'), color: COLORS[0]!, values: ser.map((p) => p.families) }, { name: T('ui.colony.idle'), color: COLORS[3]!, values: ser.map((p) => p.idle) }] }));
@@ -315,7 +315,7 @@ export function openLevel(): void {
 }
 function goalLabel(g: GoalItem): string {
   switch (g.kind) {
-    case 'families': return T('ui.goal.families');
+    case 'families': return T(BALANCE.milestoneWorkers ? 'ui.goal.workingFamilies' : 'ui.goal.families');
     case 'road': return T('ui.goal.road');
     case 'lands': return T('ui.goal.lands');
     case 'satisfaction': return T('ui.goal.satisfaction');
@@ -328,20 +328,48 @@ function goalLabel(g: GoalItem): string {
 // ---- districts
 
 export function openDistricts(): void {
-  const D = store.districts();
-  screen({ id: 'districts', title: T('ui.colony.districts'), body: K.cards(D.info.map((d) => K.card({ title: districtName(d.name), sub: T('ui.homesN', { n: d.homes.length }), attrs: `data-district="${d.id}"` }))) });
+  const A = store.accounts();
+  const body = (A.length === 1 ? K.note(esc(T('ui.district.single')), 'neutra') : '') + K.cards(A.map((a) => K.card({ title: esc(districtName(a.name)), sub: esc(T('ui.district.listSub', { families: a.families, idle: a.idle })), right: `$ ${fmt(a.income)}`, rightSub: esc(T('ui.perYearShort')), tone: a.idle > a.families * 0.3 ? 'menos' : '', attrs: `data-district="${a.id}"` })));
+  screen({ id: 'districts', title: T('ui.colony.districts'), body });
   document.querySelectorAll<HTMLElement>('[data-district]').forEach((b) => { b.onclick = () => openDistrict(b.dataset.district as string); });
 }
 export function openDistrict(id: string | { id: string }): void {
-  const key = typeof id === 'string' ? id : id.id, D = store.districts(), d = D.info.find((x) => x.id === key);
-  if (!d) return;
-  const r = store.ratings();
-  const homes = d.homes.map((h) => r.homes[h]).filter(Boolean);
-  const mean = homes.length ? Math.round(homes.reduce((x, h) => x + h!.rating, 0) / homes.length) : 0;
-  const missing: Record<string, number> = {};
-  for (const h of homes) for (const i of h!.items) if (i.kind === 'outOfReach') missing[i.service] = (missing[i.service] ?? 0) + 1;
-  closeScreen();
-  sheetWith(districtName(d.name), T('ui.homesN', { n: d.homes.length }), K.rows([K.row(T('ui.satisfaction'), mean), ...Object.entries(missing).map(([sv, n]) => K.row(T('ui.rating.outOfReach', { service: sv }), `${n}/${homes.length}`, 'menos'))]));
+  // the district as one scope: its people, its homes, what it makes and how it gets out; only what matters
+  const key = typeof id === 'string' ? id : id.id, a = store.accounts().find((x) => x.id === key);
+  if (!a) return;
+  const ay = (n: number) => T('ui.arrobasYear', { n: fmt(n) });
+  const notes: string[] = [];
+  if (a.idle > 0 && a.filled >= a.jobs) notes.push(K.note(esc(T('ui.district.needJobs', { n: a.idle })), 'ruim'));
+  if (a.filled > a.working) notes.push(K.note(esc(T('ui.district.commute', { n: a.filled - a.working })), 'neutra'));
+  if (a.reach < 0.85 && a.onFoot > 20) notes.push(K.note(esc(T('ui.district.onFoot', { n: fmt(a.onFoot), share: Math.round(a.reach * 100) })), 'ruim'));
+  const miss = Object.entries(a.missing) as [string, number][];
+  if (!notes.length && !miss.length) notes.push(K.note(esc(T('ui.district.allGood')), 'bom'));
+  const body = notes.join('')
+    + K.section(esc(T('ui.district.people'))) + K.rows([
+      K.row(esc(T('ui.district.families')), a.families),
+      K.row(esc(T('ui.district.working')), a.working),
+      K.row(esc(T('ui.district.idle')), a.idle, a.idle > a.families * 0.3 ? 'menos' : ''),
+      K.row(esc(T('ui.district.jobs')), esc(T('ui.district.jobsOf', { filled: a.filled, jobs: a.jobs }))),
+    ])
+    + K.section(esc(T('ui.district.homesTitle'))) + K.rows([
+      K.row(esc(T('ui.satisfaction')), a.satisfaction, a.satisfaction < 60 ? 'menos' : ''),
+      ...miss.map(([sv, n]) => K.row(esc(T('ui.rating.outOfReach', { service: sv })), `${n}/${a.homes}`, 'menos')),
+    ])
+    + K.section(esc(T('ui.district.production'))) + K.rows([
+      K.row(esc(T('ui.district.income')), esc(T('ui.perYear', { value: `$ ${fmt(a.income)}` })), 'mais'),
+      K.row(esc(T('ui.district.produced')), esc(ay(a.produced))),
+      K.row(esc(T('ui.district.ownTable')), esc(ay(a.ownTable))),
+      K.row(esc(T('ui.district.soldHere')), esc(ay(a.soldHere))),
+      K.row(esc(T('ui.district.exported')), esc(ay(a.exported))),
+      K.row(esc(T('ui.district.lost')), esc(ay(a.lost)), a.lost > a.produced * 0.15 ? 'menos' : ''),
+      ...(a.produced - a.ownTable - a.soldHere - a.exported - a.lost > 5 ? [K.row(esc(T('ui.district.processed')), esc(ay(a.produced - a.ownTable - a.soldHere - a.exported - a.lost)))] : []),
+    ])
+    + (a.goods.length ? K.cards(a.goods.map((g) => K.card({ ic: icon(g.good), title: esc(goodName(g.good)), sub: esc(ay(g.produced)), right: `$ ${fmt(g.income)}`, rightSub: esc(T('ui.perYearShort')) }))) : '')
+    + K.section(esc(T('ui.district.outlet'))) + K.rows([
+      K.row(esc(T('ui.district.reach')), `${Math.round(a.reach * 100)}%`, a.reach < 0.85 ? 'menos' : ''),
+      K.row(esc(T('ui.district.upkeep')), `$ ${fmt(a.upkeep)}`),
+    ]);
+  screen({ id: `district:${key}`, title: districtName(a.name), sub: T('ui.district.sub', { homes: a.homes, buildings: a.buildings }), body });
 }
 
 export const _x = { def, ico, PATH_CHOICES };

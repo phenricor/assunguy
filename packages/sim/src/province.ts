@@ -93,7 +93,8 @@ export interface GoalItem { kind: 'families' | 'road' | 'lands' | 'satisfaction'
 export function milestoneGaps(s: GameState, w: World, target: MilestoneDef, meanRating?: number | 'live'): GoalItem[] {
   const linked = connected(s.map), count: Partial<Record<BuildingId, number>> = {};
   for (const key of Object.keys(s.map.buildings) as LotKey[]) if (linked.has(key)) { const t = s.map.buildings[key] as BuildingId; count[t] = (count[t] ?? 0) + 1; }
-  const fam = Object.keys(s.families).length;
+  // families at work: building homes ahead of jobs no longer brings the milestone closer
+  const fam = BALANCE.milestoneWorkers ? allocate(s).employed : Object.keys(s.families).length;
   const famTarget = Math.round((target.families ?? 0) * (1 + (s.extraDemand || 0) * 0.05));
   const items: GoalItem[] = [{ kind: 'families', target: famTarget, current: fam, ok: fam >= famTarget, ...(s.extraDemand ? { extraDemand: s.extraDemand * 5 } : {}) }];
   if (target.road) { const r = hasRoad(s); items.push({ kind: 'road', target: 1, current: r ? 1 : 0, ok: r }); }

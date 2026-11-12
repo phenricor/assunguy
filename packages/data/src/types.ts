@@ -134,6 +134,8 @@ export interface BalanceDef {
   freeCarryDistance: number;
   /** Each upgrade the colony pays for opens one more job (the prototype opened one at level 2 only). */
   upgradeOpensJobs: boolean;
+  /** Milestones count families at work, not all families (the prototype counted all). */
+  milestoneWorkers: boolean;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;

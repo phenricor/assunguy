@@ -2,7 +2,7 @@
 import json, pathlib
 LOC = pathlib.Path(__file__).resolve().parents[2] / 'packages' / 'i18n' / 'locales'
 T = {
-  'district.centre': ('Centro', 'Centre'), 'district.mainSquare': ('Largo da Matriz', 'Mother Church Square'), 'district.churchSquare': ('Largo da Igreja', 'Church Square'),
+  'district.colony': ('Colônia', 'Colony'), 'district.centre': ('Centro', 'Centre'), 'district.mainSquare': ('Largo da Matriz', 'Mother Church Square'), 'district.churchSquare': ('Largo da Igreja', 'Church Square'),
   'district.marketSquare': ('Largo do Mercado', 'Market Square'), 'district.port': ('Bairro do Porto', 'Port Quarter'), 'district.storeStreet': ('Rua da Venda', 'Store Street'),
   'district.school': ('Bairro da Escola', 'School Quarter'), 'district.apothecary': ('Bairro da Botica', 'Apothecary Quarter'), 'district.mills': ('Bairro dos Engenhos', 'Mills Quarter'),
   'district.sawmill': ('Bairro da Serraria', 'Sawmill Quarter'), 'district.monjolo': ('Bairro do Monjolo', 'Monjolo Quarter'), 'district.councilSquare': ('Largo da Câmara', 'Council Square'),

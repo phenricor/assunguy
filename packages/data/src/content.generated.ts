@@ -1675,6 +1675,7 @@ export const BALANCE: BalanceDef = {
   "riverFreight": 0.5,
   "freeCarryDistance": 6,
   "upgradeOpensJobs": true,
+  "milestoneWorkers": true,
   "routeChoiceSharpness": 8,
   "isolatedCommerceWeight": 0.6,
   "lotPrice": 20,
