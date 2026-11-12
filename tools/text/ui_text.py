@@ -24,9 +24,6 @@ U = {
   # top bar and first steps
   'top.idle': ('desempregadas', 'out of work'), 'top.families': ('famílias', 'families'), 'top.influence': ('influência', 'influence'), 'top.zoomIn': ('Aproximar', 'Zoom in'), 'top.zoomOut': ('Afastar', 'Zoom out'), 'top.deadline': ('{n} estações para {milestone}', '{n} seasons to {milestone}'), 'top.noDeadline': ('Sem prazo', 'No deadline'),
   'guide.count': ('{chapter} {n} de {of}', '{chapter} {n} of {of}'),
-  'guide.chapter.start': ('Primeiros passos', 'First steps'), 'guide.chapter.race': ('A corrida', 'The race'),
-  'guide.notebook': ('Caderno de {advisor}', '{advisor}\'s notebook'), 'guide.notebookSub': ('O que já foi ensinado, para reler', 'What you have been shown, to read again'),
-  'guide.again': ('Mostrar de novo', 'Show again'),
   'guide.race.station.title': ('Construa uma estação de trem', 'Build a train station'),
   'guide.race.station.body': ('O trem leva a carga a Curitiba e Paranaguá mais barato que as tropas.', 'The train takes cargo to Curitiba and Paranaguá cheaper than mule trains.'),
   'guide.race.rails.title': ('Leve o trilho até a borda', 'Lay rails to the edge'),

@@ -128,7 +128,7 @@ export function openSettings(): void {
   sheet().querySelectorAll<HTMLElement>('[data-set]').forEach((b) => { b.onclick = async () => {
     const a = b.dataset.set;
     if (a === 'menu') { await store.save(); cancel(); void openMenu('start'); return; }
-    if (a === 'notebook') { openNotebook(); return; }
+    if (a === 'notebook') { cancel(); openNotebook(); return; }
     if (a === 'save') { hint((await store.save()) ? T('ui.settings.saved') : T('ui.settings.saveFailed'), 2400); return; }
     if (a === 'export') { await exportFile(); return; }
     if (a === 'music') api.Musica.alterna();

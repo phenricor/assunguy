@@ -16,9 +16,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 - "Rumo ao nível X" at the top of the advisor's screen: only what the next level still lacks (families at work,
   income, buildings) and a package of works that closes it, measured on the colony, with its cost and the income it
   adds. It says when level 12 wins the race.
-- The advisor's guide comes in chapters that open when their subject enters the game. The first steps are the first
-  chapter; "A corrida" opens with the race (station, rails to the edge, a train, the race panel, level 12). A
-  notebook in the settings keeps every chapter to read again, and a closed one can come back.
+- The advisor's notebook (in Settings): the game explained in chapters that open as their subject enters the game.
+  The screen and each tab, levels and milestones, getting cargo out (the cargo's way, on foot, stores, collection
+  points, gateways, tariff, harvest, how to see it), the parish, the village and the race. The first steps and the
+  race have steps the banner walks through; a chapter that opens shows once on the banner as new.
 - New advice, all measured: a market the colony leads (or keeps above 80%) that the rivals' next advance takes away,
   with the costs on both sides; families about to leave in the race, two seasons ahead, with the income and the works
   that avoid it; a vehicle to spare where a gateway or collection point is little used (it replaces the unmeasured

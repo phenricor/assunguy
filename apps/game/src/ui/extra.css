@@ -58,3 +58,7 @@ textarea.fb-txt[readonly] { min-height: 96px; color: #5A4A3A; }
 .linhas li.efeito span:last-child { white-space: normal; font-weight: 600; color: #5A4A3A; font-size: 13.5px; }
 /* a long label never pushes the value off the screen */
 .linhas li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+
+/* the advisor's notebook: a chapter's sections read as short paragraphs */
+.nb-texto { margin: 0 0 14px; }
+.nb-texto p { margin: 0 0 8px; line-height: 1.5; color: var(--tinta, inherit); }
