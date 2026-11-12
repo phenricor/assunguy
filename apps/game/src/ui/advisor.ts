@@ -136,6 +136,17 @@ export function runAction(a: AdviceAction | { construir?: string }): void {
       return;
     case 'build': if (a.near) at(a.near); hooks.chooseBuild(a.building); return;
     case 'district': hooks.openDistrict(a.id); return;
+    case 'buildAt': { const [x, y] = a.lot.split(',').map(Number) as [number, number]; at(a.lot); hooks.chooseBuild(a.building); hooks.previewAt(a.building, x, y); return; }
+    case 'buildLots': {
+      at(a.lots[0] as LotKey);
+      const cost = costOf(a.building, g.s.milestone) * a.lots.length, what = T(a.lots.length > 1 ? `building.${a.building}.plural` : `building.${a.building}`);
+      confirm(T('ui.fix.buildTitle', { n: a.lots.length, what }), [K.row(T('ui.build.cost'), `$ ${fmt(cost)}`)], T('ui.fix.build'), () => {
+        let n = 0;
+        for (const k of a.lots) { const [x, y] = k.split(',').map(Number) as [number, number]; if (store.run((s, w) => build(s, w, a.building, x, y))) n++; }
+        refresh(); hint(T('ui.fix.built', { n }), 2400);
+      });
+      return;
+    }
     case 'select': at(a.key); if (a.upgrade) { const t = g.s.map.buildings[a.key] as BuildingId; confirm(T('ui.sel.upgrade'), [K.row(T(`building.${t}`), '')], T('ui.sel.upgrade'), () => { if (store.run((x, y) => upgrade(x, y, a.key))) { refresh(); hooks.openBuilding(a.key); } }); } else hooks.openBuilding(a.key); return;
     case 'swap': at(a.key); confirm(T('ui.swap.confirm', { building: a.to }), [K.row(T('ui.swap.from'), T(`building.${a.from}`))], T('ui.swap.do'), () => { if (store.run((x, y) => swapCrop(x, y, a.key, a.to))) { refresh(); hooks.openBuilding(a.key); } }); return;
     case 'land': hooks.openLand(a.land); return;

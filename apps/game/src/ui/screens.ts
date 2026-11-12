@@ -3,8 +3,8 @@
 import { BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
-  askProvince, build, districtOfLot, planSteps, splitAdvice, upgrade, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
-  type GameState, type GoalItem, type LevelPlan, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
+  askProvince, districtFixSteps, splitAdvice, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
+  type DistrictAccount, type Fix, type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T, goodName, num, pct } from '../i18n';
@@ -335,7 +335,8 @@ export function openDistricts(): void {
   document.querySelectorAll<HTMLElement>('[data-district]').forEach((b) => { b.onclick = () => openDistrict(b.dataset.district as string); });
 }
 export function openDistrict(id: string | { id: string }): void {
-  // the district as one scope: a dashboard of its numbers, what to do about what is red, and its accounts
+  // the district as one scope: a dashboard of its numbers, and in each section why what is red happens and one or
+  // two ways out (measured after the screen opens)
   const key = typeof id === 'string' ? id : id.id, A = store.accounts(), a = A.find((x) => x.id === key);
   if (!a) return;
   const ay = (n: number) => T('ui.arrobasYear', { n: fmt(n) });
@@ -347,17 +348,6 @@ export function openDistrict(id: string | { id: string }): void {
     { v: a.satisfaction, r: T('ui.district.tSat'), bad: a.satisfaction < 60 },
     { v: `${reach}%`, r: T('ui.district.tReach'), bad: reach < 85 },
   ]);
-  // what to do: the red numbers, the district's own advice (by the lot it is about) and, when jobs are short, works
-  const notes: string[] = [];
-  const needJobs = a.idle > 0 && a.filled >= a.jobs;
-  if (needJobs) notes.push(K.note(esc(T('ui.district.needJobs', { n: a.idle })), 'ruim'));
-  if (a.reach < 0.85 && a.onFoot > 20) notes.push(K.note(esc(T('ui.district.onFoot', { n: fmt(a.onFoot), share: reach })), 'ruim'));
-  const { byDistrict } = splitAdvice(store.advice().filter((x) => x.weight > 0), store.districts());
-  const mine = (byDistrict[key as LotKey] ?? []).slice().sort((p, q) => q.weight - p.weight).slice(0, 3);
-  const todo = notes.join('') + (mine.length ? K.cards(mine.map(adviceCard)) : '') + (needJobs ? '<div id="dJobs"></div>' : '');
-  const miss = Object.entries(a.missing) as [string, number][];
-  const calm = !notes.length && !mine.length && !miss.length;
-  // where the production goes
   const work = Math.max(0, a.produced - a.ownTable - a.soldHere - a.exported - a.lost);
   const parts = [
     { name: T('ui.district.soldHere'), value: a.soldHere, color: COLORS[1]! }, { name: T('ui.district.exported'), value: a.exported, color: COLORS[0]! },
@@ -366,69 +356,70 @@ export function openDistrict(id: string | { id: string }): void {
   ].filter((x) => x.value > 0);
   const tot = { fam: A.reduce((x, y) => x + y.families, 0), inc: A.reduce((x, y) => x + y.income, 0) };
   const SERV = ['water', 'faith', 'school', 'health', 'commerce'] as const;
+  const red = (a.idle > 0 && a.filled >= a.jobs) || reach < 85 || a.satisfaction < 60 || Object.keys(a.missing).length > 0;
   const body = tiles
-    + (calm ? K.note(esc(T('ui.district.allGood')), 'bom') : K.section(esc(T('ui.district.todo'))) + todo)
-    + (a.produced > 0 ? K.section(esc(T('ui.district.whereGoes'))) + K.pie({ parts, centre: fmt(a.produced), centreSub: T('ui.arrobasYearShort') })
-      + (a.goods.length ? K.cards(a.goods.map((g) => K.card({ ic: icon(g.good), title: esc(goodName(g.good)), sub: esc(ay(g.produced)), right: `$ ${fmt(g.income)}`, rightSub: esc(T('ui.perYearShort')) }))) : '') : '')
+    + (red ? '' : K.note(esc(T('ui.district.allGood')), 'bom'))
     + K.section(esc(T('ui.district.people'))) + K.rows([
       K.row(esc(T('ui.district.working')), a.working),
       K.row(esc(T('ui.district.idle')), a.idle, a.idle > a.families * 0.3 ? 'menos' : ''),
       K.row(esc(T('ui.district.jobs')), esc(T('ui.district.jobsOf', { filled: a.filled, jobs: a.jobs }))),
-    ]) + (a.filled > a.working ? K.note(esc(T('ui.district.commute', { n: a.filled - a.working })), 'neutra') : '')
-    + (a.homes ? K.section(esc(T('ui.district.services'))) + K.rows(SERV.map((sv) => { const m = a.missing[sv] ?? 0, f = (a.homes - m) / a.homes; return K.row(esc(T(`service.${sv}`)), `${K.bar(f, f < 0.7 ? '#C2562B' : '#2E6B3E')} ${esc(T('ui.district.covered', { n: a.homes - m, of: a.homes }))}`, f < 0.7 ? 'menos' : ''); })) : '')
+    ]) + '<div id="fix-jobs"></div>'
+    + (a.homes ? K.section(esc(T('ui.district.services'))) + '<div id="fix-sat"></div>' + K.rows(SERV.map((sv) => { const m = a.missing[sv] ?? 0, f = (a.homes - m) / a.homes; return K.row(esc(T(`service.${sv}`)), `${K.bar(f, f < 0.7 ? '#C2562B' : '#2E6B3E')} ${esc(T('ui.district.covered', { n: a.homes - m, of: a.homes }))}`, f < 0.7 ? 'menos' : ''); })) + '<div id="fix-services"></div>' : '')
+    + (a.produced > 0 ? K.section(esc(T('ui.district.whereGoes'))) + K.pie({ parts, centre: fmt(a.produced), centreSub: T('ui.arrobasYearShort') })
+      + (a.goods.length ? K.cards(a.goods.map((g) => K.card({ ic: icon(g.good), title: esc(goodName(g.good)), sub: esc(ay(g.produced)), right: `$ ${fmt(g.income)}`, rightSub: esc(T('ui.perYearShort')) }))) : '') : '')
     + K.section(esc(T('ui.district.outlet'))) + K.rows([
       K.row(esc(T('ui.district.reach')), `${reach}%`, reach < 85 ? 'menos' : ''),
       K.row(esc(T('ui.district.lostOnFoot')), esc(ay(a.onFoot)), a.onFoot > 20 ? 'menos' : ''),
       K.row(esc(T('ui.district.upkeep')), `$ ${fmt(a.upkeep)}`),
       K.row(esc(T('ui.district.inColony')), esc(T('ui.district.inColonyValue', { families: tot.fam ? Math.round((a.families / tot.fam) * 100) : 0, income: tot.inc ? Math.round((a.income / tot.inc) * 100) : 0 }))),
-    ]);
+    ]) + '<div id="fix-outlet"></div><div id="fix-more"></div>';
   const p = screen({ id: `district:${key}`, title: districtName(a.name), sub: T('ui.district.sub', { homes: a.homes, buildings: a.buildings }), body });
-  if (needJobs) startDistrictJobs(p, key as LotKey, Math.min(a.idle, 40));
+  startFixes(p, a);
 }
 
-// ---- works for the jobs a district lacks: measured on its own free lots, a few steps per frame
+// ---- why each red number happens and the ways out, measured a few steps per frame after the screen opens
 
-let djRun = 0;
-function startDistrictJobs(p: HTMLElement, key: LotKey, jobs: number): void {
-  const box = () => p.querySelector<HTMLElement>('#dJobs');
+let fixRun = 0;
+// an option: what to do and what it brings, with the button beside it
+const fixCard = (title: string, sub: string, action: unknown) => `<div class="cartao fix-op"><div><b>${esc(title)}</b><small>${esc(sub)}</small></div>${K.go(T('ui.do'), action, 'pri')}</div>`;
+const bname = (t: BuildingId, n = 1) => T(n > 1 ? `building.${t}.plural` : `building.${t}`);
+function fixCards(list: Fix[]): string {
+  return `<div class="fix-ops">${list.map((f) => {
+    const act = f.action as { kind: string };
+    if (f.advice) { const p = { at: f.advice.params.key ?? '', ...f.advice.params, advisor: store.session().meta.advisor }; return fixCard(T(`advice.${f.advice.rule}.title`, p), T(`advice.${f.advice.rule}.body`, p), f.action); }
+    const t = f.building as BuildingId, eff = f.jobs ? T('ui.fix.jobsEffect', { jobs: f.jobs, gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) }) : T('ui.fix.gainEffect', { gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) });
+    if (act.kind === 'buildLots') return fixCard(T('ui.fix.lots', { n: f.n ?? 1, what: bname(t, f.n) }), eff, f.action);
+    if (act.kind === 'select' && f.jobs) return fixCard(T('ui.fix.upgrade', { building: t }), eff, f.action);
+    if (act.kind === 'select') return fixCard(T('ui.fix.see', { building: t }), T('ui.fix.move'), f.action);
+    if (f.covers !== undefined) return fixCard(T('ui.fix.here', { building: t }), T('ui.fix.covers', { n: f.covers, cost: fmt(f.cost) }), f.action);
+    return fixCard(T('ui.fix.here', { building: t }), eff, f.action);
+  }).join('')}</div>`;
+}
+function startFixes(p: HTMLElement, a: DistrictAccount): void {
   const { s, w } = store.session(), D = store.districts();
-  const b0 = box(); if (b0) b0.innerHTML = K.note(esc(T('ui.district.jobsComputing')), 'neutra');
-  const run = ++djRun, gen = planSteps(structuredClone(s), w, { jobs, only: (k) => districtOfLot(D, k) === key });
+  const { byDistrict } = splitAdvice(store.advice().filter((x) => x.weight > 0), D);
+  const mine = byDistrict[a.id] ?? [];
+  const run = ++fixRun, gen = districtFixSteps(s, w, D, a, mine, store.economy(), store.ratings());
+  const put = (id: string, html: string) => { const b = p.querySelector<HTMLElement>(`#${id}`); if (b) b.innerHTML = html; };
+  const why = (txt: string) => `<p class="nota neutra fix-why">${esc(txt)}</p>`;
   const tick = () => {
-    const b = box();
-    if (run !== djRun || !b || !b.isConnected) return;
+    if (run !== fixRun || !p.querySelector('#fix-jobs')) return;
     const t0 = performance.now();
     while (performance.now() - t0 < 24) {
       const r = gen.next();
-      if (r.done) { b.innerHTML = jobsBlock(r.value); wireJobs(b, r.value); return; }
+      if (!r.done) continue;
+      const f = r.value, used = new Set<unknown>();
+      if (f.jobs) put('fix-jobs', why(T('ui.fix.jobs.why', { jobs: f.jobs.jobs, idle: f.jobs.idle }) + (f.jobs.outsiders ? ` ${T('ui.fix.jobs.outsiders', { n: f.jobs.outsiders })}` : '')) + (f.jobs.fixes.length ? fixCards(f.jobs.fixes) : why(T('ui.fix.jobs.none'))));
+      if (f.satisfaction?.reasons.length) put('fix-sat', why(T('ui.fix.sat.why', { reasons: f.satisfaction.reasons.map((x) => (x.kind === 'nuisance' ? T('ui.fix.sat.nuisance', { building: x.building ?? '', n: x.homes }) : T('ui.fix.sat.service', { service: x.service ?? '', n: x.homes }))).join('; ') })) + (f.satisfaction.fixes.length ? fixCards(f.satisfaction.fixes) : ''));
+      if (f.services.length) put('fix-services', f.services.map((x) => why(T('ui.fix.service.why', { n: x.n, homes: x.homes, service: x.service })) + (x.fixes.length ? fixCards(x.fixes) : why(T('ui.fix.service.none')))).join(''));
+      if (f.outlet) { f.outlet.fixes.forEach((x) => used.add(x.advice)); put('fix-outlet', why(T(`ui.fix.outlet.${f.outlet.cause}`, { n: fmt(f.outlet.lost) })) + (f.outlet.fixes.length ? fixCards(f.outlet.fixes) : why(T('ui.fix.outlet.none')))); }
+      const rest = mine.filter((x) => !used.has(x) && x.weight >= 40).sort((p2, q) => q.weight - p2.weight).slice(0, 2);
+      if (rest.length) put('fix-more', K.section(esc(T('ui.district.more'))) + K.cards(rest.map(adviceCard)));
+      return;
     }
     setTimeout(tick, 0);
   };
   setTimeout(tick, 30);
-}
-function jobsBlock(plan: LevelPlan | null): string {
-  if (!plan || !plan.items.length) return K.note(esc(T('ui.district.noLots')), 'neutra');
-  const opened = plan.items.reduce((x, i) => x + (i.upgrade ? i.n : (def(i.building).jobs ?? 0) * i.n), 0);
-  const name = (i: LevelPlan['items'][number]) => T(i.n > 1 ? `building.${i.building}.plural` : `building.${i.building}`);
-  return K.card({ title: esc(T('ui.district.jobsPlan')), sub: esc(T('ui.district.jobsPlanNote', { jobs: opened })),
-    body: K.rows([
-      ...plan.items.map((i) => K.row(esc(i.upgrade ? T(i.n > 1 ? 'ui.plan.upgradeN' : 'ui.plan.upgrade', { n: i.n, what: name(i) }) : T('ui.plan.item', { n: i.n, what: name(i) })), `$ ${fmt(i.cost)}`)),
-      K.row(esc(T('ui.plan.cost')), `$ ${fmt(plan.cost)}`),
-      K.row(esc(T('ui.tr.income')), esc(T('ui.perYear', { value: signedMoney(plan.gain) })), plan.gain > 0 ? 'mais' : ''),
-    ]) + K.actions([{ id: 'djBuild', kind: 'pri', text: T('ui.district.buildAll') }] as never) });
-}
-function wireJobs(b: HTMLElement, plan: LevelPlan | null): void {
-  const btn = b.querySelector<HTMLElement>('#djBuild');
-  if (!btn || !plan) return;
-  const n = plan.items.reduce((x, i) => x + i.lots.length, 0);
-  btn.onclick = () => confirm(T('ui.district.buildAllTitle', { n }), [K.row(T('ui.plan.cost'), `$ ${fmt(plan.cost)}`), K.row(T('ui.tr.income'), T('ui.perYear', { value: signedMoney(plan.gain) }), 'mais')], T('ui.district.buildAll'), () => {
-    let done = 0;
-    for (const i of plan.items) for (const k of i.lots) {
-      const [x, y] = k.split(',').map(Number) as [number, number];
-      if (store.run((s, w) => (i.upgrade ? upgrade(s, w, k) : build(s, w, i.building, x, y)))) done++;
-    }
-    refresh(); hint(T('ui.district.built', { n: done }), 2400);
-  });
 }
 
 export const _x = { def, ico, PATH_CHOICES };

@@ -42,7 +42,9 @@ export type AdviceAction =
   | { kind: 'collect'; building: BuildingId; land?: LandId; near?: LotKey; lot?: LotKey; fleet?: Partial<Record<VehicleId, number>>; with?: BuildingId[] }
   | { kind: 'province'; request: 'extraFunds' | 'extraTime' }
   | { kind: 'streets'; from: [number, number]; to: [number, number] }
-  | { kind: 'district'; id: LotKey };
+  | { kind: 'district'; id: LotKey }
+  | { kind: 'buildAt'; building: BuildingId; lot: LotKey }
+  | { kind: 'buildLots'; building: BuildingId; lots: LotKey[] };
 
 export interface Advice {
   rule: string;

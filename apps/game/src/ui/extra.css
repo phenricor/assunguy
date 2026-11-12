@@ -62,3 +62,11 @@ textarea.fb-txt[readonly] { min-height: 96px; color: #5A4A3A; }
 /* the advisor's notebook: a chapter's sections read as short paragraphs */
 .nb-texto { margin: 0 0 14px; }
 .nb-texto p { margin: 0 0 8px; line-height: 1.5; color: var(--tinta, inherit); }
+
+/* a district's section: why a number is red, then the ways out */
+.fix-why { font-weight: 500; }
+.fix-ops { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 4px; }
+.fix-op { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fix-op > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fix-op small { color: var(--mudo, #5F5144); font-size: 12.5px; }
+.fix-op button { flex: none; min-height: 38px; padding: 0 16px; border: 1px solid var(--anil); border-radius: 2px; background: var(--anil); color: #FBF4E4; font: 600 14px var(--corpo); }
