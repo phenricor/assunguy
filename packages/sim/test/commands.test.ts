@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { BALANCE } from '@assunguy/data';
 import { annex, askProvince, build, buyVehicle, demolish, explore, move, proposeTax, sellVehicle, setMargin, settle, streets, swapCrop, toggleLaw, upgrade, type CommandResult } from '../src/commands.js';
 import { defineEvent, resolveEvent } from '../src/events.js';
 import { passSeason } from '../src/season.js';
@@ -59,6 +60,10 @@ function replay(s: GameState, w: ReturnType<typeof generateWorld>, cmd: any[]): 
 }
 
 describe('player commands (golden, against the prototype)', () => {
+  // the prototype opened a job only at an upgrade's second level; the game opens one at each (balance, beta.9)
+  const was = BALANCE.upgradeOpensJobs;
+  beforeAll(() => { (BALANCE as { upgradeOpensJobs: boolean }).upgradeOpensJobs = false; });
+  afterAll(() => { (BALANCE as { upgradeOpensJobs: boolean }).upgradeOpensJobs = was; });
   for (const [name, c] of Object.entries(fixture as unknown as Record<string, { state: Record<string, any>; script: any[][]; snaps: Snap[] }>)) {
     it(`${name}: a scripted session of commands, then four seasons`, () => {
       const s = legacyState(c.state), w = generateWorld(s.seed, s.mapVersion);

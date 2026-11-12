@@ -9,6 +9,7 @@ import { api, vars, hooks, show, PT, EN } from '../view';
 import { syncBirds } from '../birds';
 import { $, K, X_SVG, esc, fmt, hint, popup, closePopup, sheet, sheetWith, setSheetClose } from './kit';
 import { openFeedback } from './feedback';
+import { banner, markSeen, openChapter, openNotebook, setChapterOff } from './notebook';
 
 // ---- what the player is doing on the map
 
@@ -90,31 +91,30 @@ export function top(): void {
   guide();
 }
 
-// ---- first steps: they go away as the player does them
+// ---- the banner on the map: the advisor's guide (chapters and their steps live in notebook.ts)
 
-interface Step { key: string; done: (s: GameState) => boolean; go: () => void }
-const count = (s: GameState, f: (t: BuildingId) => boolean) => Object.values(s.map.buildings).filter((t) => f(t as BuildingId)).length;
-const STEPS: Step[] = [
-  { key: 'jobs', done: (s) => count(s, (t) => t.endsWith('Field')) > 3, go: () => hooks.chooseBuild('beanField') },
-  { key: 'homes', done: (s) => count(s, (t) => t === 'hut' || t === 'house' || t === 'whitewashedHouse' || t === 'townhouse') > 4, go: () => hooks.chooseBuild('hut') },
-  { key: 'season', done: (s) => s.market.t > 12, go: () => passSeason() },
-  { key: 'advisor', done: (s) => !!s.flags.sawAdvisor, go: () => hooks.openAdvisor() },
-  { key: 'level', done: (s) => s.level >= 2, go: () => hooks.openLevel() },
-];
 export function guide(): void {
   const g = $('guia');
   if (!store.hasGame()) { g.hidden = true; return; }
-  const { s } = store.session();
-  if (s.flags.guideOff || ui.mode.build || ui.mode.move) { g.hidden = true; return; }
-  const i = STEPS.findIndex((x) => !x.done(s));
-  if (i < 0) { g.hidden = true; return; }
-  const x = STEPS[i] as Step;
-  $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { n: i + 1, of: STEPS.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, { advisor: store.session().meta.advisor }))}</b><span>${esc(T(`ui.guide.${x.key}.body`))}</span>`;
-  $('guiaAc').onclick = x.go;
+  const { s } = store.session(), adv = store.session().meta.advisor;
+  const b = ui.mode.build || ui.mode.move ? null : banner(s);
+  if (!b) { g.hidden = true; return; }
+  const ch = b.chapter, name = T(`ui.guide.chapter.${ch.id}`);
   const fx = $('guiaX'); fx.innerHTML = X_SVG;
-  fx.onclick = () => { s.flags.guideOff = true; store.save(); guide(); };
+  if (b.step !== undefined) {
+    const steps = ch.steps!, x = steps[b.step]!;
+    $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { chapter: name, n: b.step + 1, of: steps.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, { advisor: adv }))}</b><span>${esc(T(`ui.guide.${x.key}.body`, { advisor: adv }))}</span>`;
+    $('guiaAc').onclick = x.go;
+    fx.onclick = () => { setChapterOff(s, ch.id, true); store.save(); guide(); };
+  } else {
+    // a chapter that opened: shown once, tapping opens it in the notebook
+    $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.new'))}</small><b>${esc(name)}</b><span>${esc(T('ui.guide.newTap'))}</span>`;
+    $('guiaAc').onclick = () => openChapter(ch.id);
+    fx.onclick = () => { markSeen(s, ch.id); store.save(); guide(); };
+  }
   g.hidden = false;
 }
+export { openNotebook };
 
 // ---- the bottom bar
 

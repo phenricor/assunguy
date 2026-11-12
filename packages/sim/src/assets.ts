@@ -15,6 +15,8 @@ export interface AssetReturn {
   /** Income a year the last one adds. */
   last: number;
   noLot: boolean; upkeep: number; verdict: AssetVerdict; jobs: number; noTeam: number;
+  /** The last one already takes income away (it crowds better cargo out, or floods its market): there are too many. */
+  tooMany?: boolean;
   goods?: { produced: number; soldHere: number; exported: number; lost: number; income: number };
 }
 
@@ -41,13 +43,15 @@ export function assetReturns(s: GameState, w: World, c: Economy = computeEconomy
     const last = Math.round(c.incomeTotal - computeEconomy(s, w, { [t]: -1 }).incomeTotal);
     const cp = withWorks(s, w, { [t]: 1 });
     const more = cp && !cp[1] ? Math.round(computeEconomy(cp[0], w).incomeTotal - c.incomeTotal) : null;
-    const next = more ?? last, upkeep = upkeepOf(t, s.milestone) * 4, net = next - upkeep;
+    // one more can look worth it on a fresh lot while the last one already costs income (both measured): then there
+    // are too many, and the screen says so instead of showing two numbers that disagree
+    const tooMany = last < -5, next = tooMany ? Math.min(more ?? last, last) : more ?? last, upkeep = upkeepOf(t, s.milestone) * 4, net = next - upkeep;
     const goods = goodsOf(t), jobs = def(t).jobs ?? 0;
     const outlet = net <= 5 && stuck && goods.some((g) => good(g).exportPrice > 0);
     const people = jobs > 0 && !work.idle.length && net <= 5;
     const verdict: AssetVerdict = people ? 'people' : outlet ? 'outlet' : net > 5 ? 'worth' : net >= -5 ? 'limit' : 'not';
     const noTeam = jobs ? keys.filter((k) => !work.byBuilding[k]?.families.length).length : 0;
-    const item: AssetReturn = { type: t, n: keys.length, next, last, noLot: more === null, upkeep, verdict, jobs: jobs * keys.length, noTeam };
+    const item: AssetReturn = { type: t, n: keys.length, next, last, noLot: more === null, upkeep, verdict, jobs: jobs * keys.length, noTeam, ...(tooMany ? { tooMany } : {}) };
     if (goods.length) {
       const sum = (f: (g: GoodId) => number) => Math.round(goods.reduce((x, g) => x + (f(g) || 0), 0));
       item.goods = { produced: sum((g) => c.produced[g]), soldHere: sum((g) => c.market[g] + c.ownTable[g]), exported: sum((g) => c.exported[g]), lost: sum((g) => c.lost[g]), income: sum((g) => c.income[g]) };

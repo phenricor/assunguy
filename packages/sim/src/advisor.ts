@@ -8,7 +8,7 @@
 // advice the colony cannot pay for is blocked, the province's extra funds and time are offered here, a
 // far land gets a measured package (store + waystation + mule trains, or a collection point) instead of a
 // lone store, and each producer's outlet feeds a "what fixes it" advice.
-import { railExits, vehicleAvailable } from './race.js';
+import { ADVANCES, raceTime, railExits, rivalCost, vehicleAvailable } from './race.js';
 import {
   BUILDINGS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LEVELS, MILESTONES, TRANSPORT_ROLES, VEHICLES,
   type BuildingId, type GoodId, type GreatWorkId, type MilestoneDef, type TransportRoleDef, type VehicleDef, type VehicleId,
@@ -17,18 +17,18 @@ import { allocate, computeEconomy, costOf, def, good, hasRoad, recipesOf, SECTOR
 import { firstHarvest, overplanted, swapCost, swapOptions } from './events.js';
 import { computeDistricts, districtsUnlocked, nameId } from './districts.js';
 import { ARRIVAL_AID, emptySlots, HOME_UPGRADE, SEED_AID } from './families.js';
-import { measure } from './measure.js';
+import { lotsFor, measure } from './measure.js';
 import { connected, mainNetwork } from './network.js';
 import { canPlace, canPlaceStreet } from './placement.js';
 import { goalPace, greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
 import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
 import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw, type DestinationId } from './state.js';
-import { collectionState, distance, fleetOf, fleetSize, fleetSlots, gatewayTight, geography } from './transport.js';
+import { distance, fleetOf, fleetSize, fleetSlots, gatewayTight, geography } from './transport.js';
 import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 
 export type AdviceAction =
@@ -458,7 +458,7 @@ function transportAdvice(x: Ctx): Advice[] {
   // every suggestion here is measured on the whole chain: a vehicle behind a full gateway gains nothing, so the gateway comes first
   const gainVehicle = (key: LotKey, v: VehicleId, up = 0) => computeEconomy(withFleet(s, key, v, 1, up), w).incomeTotal - c.incomeTotal;
   const bestVehicle = (key: LotKey) => bestVehicleAt(s, key);
-  let measuredN = 0;
+  let measuredN = 0, idleN = 0;
   const items = [...R.collections.map((y) => ['collection', y] as const), ...R.gateways.map((y) => ['gateway', y] as const)].sort((p, q) => q[1].peak - p[1].peak);
   for (const [which, y] of items) {
     const v = bestVehicle(y.key), room = fleetSize(s, y.key) < y.slots;
@@ -479,9 +479,13 @@ function transportAdvice(x: Ctx): Advice[] {
       const g = gainVehicle(y.key, v, 1), cost = upgradeCost(s.map.buildings[y.key] as BuildingId, upgradeOf(s, y.key), s.milestone) + V.price;
       if (g >= 10) add(workWeight(cost, g), 'noSlot', { at: y.key, vehicle: v, cost, gain: Math.round(g) }, { kind: 'select', key: y.key, upgrade: true });
     }
-    else if (which === 'collection' && collectionState(y as Economy['transport']['collections'][number]) === 'idle' && fleetSize(s, y.key) > 1 && y.tariff > 0.45) {
-      const v0 = (Object.keys(y.fleet) as VehicleId[]).find((z) => y.fleet[z]);
-      if (v0) add(46, 'idleCollection', { at: y.key, tariff: Math.round(y.tariff * 100) / 100, vehicle: v0 }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
+    // little used, with more than one vehicle: selling one is measured; its upkeep goes into the tariff the families pay
+    else if (fleetSize(s, y.key) > 1 && (which === 'collection' ? y.peak < 0.5 : (y as Economy['transport']['gateways'][number]).occupancy < 0.4) && idleN < 3) {
+      idleN++;
+      const v0 = (Object.keys(y.fleet) as VehicleId[]).filter((z) => y.fleet[z]).sort((p, q) => (VEHICLES[q] as VehicleDef).upkeep - (VEHICLES[p] as VehicleDef).upkeep)[0];
+      if (!v0) continue;
+      const g = computeEconomy(withFleet(s, y.key, v0, -1), w).incomeTotal - c.incomeTotal;
+      if (g >= 10) add(Math.min(74, 60 + g / 20), 'idleFleet', { at: y.key, vehicle: v0, gain: Math.round(g), back: Math.round((VEHICLES[v0] as VehicleDef).price * 0.5) }, { kind: 'sellVehicle', key: y.key, vehicle: v0 });
     }
   }
   if (s.level >= 4) for (const r of R.lands.filter((y) => y.producedValue > 0 && y.lostValue > 40 && y.lostValue / y.producedValue > 0.12 && !y.covered).slice(0, 2)) {
@@ -557,6 +561,58 @@ function actionCost(s: GameState, a: AdviceAction | null): number {
     case 'streets': return 4 * 5;
     default: return 0;
   }
+}
+
+/** The next rival advance within two years that takes a market the colony leads (or keeps above 80%) below it. */
+export function raceSoon(s: GameState, c: Economy): { destination: DestinationId; seasons: number; rival: number; ours: number; share: number } | null {
+  if (!s.race) return null;
+  const t = raceTime(s), a = ADVANCES.find((x) => x.at > t && x.at - t <= 8);
+  if (!a) return null;
+  const comp = c.transport.competitiveness, vol = c.transport.destVolume;
+  let worst: { destination: DestinationId; seasons: number; rival: number; ours: number; share: number } | null = null;
+  for (const [d, f] of Object.entries(a.factors) as [DestinationId, number][]) {
+    if (!((vol[d] ?? 0) > 0)) continue;
+    const costs = c.transport.gateways.filter((g) => g.capacity > 0).flatMap((g) => g.dests.filter((x) => x.d === d).map((x) => x.full));
+    if (!costs.length) continue;
+    const ours = Math.min(...costs), rival = rivalCost(s, d) * f, now = comp[d] ?? 0, then = Math.max(0.6, Math.min(1.1, rival / ours));
+    // it matters when a market led stops being led, or one above 80% falls below it
+    if (!((now >= 1 && then < 1) || (now >= 0.8 && then < 0.8))) continue;
+    if (!worst || then * 100 < worst.share) worst = { destination: d, seasons: a.at - t, rival: Math.round(rival * 100) / 100, ours: Math.round(ours * 100) / 100, share: Math.round(then * 100) };
+  }
+  return worst;
+}
+
+/**
+ * Families leave in the race when the income per family, averaged over a year, falls more than 12% below its best.
+ * New families keep coming (children marry), so this looks two seasons ahead at today's income and the recent
+ * growth; when it would cross, it says how much more income a year avoids it and the cheapest jobs that bring it.
+ */
+export function departuresAhead(s: GameState, w: World, c: Economy): { seasons: number; share: number; gain: number; building: BuildingId; count: number; cost: number } | null {
+  const R = s.race;
+  if (!R || R.peakPerFamily <= 0) return null;
+  const fam = Object.keys(s.families).length, ser = s.series ?? [], back = ser[Math.max(0, ser.length - 5)], last = ser[ser.length - 1];
+  const growth = back && last && last.t > back.t ? Math.max(0, (last.families - back.families) / (last.t - back.t)) : 0;
+  for (const k of [1, 2]) {
+    const proj = Array.from({ length: k }, (_, i) => c.incomeTotal / Math.max(1, fam + growth * (i + 1)));
+    const kept = R.perFamily.slice(-(4 - k)), mean = [...kept, ...proj].reduce((x, y) => x + y, 0) / (kept.length + k);
+    const fall = 1 - mean / R.peakPerFamily;
+    if (fall <= 0.12) continue;
+    // the income a year that keeps the mean at 88% of the best
+    const need = (0.88 * R.peakPerFamily * (kept.length + k) - kept.reduce((x, y) => x + y, 0)) / k * (fam + growth * k);
+    const gap = Math.max(0, need - c.incomeTotal);
+    if (gap < 10) return null;
+    const x: Ctx = { s, w, c, ratings: rateHomes(s, w), linked: connected(s.map), memo: new Map([['', c]]) };
+    const can = (t: BuildingId) => unlocked(s, t) && !!lotsFor(s, w, t, 1).length;
+    let best: { t: BuildingId; gain: number; per: number } | null = null;
+    for (const t of ALL.filter((y) => can(y) && (def(y).jobs ?? 0) > 0 && !def(y).housing && !roleOf(y) && !def(y).riverside).sort((p, q) => costOf(p, s.milestone) - costOf(q, s.milestone)).slice(0, 8)) {
+      const g = measured(x, { [t]: 1 }).incomeTotal - c.incomeTotal;
+      if (g >= 5 && (!best || costOf(t, s.milestone) / g < best.per)) best = { t, gain: g, per: costOf(t, s.milestone) / g };
+    }
+    if (!best) return null;
+    const count = Math.max(1, Math.ceil(gap / best.gain));
+    return { seasons: k, share: Math.round(fall * 100), gain: Math.round(gap), building: best.t, count, cost: count * costOf(best.t, s.milestone) };
+  }
+  return null;
 }
 
 /** The rules' list: colony and transport rules, heaviest first, one advice per building type. */
@@ -686,6 +742,10 @@ export function advise(s: GameState, w: World): Advice[] {
     const behind = (Object.keys(comp) as DestinationId[]).filter((d) => (vol[d] ?? 0) > 0 && comp[d] < 0.8).sort((a, b) => comp[a] - comp[b])[0];
     if (behind) add({ rule: 'race.behind', weight: 82, params: { destination: behind, share: Math.round(comp[behind] * 100) }, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
     if (s.race.decline) add({ rule: 'race.decline', weight: 98, params: { n: s.race.decline.left }, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
+    const soon = raceSoon(s, c);
+    if (soon) add({ rule: soon.share < 80 ? 'race.soonBehind' : 'race.soonLead', weight: soon.share < 80 ? 80 : 66, params: { destination: soon.destination, n: soon.seasons, rival: soon.rival, ours: soon.ours, share: soon.share }, action: { kind: 'screen', screen: 'transport' }, cost: 0 });
+    const leave = departuresAhead(s, w, c);
+    if (leave) add({ rule: 'race.departures', weight: leave.seasons <= 1 ? 94 : 86, params: { n: leave.seasons, share: leave.share, gain: leave.gain, building: leave.building, what: leave.count > 1 ? `building.${leave.building}.plural` : `building.${leave.building}`, count: leave.count, cost: leave.cost }, action: { kind: 'build', building: leave.building as BuildingId }, cost: leave.cost });
   }
   for (const y of list) { if (!y.cost) y.cost = actionCost(s, y.action); y.blocked = y.cost > Math.max(0, s.cash); }
   return list.sort((p, q) => q.weight - p.weight);

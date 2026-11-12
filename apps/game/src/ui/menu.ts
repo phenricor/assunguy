@@ -5,7 +5,7 @@ import * as store from '../store';
 import { T, locale, setLocale, num } from '../i18n';
 import { api, vars, hooks } from '../view';
 import { $, K, esc, hint, sheetWith, sheet, ico } from './kit';
-import { cancel } from './app';
+import { cancel, openNotebook } from './app';
 import { APP_VERSION } from '../version';
 
 type Screen = 'start' | 'new' | 'load';
@@ -118,6 +118,7 @@ export function openSettings(): void {
   const row = (id: string, ic: string, title: string, sub = '') => K.card({ ic: ico(ic), title, sub, attrs: `data-set="${id}"` });
   sheetWith(T('ui.settings.title'), store.session().meta.colony, K.cards([
     row('menu', '<path d="M4 11l8-7 8 7M6 10v10h12V10"/>', T('ui.settings.menu')),
+    row('notebook', '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6zM6 3v18M9 8h6M9 12h6"/>', T('ui.guide.notebook', { advisor: store.session().meta.advisor })),
     row('save', '<path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/>', T('ui.settings.save')),
     row('export', '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', T('ui.settings.export')),
     row('music', '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', T('ui.settings.music'), T(on ? 'ui.on' : 'ui.off')),
@@ -127,6 +128,7 @@ export function openSettings(): void {
   sheet().querySelectorAll<HTMLElement>('[data-set]').forEach((b) => { b.onclick = async () => {
     const a = b.dataset.set;
     if (a === 'menu') { await store.save(); cancel(); void openMenu('start'); return; }
+    if (a === 'notebook') { cancel(); openNotebook(); return; }
     if (a === 'save') { hint((await store.save()) ? T('ui.settings.saved') : T('ui.settings.saveFailed'), 2400); return; }
     if (a === 'export') { await exportFile(); return; }
     if (a === 'music') api.Musica.alterna();

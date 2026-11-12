@@ -33,9 +33,11 @@ const RIVER_FREIGHT = BALANCE.riverFreight;
 export const jobsOf = (t: BuildingId): number => def(t).jobs ?? 0;
 export const sectorOf = (t: BuildingId): Sector | undefined => def(t).sector;
 const isCrop = (t: BuildingId) => !!def(t).crop;
+/** Job slots: each upgrade the colony pays for opens one more (fields are upgraded by their families and keep theirs). */
 export const slotsOf = (s: Pick<GameState, 'map' | 'upgrades'>, key: LotKey): number => {
-  const t = s.map.buildings[key] as BuildingId;
-  return jobsOf(t) + (upgradeOf(s, key) >= 2 && !isCrop(t) ? 1 : 0);
+  const t = s.map.buildings[key] as BuildingId, j = jobsOf(t);
+  if (!BALANCE.upgradeOpensJobs) return j + (upgradeOf(s, key) >= 2 && !isCrop(t) ? 1 : 0);
+  return j + (j > 0 && !isCrop(t) ? upgradeOf(s, key) : 0);
 };
 
 /** Building price at the current milestone: public buildings get dearer as the colony grows. */

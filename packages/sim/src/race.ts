@@ -4,7 +4,7 @@
 // Below 0.8 the market takes less of its cargo, and prices follow competitiveness. Railways (rails laid lot by
 // lot from a train station to an edge of the map) open Curitiba, Paranaguá and later São Paulo. Families leave
 // when the income per family falls from its best or the freight is too dear; a colony that stays down is
-// declared in decline and ends; one that leads two markets for two years at level 12 wins.
+// declared in decline and ends; one that leads two markets for two years once at level 12 wins.
 import { BUILDINGS, VEHICLES, WORLD, type BuildingId, type VehicleDef, type VehicleId } from '@assunguy/data';
 import type { Economy } from './economy.js';
 import { chronicle } from './events.js';
@@ -175,7 +175,8 @@ export function advanceRace(s: GameState, c: Economy, news: { key: string; param
   const used = (Object.keys(comp) as DestinationId[]).filter((d) => (vol[d] ?? 0) > 0), total = used.reduce((x, d) => x + (vol[d] ?? 0), 0);
   R.meanCompetitiveness = total ? used.reduce((x, d) => x + comp[d] * (vol[d] ?? 0), 0) / total : 1;
   const leading = used.filter((d) => comp[d] >= 1).length;
-  R.winning = leading >= 2 ? R.winning + 1 : 0;
+  // the seasons leading two markets count from level 12 on: the race is won by a colony that has grown, not early
+  R.winning = leading >= 2 && s.level >= 12 ? R.winning + 1 : 0;
   if (R.winning >= 8 && s.level >= 12 && !R.won) { R.won = true; s.queue.push({ kind: 'raceWon' } as never); chronicle(s, 'chronicle.race.won'); }
 }
 

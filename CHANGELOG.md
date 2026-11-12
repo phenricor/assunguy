@@ -11,6 +11,39 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.9] - 2026-11-12
+
+Goals and race advice that say what to do, the advisor's notebook, and steamers and trains on the map.
+
+### Added
+
+- "Rumo ao nível X" at the top of the advisor's screen: only what the next level still lacks (families at work,
+  income, buildings) and a package of works that closes it, measured on the colony, with its cost and the income it
+  adds. It says when level 12 wins the race.
+- The advisor's notebook (in Settings): the game explained in chapters that open as their subject enters the game.
+  The screen and each tab, levels and milestones, getting cargo out (the cargo's way, on foot, stores, collection
+  points, gateways, tariff, harvest, how to see it), the parish, the village and the race. The first steps and the
+  race have steps the banner walks through; a chapter that opens shows once on the banner as new.
+- New advice, all measured: a market the colony leads (or keeps above 80%) that the rivals' next advance takes away,
+  with the costs on both sides; families about to leave in the race, two seasons ahead, with the income and the works
+  that avoid it; a vehicle to spare where a gateway or collection point is little used (it replaces the unmeasured
+  advice on idle collection points).
+- Buying or selling a vehicle, and upgrading a building, show the change in the families' income a year.
+
+### Changed
+
+- Each upgrade the colony pays for opens one more job (the prototype opened one at the second level only), so
+  workshops and services are another way to the workers a level asks for besides another hundred fields.
+- In the race, the seasons leading two markets count toward victory only from level 12.
+- The asset returns say when a kind of building has too many (the last one already takes income away), instead of
+  calling one more worth it.
+
+### Fixed
+
+- A steamboat bought at the pier never showed on the river; it now steams down to Iguape like the canoes.
+- Trains stopped at the end of the rails, on the map's edge, and vanished there; they now run on past the edge and
+  fade out, like the convoys on the road, and come back the same way.
+
 ## [1.0.0-beta.8] - 2026-11-11
 
 Trains for the race, a milonga, and texts that read right.
@@ -171,7 +204,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...HEAD
+[1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9
 [1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [1.0.0-beta.6]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.5...v1.0.0-beta.6

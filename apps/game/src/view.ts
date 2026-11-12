@@ -50,23 +50,31 @@ export function protoState(s: GameState, w: World): Record<string, unknown> {
     plantio: s.firstHarvest ? { ...s.firstHarvest } : null,
     escolhas: remap(s.choices as Record<string, string>, PT.choice),
     veic: Object.fromEntries(Object.entries(s.fleet).map(([k, f]) => [k, Object.fromEntries(Object.entries(f).map(([v, n]) => [PT.vehicle[v] ?? v, n]))])),
-    nucleos: [], trilhos: Object.fromEntries(Object.keys(s.race?.rails ?? {}).map((k) => [k, 1])), corrida: raceView(s), frenteIds: { ...s.reliefWorkers }, frenteFrete: s.freightRelief, frenteCusto: s.reliefCost,
+    nucleos: [], trilhos: Object.fromEntries(Object.keys(s.race?.rails ?? {}).map((k) => [k, 1])), corrida: raceView(s), linhas: linesView(s), frenteIds: { ...s.reliefWorkers }, frenteFrete: s.freightRelief, frenteCusto: s.reliefCost,
     efeitos: [], fila: [], leis: {}, leisC: {}, w: undefined, _w: w, _s: s,
   };
 }
 
 const EDGE: Record<string, string> = { south: 'sul', east: 'leste', north: 'norte' };
-/** The race as the renderer animates it: one train line per station and edge its rails reach. */
-function raceView(s: GameState): Record<string, unknown> | null {
-  if (!s.race) return null;
+/**
+ * The lines the renderer animates: one train line per station and edge its rails reach (from the race on), and
+ * one steamer line per pier with steamboats (from the level that opens them, race or not).
+ */
+function linesView(s: GameState): Record<string, unknown>[] {
   const linhas: Record<string, unknown>[] = [];
+  const count = (k: string) => Object.values(s.fleet[k as LotKey] ?? {}).reduce((x, n) => x + (n ?? 0), 0);
   for (const [k, t] of Object.entries(s.map.buildings)) {
-    if (t !== 'trainStation') continue;
-    const ex = railExits(s, k as LotKey), v = Object.values(s.fleet[k as LotKey] ?? {}).reduce((x, n) => x + (n ?? 0), 0);
+    const v = count(k);
     if (!v) continue;
-    for (const e of Object.keys(ex)) linhas.push({ id: `${k}|${e}`, est: k, modo: 'trem', dest: e === 'north' ? 'saopaulo' : e === 'east' ? 'paranagua' : 'curitiba', saida: EDGE[e], v: Array.from({ length: v }, () => 1) });
+    if (t === 'trainStation' && s.race) {
+      for (const e of Object.keys(railExits(s, k as LotKey))) linhas.push({ id: `${k}|${e}`, est: k, modo: 'trem', dest: e === 'north' ? 'saopaulo' : e === 'east' ? 'paranagua' : 'curitiba', saida: EDGE[e], v: Array.from({ length: v }, () => 1) });
+    } else if (t === 'steamPier') linhas.push({ id: `${k}|iguape`, est: k, modo: 'vapor', dest: 'iguape', v: Array.from({ length: v }, () => 1) });
   }
-  return { t0: s.race.t0, linhas };
+  return linhas;
+}
+/** The race as the renderer reads it (its start; the lines are drawn from `linhas`). */
+function raceView(s: GameState): Record<string, unknown> | null {
+  return s.race ? { t0: s.race.t0, linhas: linesView(s) } : null;
 }
 hooks.caminhoTrilho = (_m: unknown, est: LotKey, edge: string) => {
   const s = (vars.M as { _s?: GameState })._s;
