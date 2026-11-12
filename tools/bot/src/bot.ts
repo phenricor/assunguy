@@ -111,7 +111,7 @@ function events(s: GameState, w: World, o?: Observer): 'victory' | 'end' | null 
   let guard = 0;
   while (s.queue.length && guard++ < 30) {
     const ev = s.queue[0]!;
-    if (ev.kind === 'end') return 'end';
+    if (ev.kind === 'end' || (ev.kind as string) === 'raceLost') return 'end';
     if (ev.kind === 'victory') return 'victory';
     const d = defineEvent(s, ev);
     o?.event?.(d, s);
