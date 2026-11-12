@@ -11,6 +11,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.9] - 2026-11-12
+
+Goals and race advice that say what to do, the advisor's notebook, and steamers and trains on the map.
+
 ### Added
 
 - "Rumo ao nível X" at the top of the advisor's screen: only what the next level still lacks (families at work,
@@ -200,7 +204,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...HEAD
+[1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9
 [1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [1.0.0-beta.6]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.5...v1.0.0-beta.6
