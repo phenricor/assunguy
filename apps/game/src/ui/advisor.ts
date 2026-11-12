@@ -2,8 +2,8 @@
 // each item with the action that answers it. Advice above the cash in hand is shown blocked.
 import { TRANSPORT_ROLES, VEHICLES, type BuildingId, type VehicleId } from '@assunguy/data';
 import {
-  askProvince, build, buyVehicle, collectionLot, costOf, planSteps, proposeTax, sellVehicle, streets, swapCrop, upgrade,
-  type AdviceAction, type LevelPlan, type LotKey,
+  askProvince, build, buyVehicle, collectionLot, costOf, districtAlerts, planSteps, splitAdvice, proposeTax, sellVehicle, streets, swapCrop, upgrade,
+  type Advice, type AdviceAction, type DistrictAlert, type LevelPlan, type LotKey,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T } from '../i18n';
@@ -14,20 +14,58 @@ import { screen, closeScreen } from './report';
 
 const BANDS: [number, string][] = [[80, 'urgent'], [60, 'important'], [0, 'useful']];
 
+/** One piece of advice as a card, with its button (used here and on a district's screen). */
+export function adviceCard(a: Advice): string {
+  const name = store.session().meta.advisor, p = { at: a.params.key ?? '', ...a.params, advisor: name };
+  const btn = a.action ? (a.blocked ? `<p class="nota ruim">${esc(T('advice.blocked', { cost: fmt(a.cost) }))}</p>` : `<div class="acoes">${K.go(T('ui.do'), a.action, 'pri')}</div>`) : '';
+  return K.card({ title: esc(T(`advice.${a.rule}.title`, p)), sub: esc(T(`advice.${a.rule}.body`, p)), body: btn, dim: a.blocked });
+}
+
+const districtName = (n: { key: string }) => T('ui.districtLabel', { district: JSON.stringify(n) });
+type Item = { weight: number; advice?: Advice; alert?: DistrictAlert & { more: number; gain?: number } };
+/**
+ * What the advisor shows: the colony's own advice, and for each district only what is critical there (one card
+ * that opens the district, where its actions are). A district with urgent actions but no critical number gets
+ * one card too.
+ */
+export function advisorItems(): Item[] {
+  const list = store.advice().filter((a) => a.weight > 0), D = store.districts();
+  const { colony, byDistrict } = splitAdvice(list, D);
+  const alerts = districtAlerts(store.accounts());
+  const items: Item[] = colony.map((a) => ({ weight: a.weight, advice: a }));
+  const shown = new Set<string>();
+  for (const x of alerts) {
+    if (shown.has(`${x.district}|${x.problem}`)) continue;
+    shown.add(`${x.district}|${x.problem}`);
+    items.push({ weight: x.weight, alert: { ...x, more: (byDistrict[x.district] ?? []).length } });
+  }
+  for (const [d, xs] of Object.entries(byDistrict) as [LotKey, Advice[]][]) {
+    if (alerts.some((x) => x.district === d)) continue;
+    const urgent = xs.filter((a) => a.weight >= 75 && !a.blocked);
+    if (!urgent.length) continue;
+    const gain = Math.max(0, ...urgent.map((a) => Number(a.params.gain) || 0));
+    items.push({ weight: Math.max(...urgent.map((a) => a.weight)), alert: { district: d, problem: 'advice' as never, weight: 0, n: urgent.length, more: 0, gain } });
+  }
+  return items.sort((p, q) => q.weight - p.weight);
+}
+
+function alertCard(x: NonNullable<Item['alert']>): string {
+  const d = store.districts().info.find((y) => y.id === x.district);
+  if (!d) return '';
+  const pr = x.problem as string, p = { district: districtName(d.name), n: fmt(x.n), share: x.share ?? 0, service: x.service ?? '', homes: x.homes ?? 0, gain: fmt(x.gain ?? 0) };
+  const body = pr === 'advice' ? T(x.gain ? 'ui.alert.advice.body' : 'ui.alert.adviceNoGain.body', p) : T(`ui.alert.${pr}.body`, p) + (x.more ? ` ${T('ui.alert.more', { n: x.more })}` : '');
+  return K.card({ title: esc(T(`ui.alert.${pr}.title`, p)), sub: esc(body), body: `<div class="acoes">${K.go(T('ui.alert.open'), { kind: 'district', id: x.district }, 'pri')}</div>` });
+}
+
 export function openAdvisor(): void {
   const g = store.session();
   g.s.flags.sawAdvisor = true;
-  const list = store.advice().filter((a) => a.weight > 0);
-  const name = g.meta.advisor;
+  const name = g.meta.advisor, all = advisorItems();
   const groups = BANDS.map(([min, id], i) => {
     const max = i ? (BANDS[i - 1] as [number, string])[0] : Infinity;
-    const xs = list.filter((a) => a.weight >= min && a.weight < max);
+    const xs = all.filter((a) => a.weight >= min && a.weight < max);
     if (!xs.length) return '';
-    return K.section(T(`ui.advisor.${id}`)) + K.cards(xs.map((a, n) => {
-      const p = { at: a.params.key ?? '', ...a.params, advisor: name };
-      const btn = a.action ? (a.blocked ? `<p class="nota ruim">${esc(T('advice.blocked', { cost: fmt(a.cost) }))}</p>` : `<div class="acoes">${K.go(T('ui.do'), a.action, 'pri')}</div>`) : '';
-      return K.card({ title: esc(T(`advice.${a.rule}.title`, p)), sub: esc(T(`advice.${a.rule}.body`, p)), body: btn, dim: a.blocked, attrs: undefined }) + (n < 0 ? '' : '');
-    }));
+    return K.section(T(`ui.advisor.${id}`)) + K.cards(xs.map((x) => (x.advice ? adviceCard(x.advice) : alertCard(x.alert!))));
   }).join('');
   const p = screen({ id: 'advisor', title: name, sub: T('ui.advisor.sub'), body: `<div id="planBox">${planBlock(null)}</div>` + (groups || K.empty(T('ui.advisor.none', { advisor: name }))) });
   hooks.atualizaTopo?.();
@@ -97,6 +135,7 @@ export function runAction(a: AdviceAction | { construir?: string }): void {
       } else hooks.openGovernment(a.tab);
       return;
     case 'build': if (a.near) at(a.near); hooks.chooseBuild(a.building); return;
+    case 'district': hooks.openDistrict(a.id); return;
     case 'select': at(a.key); if (a.upgrade) { const t = g.s.map.buildings[a.key] as BuildingId; confirm(T('ui.sel.upgrade'), [K.row(T(`building.${t}`), '')], T('ui.sel.upgrade'), () => { if (store.run((x, y) => upgrade(x, y, a.key))) { refresh(); hooks.openBuilding(a.key); } }); } else hooks.openBuilding(a.key); return;
     case 'swap': at(a.key); confirm(T('ui.swap.confirm', { building: a.to }), [K.row(T('ui.swap.from'), T(`building.${a.from}`))], T('ui.swap.do'), () => { if (store.run((x, y) => swapCrop(x, y, a.key, a.to))) { refresh(); hooks.openBuilding(a.key); } }); return;
     case 'land': hooks.openLand(a.land); return;

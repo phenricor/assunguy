@@ -9,7 +9,7 @@ import { withWorks } from './measure.js';
 import { upgradeOf, type GameState } from './state.js';
 import type { LotKey, World } from './world.js';
 
-export interface PlanItem { building: BuildingId; n: number; cost: number; upgrade?: true }
+export interface PlanItem { building: BuildingId; n: number; cost: number; upgrade?: true; /** Where: the lots the works were measured on (the building's lot for an upgrade). */ lots: LotKey[] }
 export interface LevelPlan {
   level: number;
   /** Families at work now and what the level asks. */
@@ -42,25 +42,35 @@ interface Cand { key: string; t: BuildingId; upgrade: boolean; n: number; cost: 
  * Steps of the plan: each yields after one measured economy; the return value is the plan (null at the top level).
  * Drive it with `runPlan` in tests, or a few steps per frame on screen.
  */
-export function* planSteps(s0: GameState, w: World): Generator<void, LevelPlan | null> {
-  const next = LEVELS.find((l) => l.level === s0.level + 1);
-  if (!next) return null;
+export interface PlanOptions {
+  /** Only these lots (a district's), and only works there. */
+  only?: (k: LotKey) => boolean;
+  /** Aim at this many more jobs instead of the next level. */
+  jobs?: number;
+}
+export function* planSteps(s0: GameState, w: World, o: PlanOptions = {}): Generator<void, LevelPlan | null> {
+  const lv = LEVELS.find((l) => l.level === s0.level + 1);
+  if (!lv && !o.jobs) return null;
+  const a00 = allocate(s0);
+  // a district's plan: the jobs it lacks, nothing about the level
+  const next = o.jobs ? { level: s0.level, workers: a00.employed + o.jobs, income: 0, requires: {} as Partial<Record<BuildingId, number>> } : lv!;
   let s = s0, c: Economy = computeEconomy(s, w);
   const base = c.incomeTotal, a0 = allocate(s);
   const have = (t: BuildingId) => Object.values(s.map.buildings).filter((x) => x === t).length;
   const missing = (Object.entries(next.requires ?? {}) as [BuildingId, number][]).filter(([t, q]) => have(t) < q).map(([t, q]) => ({ building: t, n: q - have(t) }));
   const items: PlanItem[] = [];
   let cost = 0;
-  const addItem = (t: BuildingId, n: number, k: number, upgrade: boolean) => {
+  const addItem = (t: BuildingId, n: number, k: number, upgrade: boolean, lots: LotKey[]) => {
     cost += k;
     const it = items.find((x) => x.building === t && !!x.upgrade === upgrade);
-    if (it) { it.n += n; it.cost += k; } else items.push({ building: t, n, cost: k, ...(upgrade ? { upgrade: true as const } : {}) });
+    if (it) { it.n += n; it.cost += k; it.lots.push(...lots); } else items.push({ building: t, n, cost: k, lots: [...lots], ...(upgrade ? { upgrade: true as const } : {}) });
   };
+  const added = (a: GameState, b: GameState) => (Object.keys(b.map.buildings) as LotKey[]).filter((k) => !a.map.buildings[k]);
   // the level's own buildings first (they open jobs too), when they can be built now
   for (const m of missing) {
     if ((def(m.building).minLevel ?? 1) > s.level) continue;
-    const cp = withWorks(s, w, { [m.building]: m.n } as never);
-    if (cp && !cp[1]) { s = cp[0]; addItem(m.building, m.n, costOf(m.building, s.milestone) * m.n, false); }
+    const cp = withWorks(s, w, { [m.building]: m.n } as never, o.only);
+    if (cp && !cp[1]) { const lots = added(s, cp[0]); s = cp[0]; addItem(m.building, m.n, costOf(m.building, s.milestone) * m.n, false, lots); }
   }
   c = computeEconomy(s, w); yield;
   const employed = () => allocate(s).employed;
@@ -68,7 +78,7 @@ export function* planSteps(s0: GameState, w: World): Generator<void, LevelPlan |
   // what can be built or upgraded now: kinds with jobs that are not homes or transport
   const level = s.level || 1;
   const buildable = ALL.filter((t) => !def(t).lateGame && (def(t).minLevel ?? 1) <= level && (def(t).jobs ?? 0) > 0 && !def(t).housing && !isRole(t) && !def(t).riverside);
-  const upgradable = (t: BuildingId) => (Object.keys(s.map.buildings) as LotKey[]).find((k) => s.map.buildings[k] === t && upgradeOf(s, k) < 2);
+  const upgradable = (t: BuildingId) => (Object.keys(s.map.buildings) as LotKey[]).find((k) => s.map.buildings[k] === t && upgradeOf(s, k) < 2 && (!o.only || o.only(k)));
   const cands: Cand[] = [];
   // the cheapest jobs of each sort are measured (a phone measures a few dozen economies at most)
   const perJob = (t: BuildingId) => costOf(t, s.milestone) / (def(t).jobs as number);
@@ -76,15 +86,19 @@ export function* planSteps(s0: GameState, w: World): Generator<void, LevelPlan |
   const ups = [...new Set(Object.values(s.map.buildings) as BuildingId[])].filter((t) => { const D = def(t); return D.payer === 'colony' && !D.crop && !D.housing && (D.jobs ?? 0) > 0 && !isRole(t) && !!upgradable(t); });
   const upCost = (t: BuildingId) => { const k = upgradable(t) as LotKey; return upgradeCost(t, upgradeOf(s, k), s.milestone); };
   for (const t of ups.sort((p, q) => upCost(p) - upCost(q)).slice(0, 6)) cands.push({ key: `u:${t}`, t, upgrade: true, n: 1, cost: upCost(t), jobs: 1, gain: NaN });
+  let lastLots: LotKey[] = [];
   const apply = (x: Cand): GameState | null => {
     if (x.upgrade) {
       const k = upgradable(x.t);
       if (!k) return null;
       x.cost = upgradeCost(x.t, upgradeOf(s, k), s.milestone);
+      lastLots = [k];
       return { ...s, upgrades: { ...s.upgrades, [k]: upgradeOf(s, k) + 1 } };
     }
-    const cp = withWorks(s, w, { [x.t]: x.n } as never);
-    return cp && !cp[1] ? cp[0] : null;
+    const cp = withWorks(s, w, { [x.t]: x.n } as never, o.only);
+    if (!cp || cp[1]) return null;
+    lastLots = added(s, cp[0]);
+    return cp[0];
   };
   const measure = (x: Cand) => {
     if (!x.upgrade) { x.n = blockOf(x.t, next.workers - employed()); x.cost = costOf(x.t, s.milestone) * x.n; x.jobs = (def(x.t).jobs as number) * x.n; }
@@ -102,7 +116,7 @@ export function* planSteps(s0: GameState, w: World): Generator<void, LevelPlan |
     if (!best) break;
     const t = apply(best);
     if (!t) { best.gain = -Infinity; continue; }
-    s = t; addItem(best.t, best.n, best.cost, best.upgrade);
+    s = t; addItem(best.t, best.n, best.cost, best.upgrade, lastLots);
     c = computeEconomy(s, w); yield;
     measure(best); yield;
   }
@@ -121,7 +135,7 @@ export function* planSteps(s0: GameState, w: World): Generator<void, LevelPlan |
 }
 
 /** The whole plan at once (tests and tools). */
-export function levelPlan(s: GameState, w: World): LevelPlan | null {
-  const g = planSteps(s, w);
+export function levelPlan(s: GameState, w: World, o: PlanOptions = {}): LevelPlan | null {
+  const g = planSteps(s, w, o);
   for (;;) { const r = g.next(); if (r.done) return r.value; }
 }

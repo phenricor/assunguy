@@ -41,7 +41,8 @@ export type AdviceAction =
   | { kind: 'sellVehicle'; key: LotKey; vehicle: VehicleId }
   | { kind: 'collect'; building: BuildingId; land?: LandId; near?: LotKey; lot?: LotKey; fleet?: Partial<Record<VehicleId, number>>; with?: BuildingId[] }
   | { kind: 'province'; request: 'extraFunds' | 'extraTime' }
-  | { kind: 'streets'; from: [number, number]; to: [number, number] };
+  | { kind: 'streets'; from: [number, number]; to: [number, number] }
+  | { kind: 'district'; id: LotKey };
 
 export interface Advice {
   rule: string;

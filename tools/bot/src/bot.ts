@@ -71,6 +71,7 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
     }
     case 'buyVehicle': return okd(buyVehicle(s, w, a.key, a.vehicle));
     case 'sellVehicle': return okd(sellVehicle(s, w, a.key, a.vehicle));
+    case 'district': return false;
     case 'collect': {
       const lot = a.lot ?? collectionLot(s, w, a.building, a.land ?? null, a.near);
       if (!lot || !okd(build(s, w, a.building, ...parse(lot)))) return false;

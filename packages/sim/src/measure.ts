@@ -7,7 +7,8 @@ import type { GameState } from './state.js';
 import { lotKey, parseKey, type LotKey, type World } from './world.js';
 
 /** Free lots next to streets where a building of this type fits, in street order. */
-export function lotsFor(s: GameState, w: World, type: BuildingId, n: number): LotKey[] {
+/** Free lots beside the streets where a building fits; `only` keeps them to a place (a district). */
+export function lotsFor(s: GameState, w: World, type: BuildingId, n: number, only?: (k: LotKey) => boolean): LotKey[] {
   const want = def(type).crop ? 12 : 1, seen = new Set<LotKey>(), out: LotKey[] = [];
   for (const r of Object.keys(s.map.streets) as LotKey[]) {
     const [a, b] = parseKey(r);
@@ -15,6 +16,7 @@ export function lotsFor(s: GameState, w: World, type: BuildingId, n: number): Lo
       const key = lotKey(x, y);
       if (seen.has(key)) continue;
       seen.add(key);
+      if (only && !only(key)) continue;
       if (!canPlace(s.map, w, type, x, y)) out.push(key);
       if (out.length >= Math.max(n, want)) break;
     }
@@ -24,13 +26,13 @@ export function lotsFor(s: GameState, w: World, type: BuildingId, n: number): Lo
 }
 
 /** A copy of the colony with the hypothetical buildings placed, and what could not be placed. */
-export function withWorks(s: GameState, w: World, extra: Extra): [GameState, Extra | undefined] | null {
+export function withWorks(s: GameState, w: World, extra: Extra, only?: (k: LotKey) => boolean): [GameState, Extra | undefined] | null {
   const rest: Extra = {}, buildings = { ...s.map.buildings };
   let used = false;
   for (const t of Object.keys(extra) as (BuildingId | 'yield')[]) {
     const n = extra[t] as number;
     if (t === 'yield' || !(n > 0) || def(t).housing) { (rest as Record<string, unknown>)[t] = extra[t]; continue; }
-    const lots = lotsFor(s, w, t, n).filter((key) => !buildings[key]);
+    const lots = lotsFor(s, w, t, n, only).filter((key) => !buildings[key]);
     if (lots.length < n) { (rest as Record<string, unknown>)[t] = n; continue; }
     const g = def(t).output?.good;
     const chosen = def(t).crop && g ? lots.map((key) => [key, soilOf(w, key, g as never)] as const).sort((x, y) => y[1] - x[1]).slice(0, n).map((x) => x[0]) : lots.slice(0, n);
