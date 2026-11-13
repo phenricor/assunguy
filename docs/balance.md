@@ -91,18 +91,23 @@ run on them through `test/prototypeRules.ts`):
   jobs (`levelFamilies`), suggests a tithe a point above the milestone's satisfaction (`BALANCE.titheSpare`, was 3),
   and brings the road forward from two levels before the town.
 
-Robot, patient policy, 270 seasons (season of each level; the game starts at 12):
+Robot, patient policy, up to 280 seasons (season each level was reached; the game starts at 12):
 
-| Seed | Parish (5) | Village (9) | Level 13 | Mean idle after season 30 |
-|---|---|---|---|---|
-| 1869 | 36 | 79 | 153 | 22% |
-| 4242 | 37 | 79 | 124 | 25% |
-| 777 | 36 | 75 | 116 | 15% |
+| Seed | Parish (5) | Village (9) | Level 13 | Town (14) | Level 15 | Mean idle |
+|---|---|---|---|---|---|---|
+| 1869 | 36 | 79 | 151 | missed (165) | - | 22% |
+| 4242 | 37 | 79 | 111 | 165 (extra time) | 166 | 18% |
+| 777 | 36 | 75 | 118 | 126 | 143 | 18% |
 
 Before (twelve levels, big homes, milestones counting every family): parish at 37 to 41 when reached, the village
 reached once (79), idle 30% to 40%. Greedy robots still miss the village: they never save for the market.
 
-No robot reaches the town: it stalls on the road to Curitiba (lands to annex south, then a street to the edge),
-as before the rebalance. The late levels are set from the player's save (year 28, season 121: 514 families in big
-homes, about 278 at work, $ 30,000 a year), which on the new rules sits at level 14 and would need about twice
-the homes to reach 18.
+The town needs the road to Curitiba (lands south, then a street to the edge); the advisor now asks for it from two
+levels before, and prefers lands on its way. After the town every robot that got there lost the race to the
+purse: upkeep and wages rise with the milestone, the grant falls to $ 40, and the robot only takes the tithe
+the advisor suggests (8%), so cash stays below zero for six seasons and the colony declines. A player who also
+levies the export duty and the business tax (the playtester's save: 20% each, about $ 2,200 a season) does not.
+The advisor does not yet suggest those two taxes; that is the next thing to look at.
+
+The late levels are set from the player's save (year 28, season 121: 514 families in big homes, about 278 at
+work, $ 30,000 a year), which on the new rules sits at level 14 and would need about twice the homes to reach 18.
