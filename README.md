@@ -13,7 +13,7 @@ O jogo corre em turnos de uma estação. A cada estação as famílias trabalham
 - Português e inglês, trocáveis a qualquer momento.
 - Roda inteiro no navegador, sem servidor. Os jogos ficam salvos no próprio aparelho e podem ser exportados para um arquivo.
 
-Versão atual: **1.0.0-beta.9**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
+Versão atual: **1.0.0-beta.10**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
 
 ## Colônia do Assunguy
 

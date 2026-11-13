@@ -11,6 +11,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.10] - 2026-11-12
+
+Districts as the colony's scope, smaller homes, eighteen levels and taxes the advisor suggests.
+
 ### Changed
 
 - Districts are the colony's working scope from the first season: each holds its homes and the production around
@@ -241,7 +245,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...HEAD
+[1.0.0-beta.10]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...v1.0.0-beta.10
 [1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9
 [1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7
