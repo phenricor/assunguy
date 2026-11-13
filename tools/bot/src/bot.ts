@@ -137,10 +137,12 @@ export function play(seed: number, o: BotOptions = {}): Run {
     if (o.observe?.advice) o.observe.advice(advise(s, w), s);
     const actions: string[] = [], tried = new Set<string>();
     for (let n = 0; n < per; n++) {
-      const list = advise(s, w).filter((x: Advice) => x.action && !tried.has(JSON.stringify(x.action)) && x.action.kind !== 'screen' || (x.action?.kind === 'screen' && x.action.law));
+      const list = advise(s, w).filter((x: Advice) => !!x.action && !tried.has(JSON.stringify(x.action)) && (x.action.kind !== 'screen' || !!x.action.law));
       const top = list[0];
-      if (o.policy === 'patient' && top && top.weight >= 60 && (top.blocked || top.cost > s.cash - reserve)) { actions.push(`saving for ${top.rule}`); break; }
-      const pick = list.find((x: Advice) => !x.blocked && x.cost <= s.cash - reserve);
+      // saving for something dear does not stop what costs nothing (a tax the advisor suggests)
+      const saving = o.policy === 'patient' && top && top.weight >= 60 && (top.blocked || top.cost > s.cash - reserve);
+      const pick = saving ? list.find((x: Advice) => !x.blocked && x.cost === 0 && x.weight >= 60) : list.find((x: Advice) => !x.blocked && x.cost <= s.cash - reserve);
+      if (saving && !pick) { actions.push(`saving for ${top.rule}`); break; }
       if (!pick) break;
       tried.add(JSON.stringify(pick.action));
       // homes for the next groups, or the jobs a level is short of: a player builds a row, not one (the advice names one)

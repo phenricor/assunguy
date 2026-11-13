@@ -32,6 +32,9 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 - The notebook, the plan and the race quote their numbers from the game's tables, so they follow the balance.
 - The advisor also suggests the export duty (first, more, or less when it weighs on satisfaction), measured with the
   tithe as it is, and its confirmation shows the rate as a percentage.
+- After the town the advisor suggests taxes down to satisfaction 50 (it held to 60, then took every tax off a
+  colony in the red); with the purse in the red it keeps only what saves the province's score and does not ask to
+  lower taxes.
 - The business licence is set in dollars a year from each store and market ($ 10 to $ 60), as the economy counts
   it; the screen offered it as a share, so 20% charged $ 0.20.
 

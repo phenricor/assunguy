@@ -149,6 +149,8 @@ export interface BalanceDef {
   titheSpare: number;
   /** The advisor also suggests the export duty (the prototype suggested only the tithe). */
   adviseExportDuty: boolean;
+  /** The satisfaction the advisor keeps when it suggests taxes once all milestones are met (the prototype kept 60). */
+  taxFloorAfterTown: number;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;

@@ -348,14 +348,16 @@ function colonyAdvice(x: Ctx): Advice[] {
   // taxes and the council
   const hasCouncil = Object.values(s.map.buildings).includes('council');
   if (can('council') && !hasCouncil) add(88, 'council', { cost: cost('council'), revenue: Math.round(taxEffect({ ...s, taxes: { ...s.taxes, tithe: { general: 0.08 } } }, w).revenue) }, build('council'));
-  // the satisfaction the tithe must leave: the milestone's, with a point to spare (once all milestones are met, 60)
-  const floor = (target ? (target.satisfaction ?? 60) : 60) + BALANCE.titheSpare;
+  // the satisfaction the taxes must leave: the milestone's, with a point to spare; once all milestones are met, what
+  // the province still asks; with the purse in the red, only what keeps the province from scoring the colony down
+  const inRed = s.cash < 0 && BALANCE.adviseExportDuty;
+  const floor = inRed ? 46 : (target ? (target.satisfaction ?? 60) : BALANCE.taxFloorAfterTown) + BALANCE.titheSpare;
   if (hasCouncil && !s.pendingTaxes.tithe) {
     const ef = taxEffect(s, w), now0 = s.taxes.tithe?.general ?? 0, sug = suggestedTithe(s, w, floor), mean = ratings.mean;
     const act = (value: number): AdviceAction => ({ kind: 'screen', screen: 'direction', tab: 'taxes', law: 'tithe', value });
     const rich = 3000 + c.incomeTotal * 0.2;
     if (ef.familiesAtRisk) add(90, 'tithe.choking', { n: ef.familiesAtRisk, rate: Math.round(sug.rate * 100), mean, after: sug.mean }, act(sug.rate));
-    else if (now0 > sug.rate && mean < floor) add(84, 'tithe.hurts', { rate: Math.round(now0 * 100), wanted: floor - 3, suggested: Math.round(sug.rate * 100), mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
+    else if (now0 > sug.rate && mean < floor && !inRed) add(84, 'tithe.hurts', { rate: Math.round(now0 * 100), wanted: floor - BALANCE.titheSpare, suggested: Math.round(sug.rate * 100), mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
     else if (s.cash > rich && now0 >= 0.04) add(58, 'tithe.relief', { rate: Math.round((now0 - 0.04) * 100) }, act(Math.round((now0 - 0.04) * 100) / 100));
     else if (sug.rate >= now0 + 0.04 && sug.mean >= floor + firstTitheExtra() && s.cash < rich / 2) add(now0 ? 62 : 86, now0 ? 'tithe.more' : 'tithe.first', { rate: Math.round(sug.rate * 100), revenue: Math.round(sug.revenue), mean, after: sug.mean }, act(sug.rate));
   }
@@ -364,7 +366,7 @@ function colonyAdvice(x: Ctx): Advice[] {
   if (hasCouncil && BALANCE.adviseExportDuty && !s.pendingTaxes.exportDuty && !list.some((y) => y.rule === 'tithe.choking' || y.rule === 'tithe.hurts')) {
     const now0 = s.taxes.exportDuty?.general ?? 0, sug = suggestedTithe(s, w, floor, 'exportDuty'), mean = ratings.mean, rich = 3000 + c.incomeTotal * 0.2, base = taxEffect(s, w).revenue;
     const act = (value: number): AdviceAction => ({ kind: 'screen', screen: 'direction', tab: 'taxes', law: 'exportDuty', value });
-    if (now0 > 0 && mean < floor && sug.rate < now0) add(80, 'exportDuty.hurts', { rate: Math.round(now0 * 100), wanted: floor - BALANCE.titheSpare, suggested: Math.round(sug.rate * 100), mean, after: sug.mean }, act(sug.rate));
+    if (now0 > 0 && mean < floor && sug.rate < now0 && !inRed) add(80, 'exportDuty.hurts', { rate: Math.round(now0 * 100), wanted: floor - BALANCE.titheSpare, suggested: Math.round(sug.rate * 100), mean, after: sug.mean }, act(sug.rate));
     else if (sug.rate > now0 && sug.mean >= floor && s.cash < rich / 2 && sug.revenue - base >= 100)
       add(now0 ? 60 : 84, now0 ? 'exportDuty.more' : 'exportDuty.first', { rate: Math.round(sug.rate * 100), revenue: Math.round(sug.revenue - base), mean, after: sug.mean }, act(sug.rate));
   }

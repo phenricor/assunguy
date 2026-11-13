@@ -1728,6 +1728,7 @@ export const BALANCE: BalanceDef = {
   "districtsFromStart": true,
   "titheSpare": 1,
   "adviseExportDuty": true,
+  "taxFloorAfterTown": 50,
   "routeChoiceSharpness": 8,
   "isolatedCommerceWeight": 0.6,
   "lotPrice": 20,
