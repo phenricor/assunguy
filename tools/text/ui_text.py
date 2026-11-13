@@ -215,7 +215,7 @@ U = {
   # advisor
   'advisor.sub': ('O que mais pesa agora', 'What matters most now'), 'advisor.none': ('{advisor} não vê nada urgente.', '{advisor} sees nothing urgent.'),
   'advisor.urgent': ('Urgente', 'Urgent'), 'advisor.important': ('Importante', 'Important'), 'advisor.useful': ('Vale a pena', 'Worth doing'),
-  'advisor.titheTitle': ('Propor o dízimo', 'Propose the tithe'), 'advisor.collectTitle': ('Captação nova', 'New collection point'),
+  'advisor.titheTitle': ('Propor imposto', 'Propose a tax'), 'advisor.collectTitle': ('Captação nova', 'New collection point'),
   'advisor.province.extraFunds': ('Pedir verba extra', 'Ask for extra funds'), 'advisor.province.extraFunds.effect': ('$ 400 agora, por 4 de influência; a meta pede 5% mais famílias', '$ 400 now, for 4 influence; the goal asks for 5% more families'),
   'advisor.province.extraTime': ('Pedir mais prazo', 'Ask for more time'), 'advisor.province.extraTime.effect': ('Mais estações para a meta, uma vez por meta', 'More seasons for the goal, once per goal'),
   'advisor.ask': ('Pedir', 'Ask'), 'advisor.asked': ('Pedido feito à província.', 'Request sent to the province.'),
@@ -246,7 +246,7 @@ U = {
   'gov.askFundsSubNow': ('+$ 400; a meta passa a exigir mais 5% de famílias (hoje já +{n}%)', '+$ 400; the goal then asks for 5% more families (already +{n}% today)'),
   'gov.askTime': ('Mais prazo', 'More time'), 'gov.askTimeSub': ('Mais 1 ano para a próxima meta; só uma vez por meta', 'One more year for the next goal; once per goal'),
   'gov.askTimeDone': ('Já pedido nesta meta', 'Already asked for this goal'), 'gov.askTimeInspector': ('Com o inspetor aqui, não há conversa', 'With the inspector here, there is no talking'),
-  'gov.taxes': ('Impostos', 'Taxes'), 'gov.none': ('Nenhum', 'None'), 'gov.taxesYear': ('Impostos por ano', 'Taxes a year'), 'gov.atRisk': ('Famílias sufocadas', 'Families choked'),
+  'gov.taxes': ('Impostos', 'Taxes'), 'gov.perBusiness': ('$ {n} por negócio', '$ {n} a business'), 'gov.none': ('Nenhum', 'None'), 'gov.taxesYear': ('Impostos por ano', 'Taxes a year'), 'gov.atRisk': ('Famílias sufocadas', 'Families choked'),
   'gov.pending': ('Entra em vigor na próxima estação.', 'Comes into force next season.'), 'gov.propose': ('Propor', 'Propose'), 'gov.proposed': ('Proposta enviada à Câmara.', 'Proposal sent to the council.'),
   'gov.works': ('Grandes obras', 'Great works'), 'gov.workProgress': ('{n} de {of} estações', '{n} of {of} seasons'), 'gov.canStart': ('pode começar', 'can start'),
   'gov.worksInfo': ('As parcelas saem do caixa a cada estação enquanto houver dinheiro.', 'The instalments leave the purse every season while there is money.'),
@@ -439,7 +439,7 @@ U = {
   'info.collections.title': ('Captações', 'Collection points'), 'info.collections.body': ('Vendas e embarcadouros recolhem a produção longe do comércio, com tropas, carroças ou canoas.', 'Trading posts and landings collect produce far from commerce, with mule trains, wagons or canoes.'),
   'info.tax_tithe.title': ('Dízimo', 'Tithe'), 'info.tax_tithe.body': ('Parte da renda de todas as famílias. Pesa na satisfação.', 'A share of every family\'s income. It weighs on satisfaction.'),
   'info.tax_exportDuty.title': ('Dízimo de exportação', 'Export duty'), 'info.tax_exportDuty.body': ('Parte do que sai pelas portas.', 'A share of what leaves through the gateways.'),
-  'info.tax_businessTax.title': ('Licença de negócio', 'Business licence'), 'info.tax_businessTax.body': ('Cobrada do comércio e das oficinas. Alta demais, fecha portas.', 'Charged on commerce and workshops. Too high, it closes them.'),
+  'info.tax_businessTax.title': ('Licença de negócio', 'Business licence'), 'info.tax_businessTax.body': ('Um valor por ano de cada comércio e mercado, pago por quem trabalha no comércio. Alta demais, fecha portas.', 'An amount a year from each store and market, paid by those who work in commerce. Too high, it closes them.'),
 }
 
 def main():

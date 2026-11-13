@@ -12,7 +12,7 @@ const swapRecord = (a: object, b: object) => { const was = { ...a }; for (const 
 export function applyPrototypeRules(): () => void {
   const undo: (() => void)[] = [];
   const set = (o: object, k: string, v: unknown) => { const r = o as Bag, had = k in r, was = r[k]; r[k] = v; undo.push(() => { if (had) r[k] = was; else delete r[k]; }); };
-  set(BALANCE, 'milestoneWorkers', false); set(BALANCE, 'smallHomes', false); set(BALANCE, 'districtsFromStart', false); set(BALANCE, 'titheSpare', 3);
+  set(BALANCE, 'milestoneWorkers', false); set(BALANCE, 'smallHomes', false); set(BALANCE, 'districtsFromStart', false); set(BALANCE, 'titheSpare', 3); set(BALANCE, 'adviseExportDuty', false);
   for (const [t, h] of Object.entries(old.housing)) set(BUILDINGS[t as keyof typeof BUILDINGS], 'housing', h);
   for (const [t, l] of Object.entries(old.minLevel)) set(BUILDINGS[t as keyof typeof BUILDINGS], 'minLevel', l);
   for (const [t, ls] of Object.entries(old.recipes)) (BUILDINGS[t as keyof typeof BUILDINGS] as unknown as { recipes: Bag[] }).recipes.forEach((r, i) => { if (ls[i] != null) set(r, 'minLevel', ls[i]); });

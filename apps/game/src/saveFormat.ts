@@ -6,7 +6,8 @@
 export const SAVE_FORMAT = 2;
 
 type Data = Record<string, unknown>;
-/** Format 2 has eighteen levels instead of twelve: each old level moves to the new one with the same standing. */
+/** Format 2 has eighteen levels instead of twelve: each old level moves to the new one with the same standing; and
+ *  the business licence is kept in dollars a business. */
 export const LEVEL_FROM_12: Record<number, number> = { 1: 1, 2: 2, 3: 3, 4: 5, 5: 6, 6: 7, 7: 9, 8: 10, 9: 11, 10: 14, 11: 16, 12: 18 };
 const relevel = (n: unknown) => (typeof n === 'number' ? LEVEL_FROM_12[n] ?? n : n);
 /** MIGRATIONS[n] turns a save of format n into format n + 1. */
@@ -17,6 +18,11 @@ const MIGRATIONS: Record<number, (d: Data) => Data> = {
     const choices = (s.choices ?? {}) as Record<string, unknown>;
     s.choices = Object.fromEntries(Object.entries(choices).map(([k, v]) => [String(relevel(Number(k))), v]));
     s.queue = ((s.queue ?? []) as Data[]).map((e) => (e.kind === 'pathChoice' ? { ...e, level: relevel(e.level) } : e));
+    // the business licence is dollars a year from each business; the screen offered it as a share, so 20% meant $ 0.20
+    for (const k of ['taxes', 'pendingTaxes']) {
+      const tx = s[k] as Record<string, { general?: number } | null> | undefined, b = tx?.businessTax;
+      if (b && typeof b.general === 'number' && b.general < 1) s[k] = { ...tx, businessTax: { ...b, general: Math.round(b.general * 100) } };
+    }
     return { ...d, s };
   },
 };

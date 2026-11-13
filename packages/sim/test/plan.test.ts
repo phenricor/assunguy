@@ -50,3 +50,19 @@ describe('the race', () => {
     expect(allocate(s).idle.length).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('the export duty', () => {
+  it('is suggested once there is a council, at a rate the satisfaction bears, and carried out as proposed', async () => {
+    const { legacyState } = await import('./legacy.js'), { generateWorld } = await import('../src/world.js'), { advise } = await import('../src/advisor.js');
+    const { proposeTax } = await import('../src/commands.js'), seasons = (await import('./fixtures/seasons.json', { with: { type: 'json' } })).default as unknown as Record<string, { state: Record<string, unknown> }>;
+    const s = legacyState(seasons.speedrun!.state), w = generateWorld(s.seed, s.mapVersion);
+    const free = Object.keys(s.map.streets).map((k) => k.split(',').map(Number) as [number, number]).map(([a, b]) => `${a + 1},${b}` as LotKey).find((k) => !s.map.buildings[k] && !s.map.streets[k])!;
+    s.map.buildings[free] = 'council'; s.cash = 0;
+    const duty = advise(s, w).find((x) => x.rule.startsWith('exportDuty'));
+    expect(duty?.rule).toBe('exportDuty.first');
+    expect(duty!.params.after as number).toBeGreaterThanOrEqual(duty!.params.mean as number - 10);
+    const act = duty!.action as { law: 'exportDuty'; value: number };
+    expect(proposeTax(s, act.law, { general: act.value }).ok).toBe(true);
+    expect(s.pendingTaxes.exportDuty?.general).toBe(act.value);
+  });
+});

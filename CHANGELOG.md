@@ -30,6 +30,10 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
   the share without work under the level's limit), suggests homes when a level lacks the families to fill its jobs,
   and suggests a tithe while satisfaction stays a point above the milestone's (it kept three).
 - The notebook, the plan and the race quote their numbers from the game's tables, so they follow the balance.
+- The advisor also suggests the export duty (first, more, or less when it weighs on satisfaction), measured with the
+  tithe as it is, and its confirmation shows the rate as a percentage.
+- The business licence is set in dollars a year from each store and market ($ 10 to $ 60), as the economy counts
+  it; the screen offered it as a share, so 20% charged $ 0.20.
 
 ### Fixed
 
@@ -39,6 +43,7 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 - Save format 2: levels of older saves move to the level with the same standing (4 to 5, 7 to 9, 10 to 14, 12 to 18),
   and so do the path choices.
+  A business licence set as a share becomes that many dollars a business (20% becomes $ 20).
 
 ## [1.0.0-beta.9] - 2026-11-12
 

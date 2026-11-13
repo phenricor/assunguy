@@ -192,7 +192,7 @@ export function openGovernment(tab?: string): void {
   const card = (title: string, right: string | number, sub: string, tone: string, inner: string, det: string) => K.card({ title, right, rightSub: sub, tone, body: inner, attrs: `data-det="direction:${det}"` });
   const last = (s.reports as SeasonReport[]).filter((r) => r.province).at(-1)?.province;
   const cards = [card(T('ui.gov.province'), last ? T(last.factor > 1 ? 'ui.gov.praise' : last.factor < 1 ? 'ui.gov.charge' : 'ui.gov.noChange') : '-', last ? T('ui.gov.lastReport') : T('ui.gov.firstSoon'), last && last.factor < 1 ? 'ruim' : last && last.factor > 1 ? 'bom' : '', K.rows([K.row(T('ui.gov.grantYear'), `$ ${fmt(y.grant)}`), K.row(T('ui.gov.share'), `$ ${fmt(y.share)}`)]), 'province')];
-  if (hasCouncil(s)) cards.push(card(T('ui.gov.taxes'), `$ ${fmt(y.taxes)}`, T('ui.perYearShort'), '', K.rows((['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => K.row(T(`ui.tax.${id}`), s.taxes[id] ? `${Math.round((s.taxes[id]!.general || 0) * 100)}%` : T('ui.gov.none')))), 'taxes'));
+  if (hasCouncil(s)) cards.push(card(T('ui.gov.taxes'), `$ ${fmt(y.taxes)}`, T('ui.perYearShort'), '', K.rows((['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => K.row(T(`ui.tax.${id}`), s.taxes[id] ? (id === 'businessTax' ? T('ui.gov.perBusiness', { n: Math.round(s.taxes[id]!.general || 0) }) : `${Math.round((s.taxes[id]!.general || 0) * 100)}%`) : T('ui.gov.none')))), 'taxes'));
   const going = GREAT_WORK_IDS.find((id) => s.greatWorks[id]?.active && !s.greatWorks[id]?.done), avail = GREAT_WORK_IDS.filter((id) => workOpen(s, id));
   if (going || avail.length) { const g = going ?? avail[0]!, G = GREAT_WORKS[g], st = s.greatWorks[g]; cards.push(card(T('ui.gov.works'), T(`greatWork.${g}`), going ? T('ui.gov.workProgress', { n: st?.paid ?? 0, of: G.seasons }) : T('ui.gov.canStart'), going ? '' : 'bom', going ? K.bar((st?.paid ?? 0) / G.seasons) : '', 'works')); }
   if (hasCouncil(s)) cards.push(card(T('ui.gov.laws'), `${Object.keys(s.laws).length + Object.keys(s.pendingLaws).length}/${lawSlots(s)}`, T('ui.gov.inUse'), '', '', 'laws'));
@@ -226,8 +226,9 @@ export function openDirection(tab = 'province'): void {
     const eff = taxEffect(s, w);
     body = K.tiles([{ v: `$ ${fmt(store.economy().revenue.total)}`, r: T('ui.gov.taxesYear') }, { v: eff.familiesAtRisk, r: T('ui.gov.atRisk'), bad: eff.familiesAtRisk > 0 }])
       + (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => {
-        const cur = Math.round(((s.pendingTaxes[id] !== undefined ? s.pendingTaxes[id]?.general : s.taxes[id]?.general) ?? 0) * 100);
-        return K.section(T(`ui.tax.${id}`), `tax_${id}`) + K.chips([0, 5, 8, 10, 15, 20].map((v) => [String(v), v ? `${v}%` : T('ui.gov.none')] as [string, string]), String(cur), `tax-${id}`) + (s.pendingTaxes[id] !== undefined ? K.note(esc(T('ui.gov.pending')), 'neutra') : '');
+        // the business licence is an amount a year from each store and market; the others are shares
+        const money = id === 'businessTax', raw = (s.pendingTaxes[id] !== undefined ? s.pendingTaxes[id]?.general : s.taxes[id]?.general) ?? 0, cur = Math.round(money ? raw : raw * 100);
+        return K.section(T(`ui.tax.${id}`), `tax_${id}`) + K.chips((money ? [0, 10, 20, 40, 60] : [0, 5, 8, 10, 15, 20]).map((v) => [String(v), !v ? T('ui.gov.none') : money ? T('ui.gov.perBusiness', { n: v }) : `${v}%`] as [string, string]), String(cur), `tax-${id}`) + (s.pendingTaxes[id] !== undefined ? K.note(esc(T('ui.gov.pending')), 'neutra') : '');
       }).join('');
   } else if (tab === 'laws' && hasCouncil(s)) {
     body = K.note(esc(T('ui.gov.lawSlots', { n: Object.keys(s.laws).length + Object.keys(s.pendingLaws).length, of: lawSlots(s) })), 'neutra')
@@ -254,7 +255,7 @@ export function openDirection(tab = 'province'): void {
   });
   p.querySelectorAll<HTMLElement>('[data-law]').forEach((b) => { b.onclick = () => { if (store.run((x, y) => toggleLaw(x, y, b.dataset.law as string))) { refresh(); openDirection('laws'); } }; });
   p.querySelectorAll<HTMLElement>('[data-work]').forEach((b) => { b.onclick = () => { const id = b.dataset.work as GreatWorkId, on = !s.greatWorks[id]?.active, G = GREAT_WORKS[id]; confirm(T(on ? 'ui.gov.startWork' : 'ui.gov.stopWork', { work: id }), on ? [K.row(T('ui.gov.instalment'), `$ ${fmt(G.cost / G.seasons)}`), K.row(T('ui.seasons'), G.seasons)] : [], T(on ? 'ui.gov.start' : 'ui.gov.stop'), () => { if (store.run((x) => setGreatWork(x, id, on))) { refresh(); openDirection('works'); } }); }; });
-  (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).forEach((id) => p.querySelectorAll<HTMLElement>(`[data-tax-${id}]`).forEach((b) => { b.onclick = () => { const v = Number(b.getAttribute(`data-tax-${id}`)) / 100; if (store.run((x) => proposeTax(x, id, v ? { general: v } : null))) { refresh(); openDirection('taxes'); hint(T('ui.gov.proposed'), 2600); } }; }));
+  (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).forEach((id) => p.querySelectorAll<HTMLElement>(`[data-tax-${id}]`).forEach((b) => { b.onclick = () => { const v = Number(b.getAttribute(`data-tax-${id}`)) / (id === 'businessTax' ? 1 : 100); if (store.run((x) => proposeTax(x, id, v ? { general: v } : null))) { refresh(); openDirection('taxes'); hint(T('ui.gov.proposed'), 2600); } }; }));
   const ag = p.querySelector<HTMLElement>('#agent');
   if (ag) ag.onclick = () => { if (store.run((x) => setAgent(x, !s.immigrationAgent))) { refresh(); openDirection('immigration'); } };
 }

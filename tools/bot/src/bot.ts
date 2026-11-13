@@ -100,7 +100,7 @@ export function act(s: GameState, w: World, a: AdviceAction): boolean {
       for (const [v, n] of Object.entries(a.fleet ?? {})) for (let i = 0; i < (n ?? 0); i++) buyVehicle(s, w, fleetAt, v as never);
       return true;
     }
-    case 'screen': return a.law === 'tithe' && a.value !== undefined ? okd(proposeTax(s, 'tithe', a.value ? { general: a.value } : null)) : false;
+    case 'screen': return a.law && a.value !== undefined ? okd(proposeTax(s, a.law, a.value ? { general: a.value } : null)) : false;
     case 'province': return okd(askProvince(s, a.request));
     case 'streets': return streets(s, w, a.from, a.to).opened > 0;
   }

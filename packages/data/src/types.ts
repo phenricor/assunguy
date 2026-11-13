@@ -147,6 +147,8 @@ export interface BalanceDef {
   districtsFromStart: boolean;
   /** Points of satisfaction above the milestone's the advisor keeps when it suggests a tithe (the prototype kept 3). */
   titheSpare: number;
+  /** The advisor also suggests the export duty (the prototype suggested only the tithe). */
+  adviseExportDuty: boolean;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;

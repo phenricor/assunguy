@@ -131,8 +131,9 @@ export function runAction(a: AdviceAction | { construir?: string }): void {
       if (a.screen === 'level') hooks.openLevel();
       else if (a.screen === 'transport') hooks.openTransport();
       else if (a.screen === 'economy') hooks.openEconomy?.();
-      else if (a.law === 'tithe' && a.value !== undefined) {
-        confirm(T('ui.advisor.titheTitle'), [K.row(T('ui.tax.tithe'), `${a.value}%`)], T('ui.gov.propose'), () => { if (store.run((s) => proposeTax(s, 'tithe', a.value ? { general: a.value } : null))) { refresh(); hint(T('ui.gov.proposed'), 2600); } });
+      else if (a.law && a.value !== undefined) {
+        const law = a.law, value = a.value;
+        confirm(T('ui.advisor.titheTitle'), [K.row(T(`ui.tax.${law}`), value ? `${Math.round(value * 100)}%` : T('ui.gov.none'))], T('ui.gov.propose'), () => { if (store.run((s) => proposeTax(s, law, value ? { general: value } : null))) { refresh(); hint(T('ui.gov.proposed'), 2600); } });
       } else hooks.openGovernment(a.tab);
       return;
     case 'build': if (a.near) at(a.near); hooks.chooseBuild(a.building); return;

@@ -25,7 +25,7 @@ import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from '
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'levelFamilies', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'idle.upgrade', 'levelWorkers.upgrade', 'service.upgrade', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'levelFamilies', 'exportDuty.first', 'exportDuty.more', 'exportDuty.hurts', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'idle.upgrade', 'levelWorkers.upgrade', 'service.upgrade', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 /** Families for each job a goal asks for: when milestones count families at work, some are always between jobs. */
 const familySpare = (): number => (BALANCE.milestoneWorkers ? 0.9 : 1);
@@ -33,7 +33,7 @@ const familySpare = (): number => (BALANCE.milestoneWorkers ? 0.9 : 1);
 const firstTitheExtra = (): number => (BALANCE.titheSpare >= 3 ? 1 : 0);
 
 export type AdviceAction =
-  | { kind: 'screen'; screen: 'level' | 'economy' | 'direction' | 'transport'; tab?: string; law?: 'tithe'; value?: number }
+  | { kind: 'screen'; screen: 'level' | 'economy' | 'direction' | 'transport'; tab?: string; law?: 'tithe' | 'exportDuty'; value?: number }
   | { kind: 'build'; building: BuildingId | 'street'; near?: LotKey }
   | { kind: 'select'; key: LotKey; upgrade?: true }
   | { kind: 'swap'; key: LotKey; to: BuildingId; from: BuildingId }
@@ -134,12 +134,13 @@ function purseYear(s: GameState, c: Economy): number {
   return c.revenue.total * (hasLaw(s, 'landRegistry') ? 1.1 : 1) + c.incomeTotal * ((MILESTONES[s.milestone] as MilestoneDef).shareOfTrade || 0) - upkeep;
 }
 
-/** The best tithe the colony can charge without the mean rating falling under `floor` or families going under. */
-export function suggestedTithe(s: GameState, w: World, floor: number): { rate: number; mean: number; revenue: number } {
-  const without = { ...s, taxes: { ...s.taxes, tithe: null } };
+/** The best tithe (or export duty) the colony can charge without the mean rating falling under `floor` or families
+ *  going under, with the other taxes as they are. The duty is tried at the rates the government screen offers. */
+export function suggestedTithe(s: GameState, w: World, floor: number, id: 'tithe' | 'exportDuty' = 'tithe'): { rate: number; mean: number; revenue: number } {
+  const without = { ...s, taxes: { ...s.taxes, [id]: null } };
   let best = { rate: 0, mean: rateHomes(without, w).mean, revenue: taxEffect(without, w).revenue };
-  for (const rate of [0.04, 0.08, 0.12, 0.16, 0.2]) {
-    const test = { ...s, taxes: { ...s.taxes, tithe: { general: rate, byGood: {} } as TaxLaw } };
+  for (const rate of id === 'tithe' ? [0.04, 0.08, 0.12, 0.16, 0.2] : [0.05, 0.08, 0.1, 0.15, 0.2]) {
+    const test = { ...s, taxes: { ...s.taxes, [id]: { general: rate, byGood: {} } as TaxLaw } };
     const mean = rateHomes(test, w).mean, ef = taxEffect(test, w);
     if (mean < floor || ef.familiesAtRisk) break;
     best = { rate, mean, revenue: ef.revenue };
@@ -357,6 +358,15 @@ function colonyAdvice(x: Ctx): Advice[] {
     else if (now0 > sug.rate && mean < floor) add(84, 'tithe.hurts', { rate: Math.round(now0 * 100), wanted: floor - 3, suggested: Math.round(sug.rate * 100), mean, after: sug.mean, revenue: Math.round(sug.revenue) }, act(sug.rate));
     else if (s.cash > rich && now0 >= 0.04) add(58, 'tithe.relief', { rate: Math.round((now0 - 0.04) * 100) }, act(Math.round((now0 - 0.04) * 100) / 100));
     else if (sug.rate >= now0 + 0.04 && sug.mean >= floor + firstTitheExtra() && s.cash < rich / 2) add(now0 ? 62 : 86, now0 ? 'tithe.more' : 'tithe.first', { rate: Math.round(sug.rate * 100), revenue: Math.round(sug.revenue), mean, after: sug.mean }, act(sug.rate));
+  }
+  // the export duty: a share of what leaves through the gateways, as heavy on satisfaction as the tithe and raising
+  // about as much once the colony exports; suggested on the same terms, with the tithe as it is
+  if (hasCouncil && BALANCE.adviseExportDuty && !s.pendingTaxes.exportDuty && !list.some((y) => y.rule === 'tithe.choking' || y.rule === 'tithe.hurts')) {
+    const now0 = s.taxes.exportDuty?.general ?? 0, sug = suggestedTithe(s, w, floor, 'exportDuty'), mean = ratings.mean, rich = 3000 + c.incomeTotal * 0.2, base = taxEffect(s, w).revenue;
+    const act = (value: number): AdviceAction => ({ kind: 'screen', screen: 'direction', tab: 'taxes', law: 'exportDuty', value });
+    if (now0 > 0 && mean < floor && sug.rate < now0) add(80, 'exportDuty.hurts', { rate: Math.round(now0 * 100), wanted: floor - BALANCE.titheSpare, suggested: Math.round(sug.rate * 100), mean, after: sug.mean }, act(sug.rate));
+    else if (sug.rate > now0 && sug.mean >= floor && s.cash < rich / 2 && sug.revenue - base >= 100)
+      add(now0 ? 60 : 84, now0 ? 'exportDuty.more' : 'exportDuty.first', { rate: Math.round(sug.rate * 100), revenue: Math.round(sug.revenue - base), mean, after: sug.mean }, act(sug.rate));
   }
   // idle families and jobs with nobody
   // the jobs the next level asks for: its families at work, more when it allows only a share without work, or the

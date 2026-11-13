@@ -1727,6 +1727,7 @@ export const BALANCE: BalanceDef = {
   "smallHomes": true,
   "districtsFromStart": true,
   "titheSpare": 1,
+  "adviseExportDuty": true,
   "routeChoiceSharpness": 8,
   "isolatedCommerceWeight": 0.6,
   "lotPrice": 20,
