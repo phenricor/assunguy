@@ -103,11 +103,24 @@ Before (twelve levels, big homes, milestones counting every family): parish at 3
 reached once (79), idle 30% to 40%. Greedy robots still miss the village: they never save for the market.
 
 The town needs the road to Curitiba (lands south, then a street to the edge); the advisor now asks for it from two
-levels before, and prefers lands on its way. After the town every robot that got there lost the race to the
-purse: upkeep and wages rise with the milestone, the grant falls to $ 40, and the robot only takes the tithe
-the advisor suggests (8%), so cash stays below zero for six seasons and the colony declines. A player who also
-levies the export duty and the business tax (the playtester's save: 20% each, about $ 2,200 a season) does not.
-The advisor does not yet suggest those two taxes; that is the next thing to look at.
+levels before, and prefers lands on its way.
+
+Taxes (later the same day). The advisor suggested only the tithe, held satisfaction at 61 after the town and then
+took every tax off a colony in the red; the patient robot skipped taxes while saving for something dear. Now the
+export duty is suggested too, the floor after the town is 50, a colony in the red is not told to lower taxes, and
+the robot takes advice that costs nothing. Seed 777 after the town: tithe and duty at 20%, cash from $ 1,800 to
+$ 6,000 and $ 1,500 to $ 2,000 a season over upkeep of $ 1,100 to $ 1,600 (it went below zero within 4 seasons before).
+
+| Seed | Village (9) | Town (14) | Level 15 | End |
+|---|---|---|---|---|
+| 1869 | 74 | missed (the road was not done by 151) | - | 156 |
+| 4242 | 76 | 138 | 139 | race lost at 183 |
+| 777 | 75 | 126 | 138 | race lost at 172 |
+
+The race is now lost to the rivals, not the purse: about 20 seasons after the town the rivals' advances take the
+colony's markets (competitiveness under 80%), income falls by a third, and families leave on the race's departure
+rule (240 to 64 in 12 seasons) until the cash goes below zero. The robot does not build rails or trains, so this
+says little about a player; but the departures are steep, and worth a look when the race is balanced.
 
 The late levels are set from the player's save (year 28, season 121: 514 families in big homes, about 278 at
 work, $ 30,000 a year), which on the new rules sits at level 14 and would need about twice the homes to reach 18.
