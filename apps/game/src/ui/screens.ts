@@ -372,7 +372,8 @@ export function openDistrict(id: string | { id: string }): void {
       + (a.goods.length ? K.cards(a.goods.map((g) => K.card({ ic: icon(g.good), title: esc(goodName(g.good)), sub: esc(ay(g.produced)), right: `$ ${fmt(g.income)}`, rightSub: esc(T('ui.perYearShort')) }))) : '') : '')
     + K.section(esc(T('ui.district.outlet'))) + K.rows([
       K.row(esc(T('ui.district.reach')), `${reach}%`, reach < 85 ? 'menos' : ''),
-      K.row(esc(T('ui.district.lostOnFoot')), esc(ay(a.onFoot)), a.onFoot > 20 ? 'menos' : ''),
+      // what keeps cargo from a buyer, each cause that loses some
+      ...(Object.entries(a.lostBy) as [string, number][]).filter(([, n]) => n >= 1).sort((p, q) => q[1] - p[1]).map(([k, n]) => K.row(esc(T(`ui.district.lost.${k}`)), esc(ay(n)), n > 20 ? 'menos' : '')),
       K.row(esc(T('ui.district.upkeep')), `$ ${fmt(a.upkeep)}`),
       K.row(esc(T('ui.district.inColony')), esc(T('ui.district.inColonyValue', { families: tot.fam ? Math.round((a.families / tot.fam) * 100) : 0, income: tot.inc ? Math.round((a.income / tot.inc) * 100) : 0 }))),
     ]) + '<div id="fix-outlet"></div><div id="fix-more"></div>';

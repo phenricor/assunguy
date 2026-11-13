@@ -53,8 +53,10 @@ function alertCard(x: NonNullable<Item['alert']>): string {
   const d = store.districts().info.find((y) => y.id === x.district);
   if (!d) return '';
   const pr = x.problem as string, p = { district: districtName(d.name), n: fmt(x.n), share: x.share ?? 0, service: x.service ?? '', homes: x.homes ?? 0, gain: fmt(x.gain ?? 0) };
-  const body = pr === 'advice' ? T(x.gain ? 'ui.alert.advice.body' : 'ui.alert.adviceNoGain.body', p) : T(`ui.alert.${pr}.body`, p) + (x.more ? ` ${T('ui.alert.more', { n: x.more })}` : '');
-  return K.card({ title: esc(T(`ui.alert.${pr}.title`, p)), sub: esc(body), body: `<div class="acoes">${K.go(T('ui.alert.open'), { kind: 'district', id: x.district }, 'pri')}</div>` });
+  // an outlet alert says what stops the cargo
+  const key = pr === 'outlet' && x.cause ? `outlet.${x.cause}` : pr;
+  const body = pr === 'advice' ? T(x.gain ? 'ui.alert.advice.body' : 'ui.alert.adviceNoGain.body', p) : T(`ui.alert.${key}.body`, p) + (x.more ? ` ${T('ui.alert.more', { n: x.more })}` : '');
+  return K.card({ title: esc(T(`ui.alert.${key}.title`, p)), sub: esc(body), body: `<div class="acoes">${K.go(T('ui.alert.open'), { kind: 'district', id: x.district }, 'pri')}</div>` });
 }
 
 export function openAdvisor(): void {

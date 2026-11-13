@@ -11,6 +11,12 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Fixed
+
+- The advisor warned about a district's cargo only when it was lost on foot. It now warns whatever stops it (a store
+  with no gateway in reach, a full collection point or gateway, no buyer) and says which; the district screen lists
+  each cause, and for a store with no gateway it measures a waystation or a landing beside it.
+
 ## [1.0.0-beta.10] - 2026-11-12
 
 Districts as the colony's scope, smaller homes, eighteen levels and taxes the advisor suggests.

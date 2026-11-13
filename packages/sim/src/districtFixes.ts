@@ -103,6 +103,25 @@ export function* districtFixSteps(s: GameState, w: World, D: Districts, a: Distr
         fixes.sort((p, q) => (q.gain ?? 0) / Math.max(1, q.cost) - (p.gain ?? 0) / Math.max(1, p.cost)).splice(2);
       }
     }
+    // a store with no gateway in reach: a waystation or a landing beside it, with the vehicle it comes with
+    if (fixes.length < 2 && cause === 'noGateway') {
+      const stores = c.transport.commerce.filter((y) => !y.linked && y.lost > 1 && (!inside || inside(y.key))).map((y) => y.key);
+      const roles = TRANSPORT_ROLES as Partial<Record<BuildingId, { starter?: string }>>;
+      for (const t of (['waystation', 'landing'] as BuildingId[]).filter((x) => canHave(s, x) && !fixes.some((f) => f.building === x))) {
+        let best: { lot: LotKey; gain: number } | null = null;
+        for (const st of stores.slice(0, 2)) {
+          const [sx, sy] = st.split(',').map(Number) as [number, number];
+          const lots = lotsFor(s, w, t, 40).filter((k) => !s.map.buildings[k]).sort((p, q) => { const [pa, pb] = p.split(',').map(Number) as [number, number], [qa, qb] = q.split(',').map(Number) as [number, number]; return Math.hypot(pa - sx, pb - sy) - Math.hypot(qa - sx, qb - sy); }).slice(0, 6);
+          for (const lot of lots) {
+            const v = roles[t]?.starter;
+            const g = computeEconomy({ ...s, map: { ...s.map, buildings: { ...s.map.buildings, [lot]: t } }, fleet: v ? { ...s.fleet, [lot]: { [v]: 1 } } : s.fleet }, w).incomeTotal - c.incomeTotal; yield;
+            if (g > 10 && (!best || g > best.gain)) best = { lot, gain: g };
+          }
+        }
+        if (best) fixes.push({ action: { kind: 'buildAt', building: t, lot: best.lot }, building: t, n: 1, cost: costOf(t, s.milestone), gain: Math.round(best.gain) });
+      }
+      fixes.sort((p, q) => (q.gain ?? 0) / Math.max(1, q.cost) - (p.gain ?? 0) / Math.max(1, p.cost)).splice(2);
+    }
     out.outlet = { cause, lost: Math.round(lost[cause]), share: Math.round(a.reach * 100), fixes };
   }
   // ---- services: homes out of reach, and the free lot that covers most of them

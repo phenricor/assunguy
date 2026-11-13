@@ -26,6 +26,8 @@ export interface DistrictAccount {
   income: number;
   /** Share of the district's surplus that reaches a buyer, and arrobas lost on the way on foot. */
   reach: number; onFoot: number;
+  /** Arrobas a year that do not reach a buyer, by why. */
+  lostBy: { onFoot: number; collection: number; noGateway: number; gatewayFull: number; noBuyer: number };
   /** Upkeep a year of the district's buildings. */
   upkeep: number;
   /** What it makes most, by income. */
@@ -64,6 +66,7 @@ export function districtAccounts(s: GameState, w: World, c: Economy = computeEco
     const fams = d.homes.flatMap((h) => famByHome[h] ?? []);
     const idleN = fams.filter((f) => idle.has(f)).length;
     let jobs = 0, filled = 0, upkeep = 0, sent = 0, delivered = 0, onFoot = 0;
+    const lostBy = { onFoot: 0, collection: 0, noGateway: 0, gatewayFull: 0, noBuyer: 0 };
     const tot = { produced: 0, ownTable: 0, soldHere: 0, exported: 0, lost: 0, income: 0 };
     const byGood: Partial<Record<GoodId, { produced: number; income: number }>> = {};
     for (const k of d.buildings) {
@@ -72,7 +75,7 @@ export function districtAccounts(s: GameState, w: World, c: Economy = computeEco
       jobs += slotsOf(s, k); filled += c.counts.work.byBuilding[k]?.families.length ?? 0;
       upkeep += upkeepOf(t, s.milestone) * 4;
       const o = c.outlet[k];
-      if (o) { sent += o.sent; delivered += o.delivered; onFoot += o.lost.onFoot; }
+      if (o) { sent += o.sent; delivered += o.delivered; onFoot += o.lost.onFoot; for (const k of Object.keys(lostBy) as (keyof typeof lostBy)[]) lostBy[k] += o.lost[k]; }
       for (const [g, f] of Object.entries(share[k] ?? {}) as [GoodId, number][]) {
         const p = per(c.produced, g) * f, inc = per(c.income, g) * f;
         tot.produced += p; tot.ownTable += per(c.ownTable, g) * f; tot.soldHere += per(c.market, g) * f; tot.exported += per(c.exported, g) * f; tot.lost += per(c.lost, g) * f; tot.income += inc;
@@ -97,6 +100,7 @@ export function districtAccounts(s: GameState, w: World, c: Economy = computeEco
       satisfaction: rn ? round(rs / rn) : 0,
       produced: round(tot.produced), ownTable: round(tot.ownTable), soldHere: round(tot.soldHere), exported: round(tot.exported), lost: round(tot.lost), income: round(tot.income),
       reach: sent > 0 ? delivered / sent : 1, onFoot: round(onFoot),
+      lostBy: { onFoot: round(lostBy.onFoot), collection: round(lostBy.collection), noGateway: round(lostBy.noGateway), gatewayFull: round(lostBy.gatewayFull), noBuyer: round(lostBy.noBuyer) },
       upkeep: round(upkeep),
       goods: (Object.entries(byGood) as [GoodId, { produced: number; income: number }][]).map(([g, v]) => ({ good: g, produced: round(v.produced), income: round(v.income) })).sort((a, b) => b.income - a.income).slice(0, 4),
     };
