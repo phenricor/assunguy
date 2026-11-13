@@ -293,7 +293,9 @@ export const lawSlots = (s: GameState): number =>
 export function proposeTax(s: GameState, id: TaxId, law: TaxLaw | null): CommandResult {
   if (!hasCouncil(s)) return fail('noCouncil');
   const rates = law ? [law.general, ...Object.values(law.byGood ?? {})] : [];
-  if (rates.some((r) => !(r! >= 0 && r! <= 0.5))) return fail('badRate');
+  // shares up to half; the business licence is dollars a year from each business, up to $ 100
+  const max = id === 'businessTax' ? 100 : 0.5;
+  if (rates.some((r) => !(r! >= 0 && r! <= max))) return fail('badRate');
   s.pendingTaxes[id] = law ? { general: law.general, ...(law.byGood ? { byGood: { ...law.byGood } as Partial<Record<GoodId, number>> } : {}) } : null;
   log(s, 'proposed', { tax: id });
   return ok();

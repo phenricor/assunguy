@@ -6,6 +6,9 @@ import { generateWorld } from '../src/world.js';
 import districts from './fixtures/districts.json' with { type: 'json' };
 import seasons from './fixtures/seasons.json' with { type: 'json' };
 import { legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type Snap = { celula: Record<string, string>; info: { id: string; nome: string; cor: number; casas: string[]; centro: [number, number]; arraial: boolean }[]; lacos: Record<string, [number, number][][]> };
 const t = createTranslator('pt-BR');

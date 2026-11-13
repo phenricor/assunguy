@@ -1,10 +1,10 @@
 // The panels behind the bottom bar and the header: Colônia, Governo (with its detail tabs), Transporte,
 // Nível, Economia and a district's numbers. Same markup and pieces as the prototype's dashboards.
-import { BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
+import { topLevel, BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
   AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
-  askProvince, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
-  type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
+  askProvince, districtFixSteps, splitAdvice, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
+  type DistrictAccount, type Fix, type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
 import * as store from '../store';
 import { T, goodName, num, pct } from '../i18n';
@@ -12,6 +12,7 @@ import { api, hooks, PT } from '../view';
 import { K, esc, fmt, confirm, hint, signedMoney, ico, sheetWith, popup, closePopup } from './kit';
 import { refresh } from './app';
 import { screen, closeScreen, hooks2 } from './report';
+import { adviceCard } from './advisor';
 
 const COLORS = ['#23407A', '#14875A', '#A67C12', '#C2562B', '#8A5BB5', '#2F7F8A'];
 const short = (t: number) => `${T(`season.${seasonOf(t)}`).charAt(0)}${yearOf(t)}`;
@@ -36,7 +37,7 @@ export function openColony(): void {
     + (top.length ? K.cards(top.map((g) => K.card({ ic: icon(g), title: goodName(g), sub: T('ui.arrobasYear', { n: fmt(c.produced[g]) }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: trend(s, g), attrs: 'data-det="economy:goods"' }))) : '');
   if (districtsUnlocked(s)) {
     const D = store.districts();
-    if (D.info.length) body += dash(T('ui.colony.districts'), 'districts:', T('ui.colony.districts'), K.note(esc(T('ui.colony.districtsNote', { n: D.info.length })), 'neutra'), K.rows(D.info.slice(0, 6).map((d) => K.row(districtName(d.name), T('ui.homesN', { n: d.homes.length })))));
+    if (D.info.length) body += dash(T('ui.colony.districts'), 'districts:', T('ui.colony.districts'), K.note(esc(D.info.length === 1 ? T('ui.district.single') : T('ui.colony.districtsNote', { n: D.info.length })), 'neutra'), K.rows(store.accounts().slice(0, 6).map((a) => K.row(esc(districtName(a.name)), esc(T('ui.district.listSub', { families: a.families, idle: a.idle })), a.idle > a.families * 0.3 ? 'menos' : ''))));
   }
   const ser = (s.series ?? []).slice(-12) as SeriesPoint[];
   if (ser.length >= 2) body += dash(T('ui.colony.familiesTitle'), '', '', K.note(esc(T('ui.colony.idleNote', { n: ser.length ? Math.round(((ser.at(-1)!.idle) / Math.max(1, ser.at(-1)!.families)) * 100) : 0 })), 'neutra'), K.chart({ labels: ser.map((p) => short(p.t)), series: [{ name: T('ui.colony.inColony'), color: COLORS[0]!, values: ser.map((p) => p.families) }, { name: T('ui.colony.idle'), color: COLORS[3]!, values: ser.map((p) => p.idle) }] }));
@@ -191,7 +192,7 @@ export function openGovernment(tab?: string): void {
   const card = (title: string, right: string | number, sub: string, tone: string, inner: string, det: string) => K.card({ title, right, rightSub: sub, tone, body: inner, attrs: `data-det="direction:${det}"` });
   const last = (s.reports as SeasonReport[]).filter((r) => r.province).at(-1)?.province;
   const cards = [card(T('ui.gov.province'), last ? T(last.factor > 1 ? 'ui.gov.praise' : last.factor < 1 ? 'ui.gov.charge' : 'ui.gov.noChange') : '-', last ? T('ui.gov.lastReport') : T('ui.gov.firstSoon'), last && last.factor < 1 ? 'ruim' : last && last.factor > 1 ? 'bom' : '', K.rows([K.row(T('ui.gov.grantYear'), `$ ${fmt(y.grant)}`), K.row(T('ui.gov.share'), `$ ${fmt(y.share)}`)]), 'province')];
-  if (hasCouncil(s)) cards.push(card(T('ui.gov.taxes'), `$ ${fmt(y.taxes)}`, T('ui.perYearShort'), '', K.rows((['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => K.row(T(`ui.tax.${id}`), s.taxes[id] ? `${Math.round((s.taxes[id]!.general || 0) * 100)}%` : T('ui.gov.none')))), 'taxes'));
+  if (hasCouncil(s)) cards.push(card(T('ui.gov.taxes'), `$ ${fmt(y.taxes)}`, T('ui.perYearShort'), '', K.rows((['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => K.row(T(`ui.tax.${id}`), s.taxes[id] ? (id === 'businessTax' ? T('ui.gov.perBusiness', { n: Math.round(s.taxes[id]!.general || 0) }) : `${Math.round((s.taxes[id]!.general || 0) * 100)}%`) : T('ui.gov.none')))), 'taxes'));
   const going = GREAT_WORK_IDS.find((id) => s.greatWorks[id]?.active && !s.greatWorks[id]?.done), avail = GREAT_WORK_IDS.filter((id) => workOpen(s, id));
   if (going || avail.length) { const g = going ?? avail[0]!, G = GREAT_WORKS[g], st = s.greatWorks[g]; cards.push(card(T('ui.gov.works'), T(`greatWork.${g}`), going ? T('ui.gov.workProgress', { n: st?.paid ?? 0, of: G.seasons }) : T('ui.gov.canStart'), going ? '' : 'bom', going ? K.bar((st?.paid ?? 0) / G.seasons) : '', 'works')); }
   if (hasCouncil(s)) cards.push(card(T('ui.gov.laws'), `${Object.keys(s.laws).length + Object.keys(s.pendingLaws).length}/${lawSlots(s)}`, T('ui.gov.inUse'), '', '', 'laws'));
@@ -225,8 +226,9 @@ export function openDirection(tab = 'province'): void {
     const eff = taxEffect(s, w);
     body = K.tiles([{ v: `$ ${fmt(store.economy().revenue.total)}`, r: T('ui.gov.taxesYear') }, { v: eff.familiesAtRisk, r: T('ui.gov.atRisk'), bad: eff.familiesAtRisk > 0 }])
       + (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).map((id) => {
-        const cur = Math.round(((s.pendingTaxes[id] !== undefined ? s.pendingTaxes[id]?.general : s.taxes[id]?.general) ?? 0) * 100);
-        return K.section(T(`ui.tax.${id}`), `tax_${id}`) + K.chips([0, 5, 8, 10, 15, 20].map((v) => [String(v), v ? `${v}%` : T('ui.gov.none')] as [string, string]), String(cur), `tax-${id}`) + (s.pendingTaxes[id] !== undefined ? K.note(esc(T('ui.gov.pending')), 'neutra') : '');
+        // the business licence is an amount a year from each store and market; the others are shares
+        const money = id === 'businessTax', raw = (s.pendingTaxes[id] !== undefined ? s.pendingTaxes[id]?.general : s.taxes[id]?.general) ?? 0, cur = Math.round(money ? raw : raw * 100);
+        return K.section(T(`ui.tax.${id}`), `tax_${id}`) + K.chips((money ? [0, 10, 20, 40, 60] : [0, 5, 8, 10, 15, 20]).map((v) => [String(v), !v ? T('ui.gov.none') : money ? T('ui.gov.perBusiness', { n: v }) : `${v}%`] as [string, string]), String(cur), `tax-${id}`) + (s.pendingTaxes[id] !== undefined ? K.note(esc(T('ui.gov.pending')), 'neutra') : '');
       }).join('');
   } else if (tab === 'laws' && hasCouncil(s)) {
     body = K.note(esc(T('ui.gov.lawSlots', { n: Object.keys(s.laws).length + Object.keys(s.pendingLaws).length, of: lawSlots(s) })), 'neutra')
@@ -253,7 +255,7 @@ export function openDirection(tab = 'province'): void {
   });
   p.querySelectorAll<HTMLElement>('[data-law]').forEach((b) => { b.onclick = () => { if (store.run((x, y) => toggleLaw(x, y, b.dataset.law as string))) { refresh(); openDirection('laws'); } }; });
   p.querySelectorAll<HTMLElement>('[data-work]').forEach((b) => { b.onclick = () => { const id = b.dataset.work as GreatWorkId, on = !s.greatWorks[id]?.active, G = GREAT_WORKS[id]; confirm(T(on ? 'ui.gov.startWork' : 'ui.gov.stopWork', { work: id }), on ? [K.row(T('ui.gov.instalment'), `$ ${fmt(G.cost / G.seasons)}`), K.row(T('ui.seasons'), G.seasons)] : [], T(on ? 'ui.gov.start' : 'ui.gov.stop'), () => { if (store.run((x) => setGreatWork(x, id, on))) { refresh(); openDirection('works'); } }); }; });
-  (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).forEach((id) => p.querySelectorAll<HTMLElement>(`[data-tax-${id}]`).forEach((b) => { b.onclick = () => { const v = Number(b.getAttribute(`data-tax-${id}`)) / 100; if (store.run((x) => proposeTax(x, id, v ? { general: v } : null))) { refresh(); openDirection('taxes'); hint(T('ui.gov.proposed'), 2600); } }; }));
+  (['tithe', 'exportDuty', 'businessTax'] as TaxId[]).forEach((id) => p.querySelectorAll<HTMLElement>(`[data-tax-${id}]`).forEach((b) => { b.onclick = () => { const v = Number(b.getAttribute(`data-tax-${id}`)) / (id === 'businessTax' ? 1 : 100); if (store.run((x) => proposeTax(x, id, v ? { general: v } : null))) { refresh(); openDirection('taxes'); hint(T('ui.gov.proposed'), 2600); } }; }));
   const ag = p.querySelector<HTMLElement>('#agent');
   if (ag) ag.onclick = () => { if (store.run((x) => setAgent(x, !s.immigrationAgent))) { refresh(); openDirection('immigration'); } };
 }
@@ -287,7 +289,7 @@ function raceBlock(s: GameState): string {
     return K.card({ title: T(`ui.race.dest.${d}`), sub: `${T('ui.race.rival', { cost: num(rivalCost(s, d), 2) })}; ${ours === null ? T('ui.race.none') : T('ui.race.ours', { cost: num(ours, 2) })}`, right: ours === null ? '-' : `${Math.round(cp * 100)}%`, rightSub: T('ui.race.comp'), tone: ours === null ? '' : cp >= 1 ? 'bom' : cp < 0.8 ? 'ruim' : '' });
   });
   const nx = nextAdvance(s), leading = (Object.keys(comp) as (keyof typeof comp)[]).filter((d) => (c.transport.destVolume[d] ?? 0) > 0 && comp[d] >= 1).length;
-  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', s.level >= 12 && R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning })), 'bom') : K.note(esc(T('ui.race.goal', { n: leading })), 'neutra')].join('');
+  const notes = [nx ? K.note(esc(`${T('ui.race.next')}: ${T('ui.race.inSeasons', { n: nx.at - raceTime(s), what: T(`ui.race.advance.${nx.key}`) })}`), 'neutra') : '', R.decline ? K.note(esc(T('ui.race.decline', { n: R.decline.left })), 'ruim') : '', s.level >= topLevel() && R.winning ? K.note(esc(T('ui.race.winning', { n: R.winning })), 'bom') : K.note(esc(T('ui.race.goal', { n: leading, top: topLevel() })), 'neutra')].join('');
   return K.section(T('ui.race.title'), 'race') + K.cards(cards) + notes;
 }
 
@@ -296,7 +298,7 @@ function raceBlock(s: GameState): string {
 export function openLevel(): void {
   const { s, w } = store.session(), c = store.economy(), n = s.level + 1, next = LEVELS.find((l) => l.level === n);
   const target = MILESTONES[s.milestone + 1], left = s.deadline - s.market.t;
-  const item = (g: GoalItem) => K.row(goalLabel(g), g.kind === 'road' ? (g.ok ? T('ui.yes') : T('ui.no')) : `${fmt(g.current)} / ${fmt(g.target)}`, g.ok ? 'mais' : 'menos');
+  const item = (g: GoalItem) => K.row(goalLabel(g), g.kind === 'road' ? (g.ok ? T('ui.yes') : T('ui.no')) : g.kind === 'idle' ? T('ui.goal.atMost', { n: g.current, max: g.target }) : `${fmt(g.current)} / ${fmt(g.target)}`, g.ok ? 'mais' : 'menos');
   let body = `<div class="medalha"><b>${s.level}</b><small>${esc(T('ui.level.level'))}</small></div>`;
   if (next) {
     const req = levelRequirements(s, w, n, c);
@@ -315,33 +317,114 @@ export function openLevel(): void {
 }
 function goalLabel(g: GoalItem): string {
   switch (g.kind) {
-    case 'families': return T('ui.goal.families');
+    case 'families': return T(BALANCE.milestoneWorkers ? 'ui.goal.workingFamilies' : 'ui.goal.families');
     case 'road': return T('ui.goal.road');
     case 'lands': return T('ui.goal.lands');
     case 'satisfaction': return T('ui.goal.satisfaction');
     case 'building': return T(`building.${g.building}`);
     case 'workers': return T('ui.goal.workers');
     case 'income': return T('ui.goal.income');
+    case 'idle': return T('ui.goal.idle');
+    case 'districts': return T('ui.goal.districts');
   }
 }
 
 // ---- districts
 
 export function openDistricts(): void {
-  const D = store.districts();
-  screen({ id: 'districts', title: T('ui.colony.districts'), body: K.cards(D.info.map((d) => K.card({ title: districtName(d.name), sub: T('ui.homesN', { n: d.homes.length }), attrs: `data-district="${d.id}"` }))) });
+  const A = store.accounts();
+  const body = (A.length === 1 ? K.note(esc(T('ui.district.single')), 'neutra') : '') + K.cards(A.map((a) => K.card({ title: esc(districtName(a.name)), sub: esc(T('ui.district.listSub', { families: a.families, idle: a.idle })), right: `$ ${fmt(a.income)}`, rightSub: esc(T('ui.perYearShort')), tone: a.idle > a.families * 0.3 ? 'menos' : '', attrs: `data-district="${a.id}"` })));
+  screen({ id: 'districts', title: T('ui.colony.districts'), body });
   document.querySelectorAll<HTMLElement>('[data-district]').forEach((b) => { b.onclick = () => openDistrict(b.dataset.district as string); });
 }
 export function openDistrict(id: string | { id: string }): void {
-  const key = typeof id === 'string' ? id : id.id, D = store.districts(), d = D.info.find((x) => x.id === key);
-  if (!d) return;
-  const r = store.ratings();
-  const homes = d.homes.map((h) => r.homes[h]).filter(Boolean);
-  const mean = homes.length ? Math.round(homes.reduce((x, h) => x + h!.rating, 0) / homes.length) : 0;
-  const missing: Record<string, number> = {};
-  for (const h of homes) for (const i of h!.items) if (i.kind === 'outOfReach') missing[i.service] = (missing[i.service] ?? 0) + 1;
-  closeScreen();
-  sheetWith(districtName(d.name), T('ui.homesN', { n: d.homes.length }), K.rows([K.row(T('ui.satisfaction'), mean), ...Object.entries(missing).map(([sv, n]) => K.row(T('ui.rating.outOfReach', { service: sv }), `${n}/${homes.length}`, 'menos'))]));
+  // the district as one scope: a dashboard of its numbers, and in each section why what is red happens and one or
+  // two ways out (measured after the screen opens)
+  const key = typeof id === 'string' ? id : id.id, A = store.accounts(), a = A.find((x) => x.id === key);
+  if (!a) return;
+  const ay = (n: number) => T('ui.arrobasYear', { n: fmt(n) });
+  const idlePct = a.families ? Math.round((a.idle / a.families) * 100) : 0, reach = Math.round(a.reach * 100);
+  const tiles = K.tiles([
+    { v: a.families, r: T('ui.district.tFamilies') },
+    { v: `${idlePct}%`, r: T('ui.district.tIdle'), bad: idlePct > 30 },
+    { v: `$ ${fmt(a.income)}`, r: T('ui.district.tIncome') },
+    { v: a.satisfaction, r: T('ui.district.tSat'), bad: a.satisfaction < 60 },
+    { v: `${reach}%`, r: T('ui.district.tReach'), bad: reach < 85 },
+  ]);
+  const work = Math.max(0, a.produced - a.ownTable - a.soldHere - a.exported - a.lost);
+  const parts = [
+    { name: T('ui.district.soldHere'), value: a.soldHere, color: COLORS[1]! }, { name: T('ui.district.exported'), value: a.exported, color: COLORS[0]! },
+    { name: T('ui.district.ownTable'), value: a.ownTable, color: COLORS[2]! }, { name: T('ui.district.processed'), value: work, color: '#8A5BB5' },
+    { name: T('ui.district.lost'), value: a.lost, color: COLORS[3]! },
+  ].filter((x) => x.value > 0);
+  const tot = { fam: A.reduce((x, y) => x + y.families, 0), inc: A.reduce((x, y) => x + y.income, 0) };
+  const SERV = ['water', 'faith', 'school', 'health', 'commerce'] as const;
+  const red = (a.idle > 0 && a.filled >= a.jobs) || reach < 85 || a.satisfaction < 60 || Object.keys(a.missing).length > 0;
+  const body = tiles
+    + (red ? '' : K.note(esc(T('ui.district.allGood')), 'bom'))
+    + K.section(esc(T('ui.district.people'))) + K.rows([
+      K.row(esc(T('ui.district.working')), a.working),
+      K.row(esc(T('ui.district.idle')), a.idle, a.idle > a.families * 0.3 ? 'menos' : ''),
+      K.row(esc(T('ui.district.jobs')), esc(T('ui.district.jobsOf', { filled: a.filled, jobs: a.jobs }))),
+    ]) + '<div id="fix-jobs"></div>'
+    + (a.homes ? K.section(esc(T('ui.district.services'))) + '<div id="fix-sat"></div>' + K.rows(SERV.map((sv) => { const m = a.missing[sv] ?? 0, f = (a.homes - m) / a.homes; return K.row(esc(T(`service.${sv}`)), `${K.bar(f, f < 0.7 ? '#C2562B' : '#2E6B3E')} ${esc(T('ui.district.covered', { n: a.homes - m, of: a.homes }))}`, f < 0.7 ? 'menos' : ''); })) + '<div id="fix-services"></div>' : '')
+    + (a.produced > 0 ? K.section(esc(T('ui.district.whereGoes'))) + K.pie({ parts, centre: fmt(a.produced), centreSub: T('ui.arrobasYearShort') })
+      + (a.goods.length ? K.cards(a.goods.map((g) => K.card({ ic: icon(g.good), title: esc(goodName(g.good)), sub: esc(ay(g.produced)), right: `$ ${fmt(g.income)}`, rightSub: esc(T('ui.perYearShort')) }))) : '') : '')
+    + K.section(esc(T('ui.district.outlet'))) + K.rows([
+      K.row(esc(T('ui.district.reach')), `${reach}%`, reach < 85 ? 'menos' : ''),
+      K.row(esc(T('ui.district.lostOnFoot')), esc(ay(a.onFoot)), a.onFoot > 20 ? 'menos' : ''),
+      K.row(esc(T('ui.district.upkeep')), `$ ${fmt(a.upkeep)}`),
+      K.row(esc(T('ui.district.inColony')), esc(T('ui.district.inColonyValue', { families: tot.fam ? Math.round((a.families / tot.fam) * 100) : 0, income: tot.inc ? Math.round((a.income / tot.inc) * 100) : 0 }))),
+    ]) + '<div id="fix-outlet"></div><div id="fix-more"></div>';
+  const p = screen({ id: `district:${key}`, title: districtName(a.name), sub: T('ui.district.sub', { homes: a.homes, buildings: a.buildings }), body });
+  startFixes(p, a);
+}
+
+// ---- why each red number happens and the ways out, measured a few steps per frame after the screen opens
+
+let fixRun = 0;
+// an option: what to do and what it brings, with the button beside it
+const fixCard = (title: string, sub: string, action: unknown) => `<div class="cartao fix-op"><div><b>${esc(title)}</b><small>${esc(sub)}</small></div>${K.go(T('ui.do'), action, 'pri')}</div>`;
+const bname = (t: BuildingId, n = 1) => T(n > 1 ? `building.${t}.plural` : `building.${t}`);
+function fixCards(list: Fix[]): string {
+  return `<div class="fix-ops">${list.map((f) => {
+    const act = f.action as { kind: string };
+    if (f.advice) { const p = { at: f.advice.params.key ?? '', ...f.advice.params, advisor: store.session().meta.advisor }; return fixCard(T(`advice.${f.advice.rule}.title`, p), T(`advice.${f.advice.rule}.body`, p), f.action); }
+    const t = f.building as BuildingId, eff = f.jobs ? T('ui.fix.jobsEffect', { jobs: f.jobs, gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) }) : T('ui.fix.gainEffect', { gain: signedMoney(f.gain ?? 0), cost: fmt(f.cost) });
+    if (act.kind === 'buildLots') return fixCard(T('ui.fix.lots', { n: f.n ?? 1, what: bname(t, f.n) }), eff, f.action);
+    const up = act.kind === 'select' && (f.action as { upgrade?: boolean }).upgrade;
+    if (up && f.covers !== undefined) return fixCard(T('ui.fix.upgrade', { building: t }), T('ui.fix.upgradeCovers', { n: f.covers, cost: fmt(f.cost) }), f.action);
+    if (up) return fixCard(T('ui.fix.upgrade', { building: t }), eff, f.action);
+    if (act.kind === 'select') return fixCard(T('ui.fix.see', { building: t }), T('ui.fix.move'), f.action);
+    if (f.covers !== undefined) return fixCard(T('ui.fix.here', { building: t }), T('ui.fix.covers', { n: f.covers, cost: fmt(f.cost) }), f.action);
+    return fixCard(T('ui.fix.here', { building: t }), eff, f.action);
+  }).join('')}</div>`;
+}
+function startFixes(p: HTMLElement, a: DistrictAccount): void {
+  const { s, w } = store.session(), D = store.districts();
+  const { byDistrict } = splitAdvice(store.advice().filter((x) => x.weight > 0), D);
+  const mine = byDistrict[a.id] ?? [];
+  const run = ++fixRun, gen = districtFixSteps(s, w, D, a, mine, store.economy(), store.ratings());
+  const put = (id: string, html: string) => { const b = p.querySelector<HTMLElement>(`#${id}`); if (b) b.innerHTML = html; };
+  const why = (txt: string) => `<p class="nota neutra fix-why">${esc(txt)}</p>`;
+  const tick = () => {
+    if (run !== fixRun || !p.querySelector('#fix-jobs')) return;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 24) {
+      const r = gen.next();
+      if (!r.done) continue;
+      const f = r.value, used = new Set<unknown>();
+      if (f.jobs) put('fix-jobs', why(T('ui.fix.jobs.why', { jobs: f.jobs.jobs, idle: f.jobs.idle }) + (f.jobs.outsiders ? ` ${T('ui.fix.jobs.outsiders', { n: f.jobs.outsiders })}` : '')) + (f.jobs.fixes.length ? fixCards(f.jobs.fixes) : why(T('ui.fix.jobs.none'))));
+      if (f.satisfaction?.reasons.length) put('fix-sat', why(T('ui.fix.sat.why', { reasons: f.satisfaction.reasons.map((x) => (x.kind === 'nuisance' ? T('ui.fix.sat.nuisance', { building: x.building ?? '', n: x.homes }) : T('ui.fix.sat.service', { service: x.service ?? '', n: x.homes }))).join('; ') })) + (f.satisfaction.fixes.length ? fixCards(f.satisfaction.fixes) : ''));
+      if (f.services.length) put('fix-services', f.services.map((x) => why(T('ui.fix.service.why', { n: x.n, homes: x.homes, service: x.service })) + (x.fixes.length ? fixCards(x.fixes) : why(T('ui.fix.service.none')))).join(''));
+      if (f.outlet) { f.outlet.fixes.forEach((x) => used.add(x.advice)); put('fix-outlet', why(T(`ui.fix.outlet.${f.outlet.cause}`, { n: fmt(f.outlet.lost) })) + (f.outlet.fixes.length ? fixCards(f.outlet.fixes) : why(T('ui.fix.outlet.none')))); }
+      const rest = mine.filter((x) => !used.has(x) && x.weight >= 40).sort((p2, q) => q.weight - p2.weight).slice(0, 2);
+      if (rest.length) put('fix-more', K.section(esc(T('ui.district.more'))) + K.cards(rest.map(adviceCard)));
+      return;
+    }
+    setTimeout(tick, 0);
+  };
+  setTimeout(tick, 30);
 }
 
 export const _x = { def, ico, PATH_CHOICES };

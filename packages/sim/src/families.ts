@@ -48,11 +48,17 @@ export function newFamily(s: Pick<GameState, 'greatWorks'> | null, id: FamilyId,
 }
 
 /** Home slots that exist, in building order. */
-export function homeSlots(s: Pick<GameState, 'map'>): FamilyId[] {
+export function homeSlots(s: Pick<GameState, 'map'> & Partial<Pick<GameState, 'families'>>): FamilyId[] {
   const out: FamilyId[] = [];
   for (const key of Object.keys(s.map.buildings) as LotKey[]) {
     const h = def(s.map.buildings[key] as BuildingId).housing;
     if (h) for (let n = 0; n < h; n++) out.push(`${key}#${n}`);
+  }
+  // homes from before they were made smaller keep the families they had; a place over the home's size goes
+  // when its family leaves
+  if (s.families) for (const id of Object.keys(s.families) as FamilyId[]) {
+    const [key, n] = id.split('#') as [LotKey, string], h = def((s.map.buildings[key] ?? 'hut') as BuildingId).housing;
+    if (h && s.map.buildings[key] && Number(n) >= h) out.push(id);
   }
   return out;
 }

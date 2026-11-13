@@ -165,7 +165,7 @@ export function rateHomes(s: GameState, w: World): Ratings {
         if (sv === 'health') health = true;
       } else if (sv === 'water' && naturalWater(s, a, b)) {
         const v = SERVICE_VALUE.water - 2; rating += v; items.push({ kind: 'naturalWater', source: naturalWater(s, a, b) as 'brook', value: v }); water = true;
-      } else if (sv !== 'culture' || s.level >= 12) items.push({ kind: 'outOfReach', service: sv });
+      } else if (sv !== 'culture' || s.level > (BUILDINGS.theater.minLevel ?? 1)) items.push({ kind: 'outOfReach', service: sv });
     }
     for (const g of WANTS[t] ?? []) { const found = (s.supply[g] ?? 0) > 0.5; if (found) rating += 2; items.push({ kind: 'forSale', good: g, found, value: found ? 2 : 0 }); }
     let penalty = 0;

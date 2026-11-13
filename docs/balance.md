@@ -73,3 +73,54 @@ Income at 72 averages $ 8.010 a year (was $ 7.250); waste, 28% (was 25%), higher
 Over 130 seasons (`pnpm balance`), the village is still reached in 1 of 6 runs (seed 4242, patient, season 79, was
 99); the rest end at its deadline, now earlier because the parish comes earlier. The village (180 families, four
 lands, more services) is the next thing to review.
+
+## Rebalance on districts (November 2026)
+
+Aim: a full game of 2 to 3 hours (about 240 seasons), unemployment around 25% at most, and a city that fills its
+map. Changes, with the prototype's values in `packages/sim/test/fixtures/prototype-rules.json` (the golden tests
+run on them through `test/prototypeRules.ts`):
+
+- Homes hold 1, 2, 3 and 4 families (hut, house, whitewashed house, townhouse; they held 2, 4, 5 and 6). The
+  colony starts in four houses with eight families (`BALANCE.smallHomes`).
+- 18 levels: hamlet 1 to 4, parish 5 to 8, village 9 to 13, town 14 to 18. Unlocks are spread over them; the
+  council moves to level 7 so taxes come before the village's costs. Levels 8, 12, 16 and 18 ask for 2, 3, 4 and 5
+  districts; 10, 13 and 17 for at most 30%, 25% and 25% of families without work.
+- Milestones count families at work (`BALANCE.milestoneWorkers`): parish 44 in 40 seasons, village 90 in 56,
+  town 190 in 72.
+- Advisor: it aims at the jobs the next level really asks for, suggests homes when a level lacks families for its
+  jobs (`levelFamilies`), suggests a tithe a point above the milestone's satisfaction (`BALANCE.titheSpare`, was 3),
+  and brings the road forward from two levels before the town.
+
+Robot, patient policy, up to 280 seasons (season each level was reached; the game starts at 12):
+
+| Seed | Parish (5) | Village (9) | Level 13 | Town (14) | Level 15 | Mean idle |
+|---|---|---|---|---|---|---|
+| 1869 | 36 | 79 | 151 | missed (165) | - | 22% |
+| 4242 | 37 | 79 | 111 | 165 (extra time) | 166 | 18% |
+| 777 | 36 | 75 | 118 | 126 | 143 | 18% |
+
+Before (twelve levels, big homes, milestones counting every family): parish at 37 to 41 when reached, the village
+reached once (79), idle 30% to 40%. Greedy robots still miss the village: they never save for the market.
+
+The town needs the road to Curitiba (lands south, then a street to the edge); the advisor now asks for it from two
+levels before, and prefers lands on its way.
+
+Taxes (later the same day). The advisor suggested only the tithe, held satisfaction at 61 after the town and then
+took every tax off a colony in the red; the patient robot skipped taxes while saving for something dear. Now the
+export duty is suggested too, the floor after the town is 50, a colony in the red is not told to lower taxes, and
+the robot takes advice that costs nothing. Seed 777 after the town: tithe and duty at 20%, cash from $ 1,800 to
+$ 6,000 and $ 1,500 to $ 2,000 a season over upkeep of $ 1,100 to $ 1,600 (it went below zero within 4 seasons before).
+
+| Seed | Village (9) | Town (14) | Level 15 | End |
+|---|---|---|---|---|
+| 1869 | 74 | missed (the road was not done by 151) | - | 156 |
+| 4242 | 76 | 138 | 139 | race lost at 183 |
+| 777 | 75 | 126 | 138 | race lost at 172 |
+
+The race is now lost to the rivals, not the purse: about 20 seasons after the town the rivals' advances take the
+colony's markets (competitiveness under 80%), income falls by a third, and families leave on the race's departure
+rule (240 to 64 in 12 seasons) until the cash goes below zero. The robot does not build rails or trains, so this
+says little about a player; but the departures are steep, and worth a look when the race is balanced.
+
+The late levels are set from the player's save (year 28, season 121: 514 families in big homes, about 278 at
+work, $ 30,000 a year), which on the new rules sits at level 14 and would need about twice the homes to reach 18.

@@ -4,6 +4,9 @@ import { newGame } from '../src/game.js';
 import { passSeason } from '../src/season.js';
 import fixture from './fixtures/newGame.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 const B = LEGACY.buildings as Record<string, string>;
 const near = (a: number, b: number, what: string) => expect(Math.abs(a - b), `${what}: ${a} vs ${b}`).toBeLessThanOrEqual(1e-6 * Math.max(1, Math.abs(b)));

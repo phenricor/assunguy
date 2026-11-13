@@ -3,6 +3,9 @@ import { rateHomes, taxEffect, updateRatings, type RatingItem } from '../src/rat
 import { generateWorld } from '../src/world.js';
 import fixture from './fixtures/ratings.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 interface Case {
   state: Record<string, unknown>; media: number; fams: number; saude: number; lig: string[];

@@ -1,7 +1,7 @@
 // Passing a season: the purse, laws coming into force, the market, relief works, families, savings and
 // upgrades, ratings, the province report, events, great works, city problems, long crises, transport,
 // caves, goals and the report. One command, deterministic given the state.
-import { LEVELS, MILESTONES, type BuildingId, type MilestoneDef } from '@assunguy/data';
+import { topLevel, LEVELS, MILESTONES, type BuildingId, type MilestoneDef } from '@assunguy/data';
 import { allocate, computeEconomy, type Economy } from './economy.js';
 import { advanceLongCrises, advanceProblems, chronicle, draw, rollEvents, teachersCollege, PATH_CHOICES, type News } from './events.js';
 import { childrenMarry, familiesInvest, passFamilies, syncFamilies, updateSupply } from './families.js';
@@ -142,7 +142,7 @@ export function passSeason(s: GameState, w: World): SeasonReport {
   for (const e of s.market.shocks) if (e.good !== '_port' && e.kind !== 'price' && e.seasonsLeft >= 3) news.push({ key: 'news.shock', params: { reason: e.reason, ...(e.reasonParams ?? {}), share: Math.round((1 - e.factor) * 100), seasons: e.seasonsLeft, kind: e.kind } });
   const goal = checkGoals(s, w, c);
   if (goal?.missed) s.queue.unshift(goal.misses && goal.misses >= 2 ? { kind: 'end', milestone: goal.missed } : { kind: 'inspector', milestone: goal.missed });
-  if (goal?.levelUp === 12) s.queue.push({ kind: 'victory' });
+  if (goal?.levelUp === topLevel()) s.queue.push({ kind: 'victory' });
   if (province) { if (province.factor > 1 && s.market.t % 4 === 0) s.influence = Math.max(0, Math.min(15, s.influence + 1)); else if (province.factor < 1) s.influence = Math.max(0, Math.min(15, s.influence - 1)); }
   { const n = s.level + 1, lv = LEVELS.find((l) => l.level === n); s.progress = lv ? Math.min(1, Math.min(allocate(s).employed / lv.workers, c.incomeTotal / lv.income)) : 1; }
   s.series = [...(s.series ?? []), seriesPoint(s, c)].slice(-60);

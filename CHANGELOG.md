@@ -11,6 +11,47 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.10] - 2026-11-12
+
+Districts as the colony's scope, smaller homes, eighteen levels and taxes the advisor suggests.
+
+### Changed
+
+- Districts are the colony's working scope from the first season: each holds its homes and the production around
+  them, with its own accounts (families at work and idle, jobs, services, satisfaction, what it makes and how much
+  of it reaches a buyer). The first district is the Colony; it becomes the Centre when a second is born. The advisor
+  keeps the colony's own matters and points to a district only when something there is critical; each district's
+  screen shows why a section is red and one or two measured ways out, upgrades weighed against new works.
+- Smaller homes: a hut holds 1 family, a house 2, a whitewashed house 3 and a townhouse 4 (they held 2, 4, 5 and 6).
+  The colony starts in four houses, with eight families. Homes in older saves keep the families they have; the place
+  goes when its family leaves.
+- Eighteen levels instead of twelve: hamlet 1 to 4, parish 5 to 8, village 9 to 13, town 14 to 18. Unlocks are spread
+  over the new levels (the council comes at level 7, so taxes come before the village). Some levels also ask for a
+  number of districts, or for at most a share of families without work; level 18 wins, and the race counts from it.
+- Milestones count families at work, not all families: the parish asks for 44, the village 90 and the town 190, within
+  40, 56 and 72 seasons.
+- The advisor aims at the jobs the next level really asks for (its families at work, the milestone's, or enough to keep
+  the share without work under the level's limit), suggests homes when a level lacks the families to fill its jobs,
+  and suggests a tithe while satisfaction stays a point above the milestone's (it kept three).
+- The notebook, the plan and the race quote their numbers from the game's tables, so they follow the balance.
+- The advisor also suggests the export duty (first, more, or less when it weighs on satisfaction), measured with the
+  tithe as it is, and its confirmation shows the rate as a percentage.
+- After the town the advisor suggests taxes down to satisfaction 50 (it held to 60, then took every tax off a
+  colony in the red); with the purse in the red it keeps only what saves the province's score and does not ask to
+  lower taxes.
+- The business licence is set in dollars a year from each store and market ($ 10 to $ 60), as the economy counts
+  it; the screen offered it as a share, so 20% charged $ 0.20.
+
+### Fixed
+
+- The advice to put a collection point on far fields measured it with two vehicles while it buys one.
+
+### Saves
+
+- Save format 2: levels of older saves move to the level with the same standing (4 to 5, 7 to 9, 10 to 14, 12 to 18),
+  and so do the path choices.
+  A business licence set as a share becomes that many dollars a business (20% becomes $ 20).
+
 ## [1.0.0-beta.9] - 2026-11-12
 
 Goals and race advice that say what to do, the advisor's notebook, and steamers and trains on the map.
@@ -204,7 +245,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...HEAD
+[1.0.0-beta.10]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...v1.0.0-beta.10
 [1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9
 [1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8
 [1.0.0-beta.7]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.6...v1.0.0-beta.7

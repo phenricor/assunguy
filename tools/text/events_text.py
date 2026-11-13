@@ -109,8 +109,8 @@ EV = {
   ('Decree of the province', '{colony} is now a {milestone}!', 'Bells, fireworks and a lot of talk at the store door.', [('Priest', 'This calls for a celebration, sir.'), (A, 'And a budget.')],
    [('Celebrate in the square', '−$ 150; satisfaction +8', 'became a {milestone} and celebrated.'), ('Keep the money', 'Satisfaction +2', 'became a {milestone} without a celebration.')])),
  'victory': (
-  ('Decreto da província', 'Cidade consolidada', 'A colônia chegou ao nível 12. O que era um barranco de rio agora é uma cidade.', [], [('Continuar governando', '', ''), ('Nova colônia', '', '')]),
-  ('Decree of the province', 'A city at last', 'The colony reached level 12. What was a riverbank is now a city.', [], [('Keep governing', '', ''), ('New colony', '', '')])),
+  ('Decreto da província', 'Cidade consolidada', 'A colônia chegou ao nível {level}. O que era um barranco de rio agora é uma cidade.', [], [('Continuar governando', '', ''), ('Nova colônia', '', '')]),
+  ('Decree of the province', 'A city at last', 'The colony reached level {level}. What was a riverbank is now a city.', [], [('Keep governing', '', ''), ('New colony', '', '')])),
  'inspector': (
   ('Decreto da província', 'A província mandou um inspetor', 'O prazo para virar {milestone} acabou e a colônia não chegou lá. O inspetor assume as contas: a verba cai pela metade até a meta ser cumprida, a meta passa a pedir 10% mais famílias e há só mais 2 anos. Se falhar de novo, a província encerra a colônia.', [('Inspetor da província', 'Vim ver para onde foi o dinheiro, senhor diretor.')],
    [('Aceitar as condições', 'Verba −50%; influência −3; satisfação −5', 'recebeu o inspetor da província por não virar {milestone}.'), ('Convencer o inspetor', '6 de influência e $ 500; meta +10% famílias; mais 2 anos', 'convenceu o inspetor a manter a verba.')]),

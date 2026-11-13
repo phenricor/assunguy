@@ -9,6 +9,9 @@ import advice from './fixtures/advice.json' with { type: 'json' };
 import seasons from './fixtures/seasons.json' with { type: 'json' };
 import variants from './fixtures/adviceVariants.json' with { type: 'json' };
 import { LEGACY, legacyState } from './legacy.js';
+import { applyPrototypeRules } from './prototypeRules.js';
+
+applyPrototypeRules();
 
 type LegacyAdvice = { w: number; tit: string; sub: string; ac: Record<string, any> | null };
 const B = LEGACY.buildings as Record<string, string>, V = LEGACY.vehicles as Record<string, string>;
@@ -35,7 +38,13 @@ function action(ac: LegacyAdvice['ac']): AdviceAction | null {
 }
 /** Prototype advice the port replaced with measured advice of its own. */
 const PORTED_AWAY = (tit: string) => /(roças sem comércio|produção sem captação|sem vaga|sem veículos|sem porta)$/.test(tit);
-const MEASURED = new Set(['noCollection', 'noSlot', 'noVehicles.collection', 'noVehicles.gateway', 'noGateway', 'levelWorkers']);
+const MEASURED = new Set(['noCollection', 'noSlot', 'noVehicles.collection', 'noVehicles.gateway', 'noGateway', 'levelWorkers', 'levelWorkers.upgrade', 'idle.upgrade', 'service.upgrade']);
+const SERVICE_BUILDINGS = new Set(['chapel', 'school', 'apothecary', 'store', 'well', 'theater']);
+/** Where an upgrade now beats the new building the prototype advised, the prototype's advice is left out (beta.10). */
+const replacedBy = (all: { rule: string; weight: number }[]) => {
+  const idle = all.some((x) => x.rule === 'idle.upgrade'), sw = new Set(all.filter((x) => x.rule === 'service.upgrade').map((x) => x.weight.toFixed(6)));
+  return (x: { tit: string; w: number }, a: AdviceAction | null) => (idle && /^\d+ famílias sem trabalho$/.test(x.tit) && a?.kind === 'build') || (a?.kind === 'build' && SERVICE_BUILDINGS.has(a.building) && sw.has(x.w.toFixed(6)));
+};
 /** The list keeps one advice per building: a building the jobs advice names leaves the prototype's for it out. */
 const takenBy = (all: { rule: string; action: AdviceAction | null }[]) => {
   const b = new Set(all.filter((x) => x.rule === 'levelWorkers' && x.action?.kind === 'build').map((x) => (x.action as { building: string }).building));
@@ -52,8 +61,8 @@ describe('advisor (golden, against the prototype)', () => {
         if (i > 0) { passSeason(s, w); for (const _ of run.seasons[i - 1]!.picks) { const d = defineEvent(s, s.queue[0]!); resolveEvent(s, w, d.options.findIndex((o) => !o.can || o.can(s))); } }
         // the lone store for far fields is replaced by a measured package (see the review); a land with no
         // collection point is now measured too, with the vehicle a new one comes with (1.1.0)
-        const all = ruleAdvice(s, w), taken = takenBy(all);
-        const expected = want.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac))).map((x) => key(x.w, action(x.ac)));
+        const all = ruleAdvice(s, w), taken = takenBy(all), gone = replacedBy(all);
+        const expected = want.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac)) && !gone(x, action(x.ac))).map((x) => key(x.w, action(x.ac)));
         const mine = all.filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action));
         expect(mine, `${name} state ${i}: ${want.map((x) => x.tit).join(' | ')}`).toEqual(expected);
       });
@@ -72,8 +81,8 @@ describe('advisor on variants of the saves (golden)', () => {
         for (const [k, t] of Object.entries(spec.add ?? {})) s.map.buildings[k as LotKey] = B[t] as never;
         if (spec.dizimo) s.taxes.tithe = { general: spec.dizimo, byGood: {} };
         updateRatings(s, w); // the prototype's calcula re-rates the homes
-        const all = ruleAdvice(s, w), taken = takenBy(all);
-        const expected = list.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac))).map((x) => key(x.w, action(x.ac)));
+        const all = ruleAdvice(s, w), taken = takenBy(all), gone = replacedBy(all);
+        const expected = list.filter((x) => !PORTED_AWAY(x.tit) && !taken(action(x.ac)) && !gone(x, action(x.ac))).map((x) => key(x.w, action(x.ac)));
         expect(all.filter((x) => !MEASURED.has(x.rule)).map((x) => key(x.weight, x.action)), list.map((x) => x.tit).join(' | ')).toEqual(expected);
       });
     }

@@ -2,8 +2,8 @@
 // (economy, ratings, advice, districts), and the saves. Each colony keeps its current game and its last five
 // yearly autosaves, in the browser's IndexedDB; a save can also be exported to a file and imported back.
 import {
-  advise, computeDistricts, computeEconomy, generateWorld, newGame, passSeason, rateHomes, resolveEvent,
-  type Advice, type CommandResult, type Districts, type Economy, type GameState, type Ratings, type SeasonReport, type World,
+  advise, computeDistricts, computeEconomy, districtAccounts, generateWorld, newGame, passSeason, rateHomes, resolveEvent,
+  type Advice, type CommandResult, type DistrictAccount, type Districts, type Economy, type GameState, type Ratings, type SeasonReport, type World,
 } from '@assunguy/sim';
 import { setContext, T } from './i18n';
 import { readSave, writeSave } from './saveFormat';
@@ -20,15 +20,17 @@ const emit = (why: string) => { for (const f of [...listeners]) f(why); };
 
 let game: Session | null = null;
 let version = 0;
-const cache: { v: number; economy?: Economy; ratings?: Ratings; advice?: Advice[]; districts?: Districts } = { v: -1 };
+const cache: { v: number; economy?: Economy; ratings?: Ratings; advice?: Advice[]; districts?: Districts; accounts?: DistrictAccount[] } = { v: -1 };
 
 export const session = (): Session => { if (!game) throw new Error('no game'); return game; };
 export const hasGame = (): boolean => !!game;
-const fresh = () => { if (cache.v !== version) { cache.v = version; delete cache.economy; delete cache.ratings; delete cache.advice; delete cache.districts; } };
+const fresh = () => { if (cache.v !== version) { cache.v = version; delete cache.economy; delete cache.ratings; delete cache.advice; delete cache.districts; delete cache.accounts; } };
 export const economy = (): Economy => { fresh(); return (cache.economy ??= computeEconomy(game!.s, game!.w)); };
 export const ratings = (): Ratings => { fresh(); return (cache.ratings ??= rateHomes(game!.s, game!.w)); };
 export const advice = (): Advice[] => { fresh(); return (cache.advice ??= advise(game!.s, game!.w)); };
 export const districts = (): Districts => { fresh(); return (cache.districts ??= computeDistricts(game!.s, game!.w)); };
+/** Each district's accounts, read off the one economy. */
+export const accounts = (): DistrictAccount[] => { fresh(); return (cache.accounts ??= districtAccounts(game!.s, game!.w, economy(), districts(), ratings())); };
 export const changed = (why = 'state'): void => { version++; emit(why); };
 
 // ---- commands: run one against the state, show the error when it fails

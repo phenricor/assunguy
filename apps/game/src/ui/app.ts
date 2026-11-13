@@ -9,7 +9,8 @@ import { api, vars, hooks, show, PT, EN } from '../view';
 import { syncBirds } from '../birds';
 import { $, K, X_SVG, esc, fmt, hint, popup, closePopup, sheet, sheetWith, setSheetClose } from './kit';
 import { openFeedback } from './feedback';
-import { banner, markSeen, openChapter, openNotebook, setChapterOff } from './notebook';
+import { advisorItems } from './advisor';
+import { banner, facts, markSeen, openChapter, openNotebook, setChapterOff } from './notebook';
 
 // ---- what the player is doing on the map
 
@@ -86,7 +87,7 @@ export function top(): void {
   label.setAttribute('aria-label', name);
   (label.querySelector('.balao-c b') as HTMLElement).textContent = name.charAt(0).toUpperCase();
   (label.lastElementChild as HTMLElement).textContent = name;
-  const badge = $('nInacio'), n = store.advice().filter((a) => a.weight >= 60 && !a.blocked).length;
+  const badge = $('nInacio'), n = advisorItems().filter((x) => x.weight >= 60 && !x.advice?.blocked).length;
   badge.textContent = n ? String(Math.min(9, n)) : '';
   guide();
 }
@@ -103,7 +104,7 @@ export function guide(): void {
   const fx = $('guiaX'); fx.innerHTML = X_SVG;
   if (b.step !== undefined) {
     const steps = ch.steps!, x = steps[b.step]!;
-    $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { chapter: name, n: b.step + 1, of: steps.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, { advisor: adv }))}</b><span>${esc(T(`ui.guide.${x.key}.body`, { advisor: adv }))}</span>`;
+    $('guiaAc').innerHTML = `<small>${esc(T('ui.guide.count', { chapter: name, n: b.step + 1, of: steps.length }))}</small><b>${esc(T(`ui.guide.${x.key}.title`, facts()))}</b><span>${esc(T(`ui.guide.${x.key}.body`, facts()))}</span>`;
     $('guiaAc').onclick = x.go;
     fx.onclick = () => { setChapterOff(s, ch.id, true); store.save(); guide(); };
   } else {

@@ -4,7 +4,7 @@
 
 # Assunguy
 
-Assunguy é um jogo de gestão de colônia ambientado no Paraná do século XIX. Você chega à beira do rio com dez famílias, uma verba curta da província e um prazo. Abre ruas, distribui lotes, planta, monta oficinas, cobra impostos e tenta escoar a produção por caminhos ruins até Iguape e Curitiba. Se a colônia crescer, vira freguesia, depois vila, e no fim disputa a ferrovia com as colônias vizinhas.
+Assunguy é um jogo de gestão de colônia ambientado no Paraná do século XIX. Você chega à beira do rio com oito famílias, uma verba curta da província e um prazo. Abre ruas, distribui lotes, planta, monta oficinas, cobra impostos e tenta escoar a produção por caminhos ruins até Iguape e Curitiba. Se a colônia crescer, vira freguesia, depois vila, e no fim disputa a ferrovia com as colônias vizinhas.
 
 O jogo corre em turnos de uma estação. A cada estação as famílias trabalham, colhem, vendem o que sobra e reagem ao que você decidiu. O conselheiro, que você batiza no começo, lê a situação e sugere o próximo passo, sempre com o motivo.
 
@@ -13,7 +13,7 @@ O jogo corre em turnos de uma estação. A cada estação as famílias trabalham
 - Português e inglês, trocáveis a qualquer momento.
 - Roda inteiro no navegador, sem servidor. Os jogos ficam salvos no próprio aparelho e podem ser exportados para um arquivo.
 
-Versão atual: **1.0.0-beta.9**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
+Versão atual: **1.0.0-beta.10**. Para jogar, abra **[phenricor.github.io/assunguy](https://phenricor.github.io/assunguy/)** no navegador do celular ou do computador. Se preferir jogar sem internet, baixe o arquivo `.html` da [última release](https://github.com/phenricor/assunguy/releases) e abra no navegador.
 
 ## Colônia do Assunguy
 
@@ -56,7 +56,7 @@ Fontes: [IBGE, histórico de Cerro Azul](https://biblioteca.ibge.gov.br/visualiz
 </tr>
 <tr>
 <td width="96"><img src="docs/readme/mecanica-niveis.png" width="88" height="88" alt=""></td>
-<td><b>Níveis e marcos.</b> A colônia tem 12 níveis, que liberam novas culturas, oficinas e serviços. Os marcos vêm com prazo da província. A freguesia pede 90 famílias, satisfação 50, capela, escola e diretoria em 32 estações. A vila pede 180 famílias, quatro terras e mais serviços.</td>
+<td><b>Níveis e marcos.</b> A colônia tem 18 níveis, que liberam novas culturas, oficinas e serviços: povoado do 1 ao 4, freguesia do 5 ao 8, vila do 9 ao 13 e cidade do 14 ao 18. Cada nível pede famílias trabalhando e renda; alguns pedem também bairros ou no máximo uma parte das famílias sem trabalho. Os marcos vêm com prazo da província. A freguesia pede 44 famílias trabalhando, satisfação 50, capela, escola e diretoria em 40 estações. A vila pede 90, quatro terras e mais serviços.</td>
 </tr>
 <tr>
 <td width="96"><img src="docs/readme/mecanica-conselheiro.png" width="88" height="88" alt=""></td>
@@ -73,7 +73,7 @@ Fontes: [IBGE, histórico de Cerro Azul](https://biblioteca.ibge.gov.br/visualiz
 | Categoria | O que entra |
 |---|---|
 | Ruas | Ruas, que abrem os lotes, e trilhos na corrida da ferrovia |
-| Moradia | Rancho, casa, casa caiada e sobrado |
+| Moradia | Rancho (1 família), casa (2), casa caiada (3) e sobrado (4) |
 | Serviços | Capela, igreja matriz, escola, botica, Santa Casa, teatro, poço, chafariz, diretoria, câmara, cadeia e bombeiros |
 | Comércio | Comércio e mercado |
 | Transporte | Venda, embarcadouro, cais, porto, pouso, depósito de lenha, estação e parada |
