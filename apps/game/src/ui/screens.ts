@@ -2,7 +2,7 @@
 // Nível, Economia and a district's numbers. Same markup and pieces as the prototype's dashboards.
 import { topLevel, BALANCE, BUILDING_IDS, GOOD_IDS, GREAT_WORKS, GREAT_WORK_IDS, LAWS, LEVELS, LEVEL_UNLOCKS, MILESTONES, PATH_CHOICES, type BuildingId, type GoodId, type GreatWorkId } from '@assunguy/data';
 import {
-  AGENT_COST, allocate, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
+  AGENT_COST, allocate, processingPotential, arrivalChance, cityRisks, costOf, currentPrice, def, good, emptySlots, fame, goalPace, lawSlots, levelRequirements, milestoneGaps,
   askProvince, districtFixSteps, splitAdvice, proposeTax, setAgent, setGreatWork, taxEffect, toggleLaw, upkeepPerSeason, wasteShare, seasonOf, yearOf, districtsUnlocked, rivalCost, nextAdvance, raceTime,
   type DistrictAccount, type Fix, type GameState, type GoalItem, type LotKey, type TaxId, type SeriesPoint, type SeasonReport,
 } from '@assunguy/sim';
@@ -122,7 +122,9 @@ export function openEconomy(tab = 'goods'): void {
     const missing = GOOD_IDS.filter((g) => (c.produced[g] ?? 0) <= 0.5 && producerOf(s, g));
     const ofClass = made.filter((g) => classOf(g) === goodsClass).sort((x, y) => (c.produced[y] ?? 0) - (c.produced[x] ?? 0));
     const missingOfClass = missing.filter((g) => classOf(g) === goodsClass).sort((x, y) => (producerOf(s, x)!.level - producerOf(s, y)!.level) || currentPrice(s.market, y) - currentPrice(s.market, x));
-    const card = (g: GoodId) => { const f = flowOf(c, g), lost = f.lost ?? 0; return K.card({ ic: icon(g), title: goodName(g), sub: T('ui.arrobasYear', { n: fmt(c.produced[g] ?? 0) }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: priceSub(s, g), tone: lost > (c.produced[g] ?? 0) * 0.2 ? 'ruim' : '', attrs: `data-good="${g}"`, body: tagsOf(s, g) + flowBar(f, c.produced[g] ?? 1) }); };
+    // a raw good a workshop of the colony could take: the share still leaving raw or wasted
+    const P = processingPotential(s, c), toProcess = (g: GoodId) => { const p = P[g]; return p && Math.round(p.share * 100) >= 1 ? ` ${T('ui.econ.toProcess', { n: Math.round(p.share * 100) })}` : ''; };
+    const card = (g: GoodId) => { const f = flowOf(c, g), lost = f.lost ?? 0; return K.card({ ic: icon(g), title: goodName(g), sub: T('ui.arrobasYear', { n: fmt(c.produced[g] ?? 0) }) + toProcess(g), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: priceSub(s, g), tone: lost > (c.produced[g] ?? 0) * 0.2 ? 'ruim' : '', attrs: `data-good="${g}"`, body: tagsOf(s, g) + flowBar(f, c.produced[g] ?? 1) }); };
     const missingCard = (g: GoodId) => { const pr = producerOf(s, g)!; return K.card({ ic: icon(g), title: goodName(g), dim: true, sub: pr.level <= s.level ? T('ui.econ.buildFor', { building: T(`building.${pr.t}`), cost: fmt(costOf(pr.t, s.milestone)) }) : T('ui.econ.atLevel', { building: T(`building.${pr.t}`), n: pr.level }), right: `$ ${num(currentPrice(s.market, g), 1)}`, rightSub: priceSub(s, g), attrs: `data-good="${g}"`, body: tagsOf(s, g) }); };
     const section = (name: string, f: (g: GoodId) => boolean) => { const a = ofClass.filter(f).map(card), b = showMissing ? missingOfClass.filter(f).map(missingCard) : []; return a.length || b.length ? K.section(name) + K.cards([...a, ...b]) : ''; };
     const ser = (s.series ?? []) as SeriesPoint[], before = ser.length >= 5 ? ser[ser.length - 5] : undefined;
@@ -166,8 +168,10 @@ function openGood(g: GoodId): void {
     popup(esc(goodName(g)), esc(text), chart + how);
     return;
   }
-  const f = flowOf(c, g);
-  popup(esc(goodName(g)), esc(text), chart + K.section(T('ui.econ.where')) + K.rows([K.row(T('ui.econ.supply'), fmt(c.produced[g] ?? 0)), ...FLOW.filter(([k]) => (f[k] ?? 0) > 0.5).map(([k]) => K.row(T(`ui.econ.flow.${k}`), fmt(f[k] ?? 0)))]) + K.actions([{ text: T('ui.close'), attrs: 'data-fecha-pop' }]));
+  const f = flowOf(c, g), pp = processingPotential(s, c)[g];
+  // what a workshop of the colony could still take of it: the arrobas leaving raw or wasted
+  const potential = pp && pp.potential >= 0.5 ? [K.row(T('ui.econ.potential'), T('ui.econ.potentialValue', { n: fmt(pp.potential), pct: Math.round(pp.share * 100) }))] : [];
+  popup(esc(goodName(g)), esc(text), chart + K.section(T('ui.econ.where')) + K.rows([K.row(T('ui.econ.supply'), fmt(c.produced[g] ?? 0)), ...FLOW.filter(([k]) => (f[k] ?? 0) > 0.5).map(([k]) => K.row(T(`ui.econ.flow.${k}`), fmt(f[k] ?? 0))), ...potential]) + K.actions([{ text: T('ui.close'), attrs: 'data-fecha-pop' }]));
   document.querySelector<HTMLElement>('#infoPop [data-fecha-pop]')?.addEventListener('click', () => closePopup());
 }
 hooks2.openEconomy = () => openEconomy();

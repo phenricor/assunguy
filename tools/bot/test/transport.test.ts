@@ -15,7 +15,7 @@ describe('transport advice', () => {
       let w: World | null = null, i = 0;
       play(seed, { seasons: 44, observe: {
         advice: (list: Advice[], s: GameState) => {
-          if (++i % 4) return;
+          if (++i % 2) return;
           w ??= generateWorld(s.seed, s.mapVersion);
           const base = computeEconomy(s, w).incomeTotal;
           for (const a of list.filter((x) => TRANSPORT.test(x.rule) && x.action && x.action.kind !== 'select')) {

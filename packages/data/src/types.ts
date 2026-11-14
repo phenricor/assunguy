@@ -151,6 +151,10 @@ export interface BalanceDef {
   adviseExportDuty: boolean;
   /** The satisfaction the advisor keeps when it suggests taxes once all milestones are met (the prototype kept 60). */
   taxFloorAfterTown: number;
+  /** The advisor points to a workshop for a raw good that mostly leaves raw and is worth more processed. */
+  adviseProcessing: boolean;
+  /** The far-field store advice rates the homes again with the store in place (it is their commerce). */
+  measureRatings: boolean;
   routeChoiceSharpness: number;
   isolatedCommerceWeight: number;
   lotPrice: number;
