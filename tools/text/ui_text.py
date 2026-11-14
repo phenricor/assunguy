@@ -405,6 +405,7 @@ U = {
   'econ.howTo': ('Como produzir', 'How to make it'), 'econ.build': ('Construir {place}', 'Build a {place}'),
   'econ.unlocks': ('{item} libera no nível {n}, em {place}. A colônia está no nível {level}.', '{item} opens at level {n}, in the {place}. The colony is at level {level}.'),
   'econ.where': ('Para onde vai', 'Where it goes'), 'econ.supply': ('Oferta por ano', 'Supply a year'),
+  'econ.toProcess': ('({n}% a processar)', '({n}% to process)'), 'econ.potential': ('Potencial a processar', 'Could be processed'), 'econ.potentialValue': ('{n} ({pct}%)', '{n} ({pct}%)'),
   'info.resources.title': ('Recursos', 'Goods'),
   'info.resources.body': ('Matéria-prima sai da plantação, da criação, do rio, do mato ou da mina. Processado passou por uma oficina. A barra mostra o destino de cada arroba. "Iguape" é o preço de exportação, antes do frete; "aqui" é o preço na colônia, para o que não se exporta. A seta compara o preço com um ano atrás; toque no recurso para ver o gráfico. O alternador mostra, apagados, os recursos que a colônia ainda não produz.', 'Raw materials come from fields, herds, the river, the forest or the mine. Processed goods went through a workshop. The bar shows where each arroba went. "Iguape" is the export price, before freight; "here" is the price in the colony, for what is not exported. The arrow compares the price with a year ago; tap a good to see its chart. The switch shows, dimmed, the goods the colony does not make yet.'),
   # building preview, as in the prototype

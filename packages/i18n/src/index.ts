@@ -27,7 +27,7 @@ export interface Translator {
 }
 
 /** Placeholders that hold a name or a phrase; every other placeholder holds a number or an amount. */
-const TEXT_HOLES = new Set(['a', 'aEffect', 'advisor', 'at', 'b', 'bEffect', 'building', 'cause', 'cave', 'chain', 'colony', 'crisis', 'custom', 'date', 'destination', 'disease', 'district', 'email', 'family', 'from', 'good', 'item', 'label', 'land', 'lang', 'law', 'list', 'milestone', 'name', 'names', 'origin', 'place', 'reason', 'season', 'service', 'title', 'to', 'vehicle', 'version', 'what', 'work']);
+const TEXT_HOLES = new Set(['a', 'aEffect', 'advisor', 'at', 'b', 'bEffect', 'building', 'cause', 'cave', 'chain', 'colony', 'crisis', 'custom', 'date', 'destination', 'disease', 'district', 'email', 'family', 'from', 'good', 'item', 'label', 'land', 'lang', 'law', 'list', 'milestone', 'name', 'names', 'origin', 'place', 'product', 'reason', 'season', 'service', 'title', 'to', 'vehicle', 'version', 'what', 'work']);
 /** What a placeholder with no value shows: 0 for a number, an ellipsis for a name. */
 export const fallback = (name: string): string => (TEXT_HOLES.has(name) ? '…' : '0');
 /** The placeholders of a text. */

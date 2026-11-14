@@ -18,14 +18,15 @@ import { lotsFor, measure } from './measure.js';
 import { connected, mainNetwork } from './network.js';
 import { canPlace, canPlaceStreet } from './placement.js';
 import { goalPace, greatWorksUpkeep, levelRequirements, milestoneGaps, wasteShare, WASTE_LIMIT, type GoalItem } from './province.js';
-import { rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
+import { ratingsAfter, rateHomes, taxEffect, type Ratings, type Service } from './ratings.js';
 import { hasLaw, homeOf, upgradeOf, type GameState, type TaxLaw, type DestinationId } from './state.js';
+import { processingPotential, type ProcessingPotential } from './processing.js';
 import { distance, fleetOf, fleetSize, fleetSlots, gatewayTight, geography } from './transport.js';
 import { landOf, lotKey, parseKey, type LandId, type LotKey, type World } from './world.js';
 
 /** Every rule the advisor can emit; each has advice.<rule>.title and .body in both languages. */
 export const ADVICE_RULES = [
-  'deadline', 'levelFamilies', 'exportDuty.first', 'exportDuty.more', 'exportDuty.hurts', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'idle.upgrade', 'levelWorkers.upgrade', 'service.upgrade', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
+  'deadline', 'levelFamilies', 'exportDuty.first', 'exportDuty.more', 'exportDuty.hurts', 'process.potential', 'process.potentialNoGain', 'food.market', 'food.crop', 'food.plant', 'cash.negative', 'cash.runningOut', 'unlinked', 'marketFull.people', 'marketFull.upgrade', 'marketFull.build', 'cropSwap', 'overplanted', 'workersWithoutService', 'greatWork', 'council', 'tithe.choking', 'tithe.hurts', 'tithe.relief', 'tithe.more', 'tithe.first', 'idle.invest', 'idle.jobs', 'chain', 'caneIdle', 'levelBuilding', 'milestoneBuilding', 'milestoneLands', 'milestoneFamilies', 'jobsEmpty.homes', 'jobsEmpty.build', 'waste', 'lostGood.workshop', 'lostGood.noBuyer', 'homesCanGrow', 'service.satisfaction', 'service.homes', 'crowded', 'road.lands', 'road.street', 'nextLevel', 'noVehicles.collection', 'noVehicles.gateway', 'full.collection', 'full.gateway', 'noSlot', 'idleCollection', 'idleFleet', 'idle.upgrade', 'levelWorkers.upgrade', 'service.upgrade', 'race.soonLead', 'race.soonBehind', 'race.departures', 'noCollection', 'pierFullIdle', 'pierFullIdle.less', 'noGateway', 'highTariffs', 'farLand.collection', 'farLand.storePackage', 'levelWorkers', 'outlet.vehicle', 'outlet.upgrade', 'farLand.store', 'farLand.storeEarly', 'outlet.swap', 'outlet.collect', 'province.extraTime', 'province.extraFunds', 'streets.room',
 ] as const;
 /** Families for each job a goal asks for: when milestones count families at work, some are always between jobs. */
 const familySpare = (): number => (BALANCE.milestoneWorkers ? 0.9 : 1);
@@ -170,8 +171,16 @@ export function collectionLot(s: GameState, w: World, t: BuildingId, land: LandI
 }
 
 /** The colony with these buildings and fleets placed on these lots. */
-const withPlaced = (s: GameState, put: Partial<Record<LotKey, BuildingId>>, fleet: Partial<Record<LotKey, Partial<Record<VehicleId, number>>>> = {}): GameState =>
-  ({ ...s, map: { ...s.map, buildings: { ...s.map.buildings, ...put } as GameState['map']['buildings'] }, fleet: { ...s.fleet, ...fleet } as GameState['fleet'] });
+const withPlaced = (w: World, s: GameState, put: Partial<Record<LotKey, BuildingId>>, fleet: Partial<Record<LotKey, Partial<Record<VehicleId, number>>>> = {}): GameState => {
+  const x: GameState = { ...s, map: { ...s.map, buildings: { ...s.map.buildings, ...put } as GameState['map']['buildings'] }, fleet: { ...s.fleet, ...fleet } as GameState['fleet'] };
+  return x;
+};
+/** withPlaced with the homes rated again: for works that change how the homes rate (a store is their commerce). */
+const withPlacedRated = (w: World, s: GameState, put: Partial<Record<LotKey, BuildingId>>, fleet: Partial<Record<LotKey, Partial<Record<VehicleId, number>>>> = {}): GameState => {
+  const x = withPlaced(w, s, put, fleet);
+  if (BALANCE.measureRatings) x.homeRating = ratingsAfter(s, x, w);
+  return x;
+};
 
 export interface ProducerFix { action: AdviceAction; gain: number; cost: number; rule: string; params: Record<string, string | number> }
 /**
@@ -197,7 +206,7 @@ export function producerFix(s: GameState, w: World, key: LotKey, c: Economy = co
       if (!unlocked(s, ct) || (ct === 'landing' && !landHasWater(s, w, land))) continue;
       const lot = nearestFree(s, w, ct, key);
       if (!lot) continue;
-      const c2 = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: PACKAGE } }), w), gain = c2.incomeTotal - c.incomeTotal;
+      const c2 = computeEconomy(withPlaced(w, s, { [lot]: ct }, { [lot]: { [v]: PACKAGE } }), w), gain = c2.incomeTotal - c.incomeTotal;
       const cost = packageCost(s, ct, v);
       if (gain >= 15 && helps(c2)) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: packageFleet(ct, v) }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
     }
@@ -576,7 +585,7 @@ function transportAdvice(x: Ctx): Advice[] {
     const t: BuildingId = landHasWater(s, w, r.id) ? 'landing' : 'tradingPost', v: VehicleId = t === 'tradingPost' ? 'muleTrain' : 'canoe', total = packageCost(s, t, v);
     const lot = collectionLot(s, w, t, r.id);
     if (!lot) continue;
-    const gain = computeEconomy(withPlaced(s, { [lot]: t }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+    const gain = computeEconomy(withPlaced(w, s, { [lot]: t }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
     if (gain < 15) continue;
     L.push({ weight: workWeight(total, gain), rule: 'noCollection', params: { land: r.id, lost: Math.round(r.lostValue), building: t, vehicle: v, cost: total, gain: Math.round(gain) }, action: { kind: 'collect', building: t, land: r.id, lot, fleet: packageFleet(t, v) }, cost: total, blocked: false });
   }
@@ -592,12 +601,22 @@ function transportAdvice(x: Ctx): Advice[] {
       if (best) { const n = Math.min(a0.idle.length, def(best.t).jobs || 1); add(78, best.less > 10 ? 'pierFullIdle.less' : 'pierFullIdle', { building: best.t, cost: costOf(best.t, s.milestone), n, gain: Math.round(best.g), less: best.less > 10 ? Math.round(best.less) : 0 }, { kind: 'build', building: best.t }); }
     }
   }
+  // a raw good that mostly leaves raw or goes to waste, and is worth half as much again processed: its workshop
+  if (BALANCE.adviseProcessing) {
+    const P = processingPotential(s, c);
+    const ripe = (Object.values(P) as ProcessingPotential[]).filter((p) => p.share > 0.5 && p.potential >= 10 && p.processedValue >= p.rawPrice * 1.5).sort((p, q) => q.potential * (q.processedValue - q.rawPrice) - p.potential * (p.processedValue - p.rawPrice));
+    for (const p of ripe.slice(0, 2)) {
+      const cost = costOf(p.building, s.milestone), gain = measured(x, { [p.building]: 1 }).incomeTotal - c.incomeTotal;
+      const params = { good: p.good, product: p.to, building: p.building, share: Math.round(p.share * 100), n: Math.round(p.potential), more: Math.round((p.processedValue / Math.max(0.01, p.rawPrice) - 1) * 100), cost, gain: Math.round(gain) };
+      add(gain >= 15 ? Math.max(56, workWeight(cost, gain)) : 50, gain >= 15 ? 'process.potential' : 'process.potentialNoGain', params, { kind: 'build', building: p.building });
+    }
+  }
   // the store package replaces the prototype's lone store for far fields (see storePackage)
   // a commerce with no gateway in reach: a waystation next to it, measured with its mule trains
   if (unlocked(s, 'waystation')) for (const y of R.commerce.filter((z) => !z.linked && z.lost > 20)) {
     const lot = collectionLot(s, w, 'waystation', null, y.key);
     if (!lot) continue;
-    const cost = packageCost(s, 'waystation', 'muleTrain'), gain = computeEconomy(withPlaced(s, { [lot]: 'waystation' }, { [lot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+    const cost = packageCost(s, 'waystation', 'muleTrain'), gain = computeEconomy(withPlaced(w, s, { [lot]: 'waystation' }, { [lot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
     if (gain >= 15) L.push({ weight: workWeight(cost, gain), rule: 'noGateway', params: { at: y.key, lost: Math.round(y.lost), cost, gain: Math.round(gain) }, action: { kind: 'collect', building: 'waystation', near: y.key, lot, fleet: packageFleet('waystation', 'muleTrain') }, cost, blocked: false });
   }
   const u = s.transport.last;
@@ -738,21 +757,21 @@ export function farLandPlan(s: GameState, w: World, c: Economy = computeEconomy(
     if (!unlocked(s, t) || (t === 'landing' && !landHasWater(s, w, land))) continue;
     const lot = collectionLot(s, w, t, land);
     if (!lot) continue;
-    const gain = computeEconomy(withPlaced(s, { [lot]: t }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+    const gain = computeEconomy(withPlaced(w, s, { [lot]: t }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
     options.push({ ...base, option: 'collection', action: { kind: 'collect', building: t, land, lot, fleet: packageFleet(t, v) }, cost: packageCost(s, t, v), gain });
   }
   if (unlocked(s, 'store')) {
     const storeLot = collectionLot(s, w, 'store', land);
     if (storeLot) {
-      const withStore = withPlaced(s, { [storeLot]: 'store' }), G2 = geography(withStore, connected(withStore.map)), j = G2.commerce.findIndex((x) => x.key === storeLot);
+      const withStore = withPlaced(w, s, { [storeLot]: 'store' }), G2 = geography(withStore, connected(withStore.map)), j = G2.commerce.findIndex((x) => x.key === storeLot);
       if (j >= 0 && G2.commerce[j]!.linked) {
-        const gain = computeEconomy(withStore, w).incomeTotal - c.incomeTotal;
+        const gain = computeEconomy(BALANCE.measureRatings ? { ...withStore, homeRating: ratingsAfter(s, withStore, w) } : withStore, w).incomeTotal - c.incomeTotal;
         // a store with a gateway already in reach takes the produce alone; before the trading post opens, say it is coming
         options.push({ ...base, option: unlocked(s, 'tradingPost') ? 'store' : 'storeEarly', action: { kind: 'collect', building: 'store', land, lot: storeLot }, cost: costOf('store', s.milestone), gain });
       } else if (unlocked(s, 'waystation')) {
         const wayLot = collectionLot(withStore, w, 'waystation', null, storeLot);
         if (wayLot) {
-          const gain = computeEconomy(withPlaced(s, { [storeLot]: 'store', [wayLot]: 'waystation' }, { [wayLot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+          const gain = computeEconomy(withPlacedRated(w, s, { [storeLot]: 'store', [wayLot]: 'waystation' }, { [wayLot]: { muleTrain: PACKAGE } }), w).incomeTotal - c.incomeTotal;
           options.push({ ...base, option: 'storePackage', action: { kind: 'collect', building: 'store', land, lot: storeLot, with: ['waystation'], fleet: packageFleet('waystation', 'muleTrain') }, cost: costOf('store', s.milestone) + packageCost(s, 'waystation', 'muleTrain'), gain });
         }
       }
