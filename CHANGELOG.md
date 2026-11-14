@@ -11,6 +11,14 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.13] - 2026-11-14
+
+### Fixed
+
+- A producer's "what solves it" could offer a vehicle at a full gateway elsewhere, which pays the colony but does
+  nothing for that producer's cargo lost on foot. It now offers only what brings more of the producer's own cargo
+  to a buyer.
+
 ## [1.0.0-beta.12] - 2026-11-14
 
 ### Added
@@ -269,7 +277,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.12...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.13...HEAD
+[1.0.0-beta.13]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.12...v1.0.0-beta.13
 [1.0.0-beta.12]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.11...v1.0.0-beta.12
 [1.0.0-beta.11]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...v1.0.0-beta.11
 [1.0.0-beta.10]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...v1.0.0-beta.10
