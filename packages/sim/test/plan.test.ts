@@ -66,3 +66,23 @@ describe('the export duty', () => {
     expect(s.pendingTaxes.exportDuty?.general).toBe(act.value);
   });
 });
+
+describe('a store with no gateway in reach', () => {
+  it('is a district alert that says why the cargo stops, and the district screen offers a gateway for it', async () => {
+    const { newGame } = await import('../src/game.js'), { build, streets } = await import('../src/commands.js');
+    const { districtAccounts } = await import('../src/accounts.js'), { districtAlerts } = await import('../src/districtAdvice.js');
+    const { districtFixes } = await import('../src/districtFixes.js'), { computeDistricts } = await import('../src/districts.js');
+    const { s, w } = newGame(1869);
+    s.cash = 1e5; s.level = 3; // waystations and landings open at 3
+    // the colony's only store far from the river port, on a street of its own
+    expect(streets(s, w, [22, 52], [22, 56]).ok).toBe(true);
+    expect(streets(s, w, [22, 56], [29, 56]).ok).toBe(true);
+    expect(build(s, w, 'store', 28, 57).ok).toBe(true);
+    delete s.map.buildings['23,51' as LotKey];
+    const A = districtAccounts(s, w), alert = districtAlerts(A).find((x) => x.problem === 'outlet');
+    expect(alert?.cause).toBe('noGateway');
+    const D = computeDistricts(s, w), fix = districtFixes(s, w, D, A.find((a) => a.id === alert!.district)!, []);
+    expect(fix.outlet?.cause).toBe('noGateway');
+    expect(fix.outlet?.fixes.some((f) => f.building === 'waystation' || f.building === 'landing')).toBe(true);
+  });
+});

@@ -11,6 +11,14 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.11] - 2026-11-13
+
+### Fixed
+
+- The advisor warned about a district's cargo only when it was lost on foot. It now warns whatever stops it (a store
+  with no gateway in reach, a full collection point or gateway, no buyer) and says which; the district screen lists
+  each cause, and for a store with no gateway it measures a waystation or a landing beside it.
+
 ## [1.0.0-beta.10] - 2026-11-12
 
 Districts as the colony's scope, smaller homes, eighteen levels and taxes the advisor suggests.
@@ -245,7 +253,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.11...HEAD
+[1.0.0-beta.11]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...v1.0.0-beta.11
 [1.0.0-beta.10]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...v1.0.0-beta.10
 [1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9
 [1.0.0-beta.8]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.7...v1.0.0-beta.8

@@ -43,7 +43,7 @@ export function splitAdvice(list: Advice[], D: Districts): { colony: Advice[]; b
 }
 
 export type DistrictProblem = 'jobs' | 'outlet' | 'service' | 'satisfaction';
-export interface DistrictAlert { district: LotKey; problem: DistrictProblem; weight: number; n: number; share?: number; service?: Service; homes?: number }
+export interface DistrictAlert { district: LotKey; problem: DistrictProblem; weight: number; n: number; share?: number; service?: Service; homes?: number; cause?: keyof DistrictAccount['lostBy'] }
 
 /** What is critical in each district, worst first; the advisor shows these and opens the district. */
 export function districtAlerts(A: DistrictAccount[]): DistrictAlert[] {
@@ -54,7 +54,10 @@ export function districtAlerts(A: DistrictAccount[]): DistrictAlert[] {
   const short = new Set(A.filter((a) => a.families && a.idle >= 5 && a.idle / a.families >= Math.max(0.2, share) && a.filled >= a.jobs).sort((p, q) => q.idle - p.idle).slice(0, 2).map((a) => a.id));
   for (const a of A) {
     if (short.has(a.id)) out.push({ district: a.id, problem: 'jobs', weight: 82, n: a.idle });
-    if (a.onFoot >= 30 && a.reach < 0.85) out.push({ district: a.id, problem: 'outlet', weight: 78, n: a.onFoot, share: Math.round(a.reach * 100) });
+    // cargo that does not reach a buyer, whatever stops it: on foot, a full collection point, a store with no gateway
+    // in reach, a full gateway, no buyer; the alert names the largest
+    const cause = (Object.entries(a.lostBy) as [keyof DistrictAccount['lostBy'], number][]).sort((p, q) => q[1] - p[1])[0]!, lost = Object.values(a.lostBy).reduce((x, y) => x + y, 0);
+    if (lost >= (a.reach < 0.5 ? 15 : 30) && a.reach < 0.85 && cause[1] > 0) out.push({ district: a.id, problem: 'outlet', weight: 78, n: cause[1], share: Math.round(a.reach * 100), cause: cause[0] });
     const worst = (Object.entries(a.missing) as [Service, number][]).sort((p, q) => q[1] - p[1])[0];
     if (worst && worst[1] >= Math.max(3, a.homes * 0.3)) out.push({ district: a.id, problem: 'service', weight: 70, n: worst[1], service: worst[0], homes: a.homes });
     if (a.homes >= 3 && a.satisfaction < 55) out.push({ district: a.id, problem: 'satisfaction', weight: 74, n: a.satisfaction });
