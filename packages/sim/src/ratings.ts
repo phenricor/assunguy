@@ -195,6 +195,22 @@ export function rateHomes(s: GameState, w: World): Ratings {
   return { homes, linked, mean: families ? Math.round(sum / families) : 0, families, health: healthShare };
 }
 
+const baseRatings = new WeakMap<GameState, Ratings>();
+/**
+ * The stored ratings of a colony with works placed on it (`x`, made from `s`): each home's stored rating moved by
+ * what the works change in it, so a measurement compares like with like whether or not the stored ratings are fresh.
+ */
+export function ratingsAfter(s: GameState, x: GameState, w: World): Record<LotKey, number> {
+  let base = baseRatings.get(s);
+  if (!base) { base = rateHomes(s, w); baseRatings.set(s, base); }
+  const next = rateHomes(x, w), out: Record<LotKey, number> = { ...s.homeRating };
+  for (const [k, v] of Object.entries(next.homes) as [LotKey, { rating: number }][]) {
+    const was = base.homes[k]?.rating;
+    out[k] = was === undefined ? v.rating : Math.max(0, Math.min(100, (s.homeRating[k] ?? was) + v.rating - was));
+  }
+  return out;
+}
+
 /** Rates homes and stores the result where the next season's allocation reads it. */
 export function updateRatings(s: GameState, w: World): Ratings {
   const r = rateHomes(s, w);

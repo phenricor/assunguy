@@ -28,7 +28,7 @@ export const setContext = (c: { s: GameState; w: World } | null): void => { ctx 
 
 const NS: Record<string, string> = {
   building: 'building', from: 'building', to: 'building', type: 'building', crop: 'building', target: 'building',
-  good: 'good', service: 'service', vehicle: 'vehicle', milestone: 'milestone', work: 'greatWork', cause: 'cause', chain: 'advice.chain',
+  good: 'good', product: 'good', service: 'service', vehicle: 'vehicle', milestone: 'milestone', work: 'greatWork', cause: 'cause', chain: 'advice.chain',
   destination: 'ui.race.dest', origin: 'origin', choice: 'choice', a: 'choice', b: 'choice', law: 'law', disease: 'disease', crisis: 'crisis', weather: 'weather', tax: 'tax',
 };
 const isLot = (v: string) => /^\d+,\d+$/.test(v);

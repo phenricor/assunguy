@@ -11,6 +11,22 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+## [1.0.0-beta.12] - 2026-11-14
+
+### Added
+
+- Processing potential: each raw good a workshop of the colony can take shows on Colony > Goods how much of it
+  still leaves raw or goes to waste, as "(y% to process)", and its detail adds "Could be processed" with the arrobas
+  and the share. The families' table and the colony's market are left out: that is already used here.
+- The advisor points to the workshop when more than half of a raw good leaves unprocessed and an arroba of it is
+  worth at least half as much again processed (the product's price times the recipe's yield), with its cost and
+  the measured gain.
+
+### Fixed
+
+- The far-field store advice measured the store without the better ratings it gives the homes around it, so it
+  could promise twice what it paid.
+
 ## [1.0.0-beta.11] - 2026-11-13
 
 ### Fixed
@@ -253,7 +269,8 @@ The first beta: the whole game, from the first ten families to the railway race.
 - The README, in Portuguese: the game, the history of the Assunguy colony, the mechanics and a gallery.
 - Licensed under PolyForm Noncommercial 1.0.0.
 
-[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.11...HEAD
+[Unreleased]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.12...HEAD
+[1.0.0-beta.12]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.11...v1.0.0-beta.12
 [1.0.0-beta.11]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.10...v1.0.0-beta.11
 [1.0.0-beta.10]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.9...v1.0.0-beta.10
 [1.0.0-beta.9]: https://github.com/phenricor/assunguy/compare/v1.0.0-beta.8...v1.0.0-beta.9

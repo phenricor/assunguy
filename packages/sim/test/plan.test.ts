@@ -86,3 +86,22 @@ describe('a store with no gateway in reach', () => {
     expect(fix.outlet?.fixes.some((f) => f.building === 'waystation' || f.building === 'landing')).toBe(true);
   });
 });
+
+describe('the processing potential', () => {
+  it('is what of a raw good leaves raw or is wasted, priced at the best workshop the colony can build', async () => {
+    const { legacyState } = await import('./legacy.js'), { generateWorld } = await import('../src/world.js'), { computeEconomy, def } = await import('../src/economy.js');
+    const { processingPotential } = await import('../src/processing.js'), { currentPrice } = await import('../src/market.js');
+    const seasons = (await import('./fixtures/seasons.json', { with: { type: 'json' } })).default as unknown as Record<string, { state: Record<string, unknown> }>;
+    const s = legacyState(seasons.speedrun!.state), w = generateWorld(s.seed, s.mapVersion), c = computeEconomy(s, w);
+    const P = Object.values(processingPotential(s, c));
+    expect(P.length).toBeGreaterThan(0);
+    for (const p of P) {
+      const g = p!.good, left = (c.produced[g] ?? 0) - (c.ownTable[g] ?? 0) - (c.market[g] ?? 0) - (c.processed[g] ?? 0);
+      expect(p!.potential).toBeCloseTo(Math.max(0, left), 6);
+      expect(p!.share).toBeGreaterThanOrEqual(0); expect(p!.share).toBeLessThanOrEqual(1);
+      expect((def(p!.building).minLevel ?? 1)).toBeLessThanOrEqual(s.level);
+      const r = def(p!.building).recipes!.find((x) => x.from === g && x.to === p!.to)!;
+      expect(p!.processedValue).toBeCloseTo(currentPrice(s.market, p!.to) * r.ratio, 6);
+    }
+  });
+});

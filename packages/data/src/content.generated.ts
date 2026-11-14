@@ -1729,6 +1729,8 @@ export const BALANCE: BalanceDef = {
   "titheSpare": 1,
   "adviseExportDuty": true,
   "taxFloorAfterTown": 50,
+  "adviseProcessing": true,
+  "measureRatings": true,
   "routeChoiceSharpness": 8,
   "isolatedCommerceWeight": 0.6,
   "lotPrice": 20,
