@@ -11,6 +11,12 @@ Pre-releases carry a suffix (`-beta.N`, `-rc.N`) and count up until the stable v
 
 ## [Unreleased]
 
+### Fixed
+
+- A producer's "what solves it" could offer a vehicle at a full gateway elsewhere, which pays the colony but does
+  nothing for that producer's cargo lost on foot. It now offers only what brings more of the producer's own cargo
+  to a buyer.
+
 ## [1.0.0-beta.11] - 2026-11-13
 
 ### Fixed

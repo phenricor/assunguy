@@ -187,15 +187,19 @@ export function producerFix(s: GameState, w: World, key: LotKey, c: Economy = co
     if (op && op.gain >= 12 && op.cost <= op.gain * 3) options.push({ rule: 'outlet.swap', action: { kind: 'swap', key, to: op.t, from: t }, gain: op.gain, cost: Math.max(0, op.cost), params: { building: t, to: op.t, gain: op.gain, cost: op.cost } });
   }
   const G = geography(s, connected(s.map)), p = G.producers[key];
+  // a fix for this producer has to bring more of its own cargo to a buyer: a vehicle at a full pier elsewhere may
+  // pay the colony, but does nothing for cargo lost on foot here
+  const o0 = c.outlet[key], lost0 = o0 ? o0.sent - o0.delivered : 0;
+  const helps = (c2: Economy) => !o0 || (c2.outlet[key]?.delivered ?? 0) - o0.delivered >= Math.max(1, lost0 * 0.1);
   if (p && p.carry > 6) {
     const land = p.land;
     for (const [ct, v] of [['tradingPost', 'muleTrain'], ['landing', 'canoe']] as const) {
       if (!unlocked(s, ct) || (ct === 'landing' && !landHasWater(s, w, land))) continue;
       const lot = nearestFree(s, w, ct, key);
       if (!lot) continue;
-      const gain = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: PACKAGE } }), w).incomeTotal - c.incomeTotal;
+      const c2 = computeEconomy(withPlaced(s, { [lot]: ct }, { [lot]: { [v]: PACKAGE } }), w), gain = c2.incomeTotal - c.incomeTotal;
       const cost = packageCost(s, ct, v);
-      if (gain >= 15) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: packageFleet(ct, v) }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
+      if (gain >= 15 && helps(c2)) options.push({ rule: 'outlet.collect', action: { kind: 'collect', building: ct, lot, fleet: packageFleet(ct, v) }, gain, cost, params: { building: ct, vehicle: v, gain: Math.round(gain), cost } });
     }
   }
   // what already serves it: one more vehicle at a collection point in its reach, or at a full gateway
@@ -204,15 +208,15 @@ export function producerFix(s: GameState, w: World, key: LotKey, c: Economy = co
     for (const k of at) {
       const v = bestVehicleAt(s, k);
       if (!v || fleetSize(s, k) >= fleetSlots(s, k)) continue;
-      const gain = computeEconomy(withFleet(s, k, v), w).incomeTotal - c.incomeTotal, cost = (VEHICLES[v] as VehicleDef).price;
-      if (gain >= 15) options.push({ rule: 'outlet.vehicle', action: { kind: 'buyVehicle', key: k, vehicle: v }, gain, cost, params: { building: s.map.buildings[k] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
+      const c2 = computeEconomy(withFleet(s, k, v), w), gain = c2.incomeTotal - c.incomeTotal, cost = (VEHICLES[v] as VehicleDef).price;
+      if (gain >= 15 && helps(c2)) options.push({ rule: 'outlet.vehicle', action: { kind: 'buyVehicle', key: k, vehicle: v }, gain, cost, params: { building: s.map.buildings[k] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
     }
     // a full gateway with no slot left: raise its level and add a vehicle
     for (const g of c.transport.gateways.filter((y) => gatewayTight(y) && fleetSize(s, y.key) >= fleetSlots(s, y.key) && upgradeOf(s, y.key) < 2)) {
       const v = bestVehicleAt(s, g.key);
       if (!v) continue;
-      const gain = computeEconomy(withFleet(s, g.key, v, 1, 1), w).incomeTotal - c.incomeTotal, cost = upgradeCost(s.map.buildings[g.key] as BuildingId, upgradeOf(s, g.key), s.milestone) + (VEHICLES[v] as VehicleDef).price;
-      if (gain >= 15) options.push({ rule: 'outlet.upgrade', action: { kind: 'select', key: g.key, upgrade: true }, gain, cost, params: { building: s.map.buildings[g.key] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
+      const c2 = computeEconomy(withFleet(s, g.key, v, 1, 1), w), gain = c2.incomeTotal - c.incomeTotal, cost = upgradeCost(s.map.buildings[g.key] as BuildingId, upgradeOf(s, g.key), s.milestone) + (VEHICLES[v] as VehicleDef).price;
+      if (gain >= 15 && helps(c2)) options.push({ rule: 'outlet.upgrade', action: { kind: 'select', key: g.key, upgrade: true }, gain, cost, params: { building: s.map.buildings[g.key] as BuildingId, vehicle: v, gain: Math.round(gain), cost } });
     }
   }
   return options.sort((x, y) => y.gain / Math.max(1, y.cost) - x.gain / Math.max(1, x.cost))[0] ?? null;
